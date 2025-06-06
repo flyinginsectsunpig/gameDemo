@@ -6,7 +6,7 @@ export class Weapon {
   private projectileSpeed = 300;
   private damage = 1;
 
-  public fire(deltaTime: number, playerX: number, playerY: number): Projectile[] {
+  public fire(deltaTime: number, playerX: number, playerY: number, direction = { x: 1, y: 0 }): Projectile[] {
     this.timeSinceLastShot += deltaTime;
 
     const shotInterval = 1 / this.fireRate;

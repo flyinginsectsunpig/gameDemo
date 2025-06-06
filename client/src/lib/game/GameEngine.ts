@@ -8,6 +8,8 @@ import { CollisionDetection } from "./CollisionDetection";
 import { InputManager } from "./InputManager";
 import { useGameState } from "../stores/useGameState";
 import { useAudio } from "../stores/useAudio";
+import { SingleShotWeapon, SpreadShotWeapon, RapidFireWeapon, MultiDirectionalWeapon, PiercingWeapon } from "./WeaponTypes";
+import { SpriteManager } from "./SpriteManager";
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -22,19 +24,31 @@ export class GameEngine {
   private inputManager: InputManager;
   private animationFrameId: number | null = null;
   private lastTime = 0;
+  private lastMuteState = false;
+  private lastRestartState = false;
+  private lastWeapon1State = false;
+  private lastWeapon2State = false;
+  private lastWeapon3State = false;
+  private lastWeapon4State = false;
+  private lastWeapon5State = false;
+  private spriteManager: SpriteManager;
 
   constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.canvas = canvas;
     this.ctx = ctx;
-    
+
     // Initialize game systems
     this.player = new Player(canvas.width / 2, canvas.height / 2);
     this.waveManager = new WaveManager();
     this.collisionDetection = new CollisionDetection();
     this.inputManager = new InputManager();
-    
+    this.spriteManager = SpriteManager.getInstance();
+
     // Set up input handling
     this.setupInput();
+    
+    // Initialize sprites
+    this.initializeSprites();
   }
 
   private setupInput() {
@@ -65,7 +79,7 @@ export class GameEngine {
       if (e.key === "m" || e.key === "M") {
         const audioState = useAudio.getState();
         audioState.toggleMute();
-        
+
         // Handle background music
         if (audioState.backgroundMusic) {
           if (audioState.isMuted) {
@@ -77,12 +91,44 @@ export class GameEngine {
       }
     };
 
+    // Handle debug weapon switching
+    const handleWeaponSwitch = (e: KeyboardEvent) => {
+      const gameState = useGameState.getState();
+      if (gameState.phase !== "playing") return;
+
+
+
+      switch(e.key) {
+        case "1":
+          this.player.setWeapon(new SingleShotWeapon());
+          console.log("Switched to Single Shot");
+          break;
+        case "2":
+          this.player.setWeapon(new SpreadShotWeapon());
+          console.log("Switched to Spread Shot");
+          break;
+        case "3":
+          this.player.setWeapon(new RapidFireWeapon());
+          console.log("Switched to Rapid Fire");
+          break;
+        case "4":
+          this.player.setWeapon(new MultiDirectionalWeapon());
+          console.log("Switched to Multi-Directional");
+          break;
+        case "5":
+          this.player.setWeapon(new PiercingWeapon());
+          console.log("Switched to Piercing");
+          break;
+      }
+    };
+
     // Add event listeners
     document.addEventListener("keydown", handleStart);
     document.addEventListener("click", handleStart);
     document.addEventListener("keydown", handleRestart);
     document.addEventListener("keydown", handleSoundToggle);
-    
+    document.addEventListener("keydown", handleWeaponSwitch);
+
     // Store references for cleanup
     this.inputManager.addEventListeners();
   }
@@ -113,12 +159,12 @@ export class GameEngine {
     this.lastTime = currentTime;
 
     const gameState = useGameState.getState();
-    
+
     // Only update game logic when playing, but always render
     if (gameState.phase === "playing") {
       this.update(deltaTime);
     }
-    
+
     this.render();
     this.animationFrameId = requestAnimationFrame(this.gameLoop);
   };
@@ -129,7 +175,7 @@ export class GameEngine {
 
   private update(deltaTime: number) {
     const gameState = useGameState.getState();
-    
+
     // Update player
     const input = this.inputManager.getInput();
     this.player.update(deltaTime, input, this.canvas.width, this.canvas.height);
@@ -192,7 +238,9 @@ export class GameEngine {
         if (this.collisionDetection.checkCollision(projectile, enemy)) {
           // Damage enemy
           enemy.takeDamage(projectile.getDamage());
-          projectile.destroy();
+
+          // Handle piercing logic - addHit returns true if projectile should be destroyed
+          projectile.addHit();
 
           // Create hit particles
           this.createHitParticles(enemy.x, enemy.y);
@@ -206,7 +254,7 @@ export class GameEngine {
           if (!enemy.isAlive()) {
             gameState.addScore(enemy.getScoreValue());
             this.createDeathParticles(enemy.x, enemy.y);
-            
+
             // Drop experience orb
             const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
             this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
@@ -222,7 +270,7 @@ export class GameEngine {
       if (this.collisionDetection.checkCollision(this.player, enemy)) {
         // Player takes damage
         gameState.takeDamage(enemy.getDamage());
-        
+
         // Push enemy away to prevent multiple hits
         const dx = enemy.x - this.player.x;
         const dy = enemy.y - this.player.y;
@@ -247,7 +295,7 @@ export class GameEngine {
           const damage = orbital.dealDamage();
           if (damage > 0) {
             enemy.takeDamage(damage);
-            
+
             // Create hit particles
             this.createHitParticles(orbital.x, orbital.y, "#4444ff");
 
@@ -260,7 +308,7 @@ export class GameEngine {
             if (!enemy.isAlive()) {
               gameState.addScore(enemy.getScoreValue());
               this.createDeathParticles(enemy.x, enemy.y);
-              
+
               const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
               this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
             }
@@ -273,12 +321,12 @@ export class GameEngine {
     this.experienceOrbs = this.experienceOrbs.filter(orb => {
       if (orb.canBeCollected(this.player.getPosition())) {
         gameState.addExperience(orb.getValue());
-        
+
         // Play success sound
         if (!audioState.isMuted) {
           audioState.playSuccess();
         }
-        
+
         return false; // Remove the orb
       }
       return true; // Keep the orb
@@ -317,7 +365,7 @@ export class GameEngine {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     const gameState = useGameState.getState();
-    
+
     if (gameState.phase !== "playing") return;
 
     // Render particles (background layer)
@@ -353,5 +401,9 @@ export class GameEngine {
       this.ctx.fillText(`Experience Orbs: ${this.experienceOrbs.length}`, 10, this.canvas.height - 40);
       this.ctx.fillText(`FPS: ${Math.round(1000 / (performance.now() - this.lastTime))}`, 10, this.canvas.height - 20);
     }
+  }
+
+  private async initializeSprites() {
+    await this.spriteManager.loadAllSprites();
   }
 }

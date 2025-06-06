@@ -12,7 +12,7 @@ export abstract class BaseWeapon {
     this.projectileSpeed = projectileSpeed;
   }
 
-  public abstract fire(deltaTime: number, playerX: number, playerY: number): Projectile[];
+  public abstract fire(deltaTime: number, playerX: number, playerY: number, direction?: { x: number; y: number }): Projectile[];
 
   public upgradeDamage() {
     this.damage += 1;
@@ -40,14 +40,14 @@ export class SingleShotWeapon extends BaseWeapon {
     super(3, 1, 300); // fireRate, damage, speed
   }
 
-  public fire(deltaTime: number, playerX: number, playerY: number): Projectile[] {
+  public fire(deltaTime: number, playerX: number, playerY: number, direction = { x: 1, y: 0 }): Projectile[] {
     if (!this.updateFireTimer(deltaTime)) return [];
 
     return [new Projectile(
       playerX,
       playerY,
-      this.projectileSpeed, // fire to the right
-      0,
+      direction.x * this.projectileSpeed,
+      direction.y * this.projectileSpeed,
       this.damage
     )];
   }
@@ -62,12 +62,13 @@ export class SpreadShotWeapon extends BaseWeapon {
     super(2, 0.8, 280);
   }
 
-  public fire(deltaTime: number, playerX: number, playerY: number): Projectile[] {
+  public fire(deltaTime: number, playerX: number, playerY: number, direction = { x: 1, y: 0 }): Projectile[] {
     if (!this.updateFireTimer(deltaTime)) return [];
 
     const projectiles: Projectile[] = [];
+    const baseAngle = Math.atan2(direction.y, direction.x);
     const angleStep = this.spreadAngle / (this.projectileCount - 1);
-    const startAngle = -this.spreadAngle / 2;
+    const startAngle = baseAngle - this.spreadAngle / 2;
 
     for (let i = 0; i < this.projectileCount; i++) {
       const angle = startAngle + (angleStep * i);
@@ -92,14 +93,14 @@ export class RapidFireWeapon extends BaseWeapon {
     super(8, 0.5, 350);
   }
 
-  public fire(deltaTime: number, playerX: number, playerY: number): Projectile[] {
+  public fire(deltaTime: number, playerX: number, playerY: number, direction = { x: 1, y: 0 }): Projectile[] {
     if (!this.updateFireTimer(deltaTime)) return [];
 
     return [new Projectile(
       playerX,
       playerY,
-      this.projectileSpeed,
-      0,
+      direction.x * this.projectileSpeed,
+      direction.y * this.projectileSpeed,
       this.damage
     )];
   }
@@ -113,7 +114,7 @@ export class MultiDirectionalWeapon extends BaseWeapon {
     super(1.5, 1.2, 250);
   }
 
-  public fire(deltaTime: number, playerX: number, playerY: number): Projectile[] {
+  public fire(deltaTime: number, playerX: number, playerY: number, direction = { x: 1, y: 0 }): Projectile[] {
     if (!this.updateFireTimer(deltaTime)) return [];
 
     const projectiles: Projectile[] = [];
@@ -141,14 +142,17 @@ export class PiercingWeapon extends BaseWeapon {
     super(2.5, 2, 320);
   }
 
-  public fire(deltaTime: number, playerX: number, playerY: number): Projectile[] {
+  public fire(deltaTime: number, playerX: number, playerY: number, direction = { x: 1, y: 0 }): Projectile[] {
     if (!this.updateFireTimer(deltaTime)) return [];
 
-    const projectile = new Projectile(playerX, playerY, this.projectileSpeed, 0, this.damage);
-    // Mark as piercing - we'll handle this in collision detection
-    (projectile as any).piercing = true;
-    (projectile as any).hitCount = 0;
-    (projectile as any).maxHits = 3;
+    const projectile = new Projectile(
+      playerX, 
+      playerY, 
+      direction.x * this.projectileSpeed, 
+      direction.y * this.projectileSpeed, 
+      this.damage
+    );
+    projectile.setPiercing(true, 3);
 
     return [projectile];
   }

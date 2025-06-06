@@ -16,6 +16,12 @@ export default function GameUI() {
             <p><strong>Weapons fire automatically</strong></p>
             <p><strong>M</strong> - Toggle sound</p>
             <p><strong>R</strong> - Restart game</p>
+            <div className="mt-4 pt-4 border-t border-gray-600">
+              <p className="text-base text-yellow-400 mb-2">Debug Controls:</p>
+              <p className="text-sm"><strong>1</strong> - Single Shot | <strong>2</strong> - Spread Shot</p>
+              <p className="text-sm"><strong>3</strong> - Rapid Fire | <strong>4</strong> - Multi-Direction</p>
+              <p className="text-sm"><strong>5</strong> - Piercing Shot</p>
+            </div>
           </div>
           <p className="text-sm mt-8 text-gray-400">Press any key or click to start</p>
         </div>
@@ -89,7 +95,10 @@ export default function GameUI() {
 
       {/* Controls reminder */}
       <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 p-2 rounded text-white text-sm">
-        WASD/Arrows: Move | M: Sound | R: Restart
+        <div>WASD/Arrows: Move | M: Sound | R: Restart</div>
+        <div className="text-xs text-gray-400 mt-1">
+          Debug: 1-SingleShot | 2-Spread | 3-Rapid | 4-Multi | 5-Pierce
+        </div>
       </div>
     </div>
   );

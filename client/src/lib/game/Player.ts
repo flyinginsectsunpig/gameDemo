@@ -3,6 +3,7 @@ import { Projectile } from "./Projectile";
 import { OrbitalWeapon } from "./OrbitalWeapon";
 import { BaseWeapon, SingleShotWeapon } from "./WeaponTypes";
 import { useGameState } from "../stores/useGameState";
+import { SpriteManager } from "./SpriteManager";
 
 export interface GameObject {
   x: number;
@@ -14,12 +15,13 @@ export interface GameObject {
 export class Player implements GameObject {
   public x: number;
   public y: number;
-  public width = 20;
-  public height = 20;
+  public width = 40;
+  public height = 40;
   public speed = 200;
   public weapon: BaseWeapon;
   private orbitalWeapons: OrbitalWeapon[] = [];
   private orbitalPositions: { x: number; y: number }[] = [];
+  private lastMoveDirection = { x: 1, y: 0 }; // Default to right
 
   constructor(x: number, y: number) {
     this.x = x;
@@ -47,6 +49,11 @@ export class Player implements GameObject {
       moveY *= 0.707;
     }
 
+    // Update last move direction if player is moving
+    if (moveX !== 0 || moveY !== 0) {
+      this.lastMoveDirection = { x: moveX, y: moveY };
+    }
+
     // Apply movement
     this.x += moveX * this.speed * deltaTime;
     this.y += moveY * this.speed * deltaTime;
@@ -57,7 +64,7 @@ export class Player implements GameObject {
   }
 
   public fireWeapon(deltaTime: number): Projectile[] {
-    const projectiles = this.weapon.fire(deltaTime, this.x, this.y);
+    const projectiles = this.weapon.fire(deltaTime, this.x, this.y, this.lastMoveDirection);
     
     // Update orbital weapons and store their positions (no projectiles anymore)
     this.orbitalPositions = [];
@@ -87,23 +94,37 @@ export class Player implements GameObject {
   }
 
   public render(ctx: CanvasRenderingContext2D) {
-    // Draw player as a blue square
-    ctx.fillStyle = "#4488ff";
-    ctx.fillRect(
-      this.x - this.width / 2,
-      this.y - this.height / 2,
-      this.width,
-      this.height
-    );
+    const spriteManager = SpriteManager.getInstance();
+    const playerSprite = spriteManager.getSprite('player');
+    
+    if (playerSprite) {
+      // Draw player sprite
+      ctx.drawImage(
+        playerSprite,
+        this.x - this.width / 2,
+        this.y - this.height / 2,
+        this.width,
+        this.height
+      );
+    } else {
+      // Fallback to blue square if sprite not loaded
+      ctx.fillStyle = "#4488ff";
+      ctx.fillRect(
+        this.x - this.width / 2,
+        this.y - this.height / 2,
+        this.width,
+        this.height
+      );
 
-    // Draw a white center dot
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(
-      this.x - 2,
-      this.y - 2,
-      4,
-      4
-    );
+      // Draw a white center dot
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(
+        this.x - 2,
+        this.y - 2,
+        4,
+        4
+      );
+    }
 
     // Render orbital weapons using stored positions
     this.orbitalWeapons.forEach((orbital, index) => {
