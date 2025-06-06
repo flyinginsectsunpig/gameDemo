@@ -2,11 +2,16 @@ import { GameObject } from "./Player";
 
 export class CollisionDetection {
   public checkCollision(obj1: GameObject, obj2: GameObject): boolean {
+    const obj1Width = (obj1 as any).collisionWidth || obj1.width;
+    const obj1Height = (obj1 as any).collisionHeight || obj1.height;
+    const obj2Width = (obj2 as any).collisionWidth || obj2.width;
+    const obj2Height = (obj2 as any).collisionHeight || obj2.height;
+    
     return (
-      obj1.x - obj1.width / 2 < obj2.x + obj2.width / 2 &&
-      obj1.x + obj1.width / 2 > obj2.x - obj2.width / 2 &&
-      obj1.y - obj1.height / 2 < obj2.y + obj2.height / 2 &&
-      obj1.y + obj1.height / 2 > obj2.y - obj2.height / 2
+      obj1.x - obj1Width / 2 < obj2.x + obj2Width / 2 &&
+      obj1.x + obj1Width / 2 > obj2.x - obj2Width / 2 &&
+      obj1.y - obj1Height / 2 < obj2.y + obj2Height / 2 &&
+      obj1.y + obj1Height / 2 > obj2.y - obj2Height / 2
     );
   }
 

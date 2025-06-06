@@ -46,7 +46,7 @@ export class GameEngine {
 
     // Set up input handling
     this.setupInput();
-    
+
     // Initialize sprites
     this.initializeSprites();
   }
@@ -165,7 +165,7 @@ export class GameEngine {
       this.update(deltaTime);
     }
 
-    this.render();
+    this.render(deltaTime);
     this.animationFrameId = requestAnimationFrame(this.gameLoop);
   };
 
@@ -359,10 +359,9 @@ export class GameEngine {
     }
   }
 
-  private render() {
-    // Clear canvas
-    this.ctx.fillStyle = "#0a0a0a";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+  private render(deltaTime: number) {
+    // Draw tiled background
+    this.spriteManager.drawTiledBackground(this.ctx, this.canvas.width, this.canvas.height);
 
     const gameState = useGameState.getState();
 
@@ -389,7 +388,7 @@ export class GameEngine {
     });
 
     // Render player
-    this.player.render(this.ctx);
+    this.player.render(this.ctx, deltaTime);
 
     // Debug info
     if (process.env.NODE_ENV === "development") {

@@ -15,18 +15,23 @@ export interface GameObject {
 export class Player implements GameObject {
   public x: number;
   public y: number;
-  public width = 40;
-  public height = 40;
+  public width = 96;
+  public height = 96;
+  public collisionWidth = 40; // Smaller collision box
+  public collisionHeight = 40;
   public speed = 200;
   public weapon: BaseWeapon;
   private orbitalWeapons: OrbitalWeapon[] = [];
   private orbitalPositions: { x: number; y: number }[] = [];
   private lastMoveDirection = { x: 1, y: 0 }; // Default to right
+  private isMoving = false;
+  private instanceId: string;
 
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
     this.weapon = new SingleShotWeapon();
+    this.instanceId = `player_${Date.now()}_${Math.random()}`;
   }
 
   public setWeapon(weapon: BaseWeapon) {
@@ -52,6 +57,9 @@ export class Player implements GameObject {
     // Update last move direction if player is moving
     if (moveX !== 0 || moveY !== 0) {
       this.lastMoveDirection = { x: moveX, y: moveY };
+      this.isMoving = true;
+    } else {
+      this.isMoving = false;
     }
 
     // Apply movement
@@ -65,14 +73,14 @@ export class Player implements GameObject {
 
   public fireWeapon(deltaTime: number): Projectile[] {
     const projectiles = this.weapon.fire(deltaTime, this.x, this.y, this.lastMoveDirection);
-    
+
     // Update orbital weapons and store their positions (no projectiles anymore)
     this.orbitalPositions = [];
     this.orbitalWeapons.forEach(orbital => {
       const result = orbital.update(deltaTime, this.x, this.y);
       this.orbitalPositions.push({ x: result.x, y: result.y });
     });
-    
+
     return projectiles;
   }
 
@@ -93,12 +101,12 @@ export class Player implements GameObject {
     gameState.upgradeHealth();
   }
 
-  public render(ctx: CanvasRenderingContext2D) {
+  public render(ctx: CanvasRenderingContext2D, deltaTime: number) {
     const spriteManager = SpriteManager.getInstance();
     const playerSprite = spriteManager.getSprite('player');
-    
+
     if (playerSprite) {
-      // Draw player sprite
+      // Draw static sprite
       ctx.drawImage(
         playerSprite,
         this.x - this.width / 2,
@@ -107,30 +115,19 @@ export class Player implements GameObject {
         this.height
       );
     } else {
-      // Fallback to blue square if sprite not loaded
-      ctx.fillStyle = "#4488ff";
+      // Fallback to colored square
+      ctx.fillStyle = "#4444ff";
       ctx.fillRect(
         this.x - this.width / 2,
         this.y - this.height / 2,
         this.width,
         this.height
       );
-
-      // Draw a white center dot
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(
-        this.x - 2,
-        this.y - 2,
-        4,
-        4
-      );
     }
 
-    // Render orbital weapons using stored positions
-    this.orbitalWeapons.forEach((orbital, index) => {
-      if (this.orbitalPositions[index]) {
-        orbital.render(ctx, this.orbitalPositions[index].x, this.orbitalPositions[index].y);
-      }
+    // Render orbital weapons
+    this.orbitalWeapons.forEach(orbital => {
+      orbital.render(ctx);
     });
   }
 }
