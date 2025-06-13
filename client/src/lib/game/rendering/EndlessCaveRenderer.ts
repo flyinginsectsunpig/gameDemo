@@ -36,7 +36,7 @@ export class EndlessCaveRenderer {
     try {
       await this.spriteManager.loadSprite(
         "ground_rocks",
-        "/craftpix-net-695666-free-undead-tileset-top-down-pixel-art/PNG/Ground_rocks.png",
+        "/assets/tilesets/PNG/Ground_rocks.png",
       );
       this.spriteLoaded = true;
       console.log("Ground rocks tileset loaded successfully");
@@ -103,7 +103,7 @@ export class EndlessCaveRenderer {
     endTileX: number,
     startTileY: number,
     endTileY: number,
-    camera: Camera,
+    camera: { x: number; y: number },
   ): void {
     // Fallback to grey colors if sprite fails to load
     const greyColor = "#666666";

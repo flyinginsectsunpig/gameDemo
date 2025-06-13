@@ -1,4 +1,11 @@
 
+export interface Camera {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export class CameraSystem {
   public x: number = 0;
   public y: number = 0;

@@ -89,7 +89,7 @@ export class InfiniteTileRenderer {
     try {
       await this.spriteManager.loadSprite(
         'undead_tileset', 
-        '/Tileset/PNG/Ground_new.png'
+        '/assets/tilesets/PNG/Ground_new.png'
       );
       this.spriteLoaded = true;
       console.log('Undead tileset loaded successfully');
@@ -102,7 +102,7 @@ export class InfiniteTileRenderer {
   private async loadFlowerSprites(): Promise<void> {
     try {
       const spritesheet = new Image();
-      spritesheet.src = '/textures/flower_growing.png';
+      spritesheet.src = '/assets/sprites/flower_growing.png';
       await new Promise((resolve, reject) => {
         spritesheet.onload = resolve;
         spritesheet.onerror = reject;
@@ -202,21 +202,24 @@ export class InfiniteTileRenderer {
       return InfiniteTileRenderer.GROUND_TILES.STONE_4;
     } else if (finalNoise > 0.4) {
       // Dark/corrupted areas
-      if (noise3 > 0.2) return InfiniteTileRenderer.GROUND_TILES.DARK_1;
-      if (noise3 > -0.2) return InfiniteTileRenderer.GROUND_TILES.DARK_2;
+      if (finalNoise > 0.7) return InfiniteTileRenderer.GROUND_TILES.DARK_1;
+      if (finalNoise > 0.5) return InfiniteTileRenderer.GROUND_TILES.DARK_2;
       return InfiniteTileRenderer.GROUND_TILES.DARK_3;
     } else if (finalNoise > 0.1) {
       // Dirt areas
-      if (noise2 > 0.3) return InfiniteTileRenderer.GROUND_TILES.DIRT_1;
-      if (noise2 > 0.0) return InfiniteTileRenderer.GROUND_TILES.DIRT_2;
-      if (noise2 > -0.3) return InfiniteTileRenderer.GROUND_TILES.DIRT_3;
-      return InfiniteTileRenderer.GROUND_TILES.DIRT_4;
+      if (finalNoise > 0.3) return InfiniteTileRenderer.GROUND_TILES.DIRT_1;
+      if (finalNoise > 0.2) return InfiniteTileRenderer.GROUND_TILES.DIRT_2;
+      return InfiniteTileRenderer.GROUND_TILES.DIRT_3;
+    } else if (finalNoise > -0.2) {
+      // Grass areas
+      if (finalNoise > 0.0) return InfiniteTileRenderer.GROUND_TILES.GRASS_1;
+      if (finalNoise > -0.1) return InfiniteTileRenderer.GROUND_TILES.GRASS_2;
+      return InfiniteTileRenderer.GROUND_TILES.GRASS_3;
     } else {
-      // Grass areas with variation
-      if (finalNoise > -0.1) return InfiniteTileRenderer.GROUND_TILES.GRASS_1;
-      if (finalNoise > -0.3) return InfiniteTileRenderer.GROUND_TILES.GRASS_2;
-      if (finalNoise > -0.5) return InfiniteTileRenderer.GROUND_TILES.GRASS_3;
-      return InfiniteTileRenderer.GROUND_TILES.GRASS_4;
+      // Base ground variation
+      if (finalNoise > -0.4) return InfiniteTileRenderer.GROUND_TILES.GRASS_4;
+      if (finalNoise > -0.6) return InfiniteTileRenderer.GROUND_TILES.DIRT_4;
+      return InfiniteTileRenderer.GROUND_TILES.STONE_1;
     }
   }
 

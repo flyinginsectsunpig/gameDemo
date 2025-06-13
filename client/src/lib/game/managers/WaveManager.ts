@@ -1,4 +1,4 @@
-import { Enemy } from ".enemy/Enemy";
+import { Enemy } from "../entities/Enemy";
 
 export class WaveManager {
   private currentWave = 1;

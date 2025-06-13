@@ -1,4 +1,6 @@
 import { GameObject } from "../entities/Player";
+import { Projectile } from "../weapons/Projectile";
+import { Enemy } from "../entities/Enemy";
 
 export class CollisionDetection {
   public checkCollision(obj1: GameObject, obj2: GameObject): boolean {

@@ -42,9 +42,9 @@ export class AssassinSpiderWeapon extends BaseWeapon {
     this.spiders = this.spiders.filter(spider => spider.isAlive());
   }
 
-  public renderSpiders(ctx: CanvasRenderingContext2D) {
+  public renderSpiders(ctx: CanvasRenderingContext2D, cameraX: number = 0, cameraY: number = 0) {
     this.spiders.forEach(spider => {
-      spider.render(ctx);
+      spider.render(ctx, cameraX, cameraY);
     });
   }
 

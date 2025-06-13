@@ -58,13 +58,19 @@ export class SpriteManager {
       { name: "player_down", src: "/assets/sprites/walking_Down_weapon.png" },
       { name: "player_diagonal_down", src: "/assets/sprites/Walking_diagonal_Down_weapon_1749410363417.png" },
       { name: "player_up", src: "/assets/sprites/walking_up_weapon.png" },
+      // Assassin character sprites
+      { name: "assassin_diagonal_back", src: "/assets/sprites/assassin_diagonal_back.png" },
+      { name: "assassin_diagonal_front", src: "/assets/sprites/assassin_diagonal_front.png" },
+      { name: "assassin_down", src: "/assets/sprites/assassin_down.png" },
+      { name: "assassin_sideways", src: "/assets/sprites/assassin_sideways.png" },
+      { name: "assassin_up", src: "/assets/sprites/assassin_up.png" },
       { name: "enemy_basic", src: "/assets/sprites/enemy_basic.png" },
       { name: "enemy_fast", src: "/assets/sprites/enemy_fast.png" },
       { name: "enemy_tank", src: "/assets/sprites/enemy_tank.png" },
-      { name: "objects", src: "/assets/tilesets/Objects.png" },
-      { name: "details", src: "/assets/tilesets/Details.png" },
+      { name: "objects", src: "/assets/tilesets/PNG/Objects.png" },
+      { name: "details", src: "/assets/tilesets/PNG/Details.png" },
       { name: "flower_growing", src: "/assets/sprites/flower_growing.png" },
-      { name: "undead_tileset", src: "/assets/tilesets/Ground_new.png" }
+      { name: "undead_tileset", src: "/assets/tilesets/PNG/Ground_new.png" }
     ];
 
     try {
