@@ -21,17 +21,16 @@ export class Player implements GameObject {
   public collisionWidth = 60; // Larger collision box for better collision detection
   public collisionHeight = 70; // Taller collision box for better vertical collision
   public speed = 200;
-  public weapon: BaseWeapon;
   public health = 100;
   private lastDamageTime = 0;
   private orbitalWeapons: OrbitalWeapon[] = [];
   private orbitalPositions: { x: number; y: number }[] = [];
   private lastMoveDirection = { x: 1, y: 0 }; // Default to right
   private isMoving = false;
-  private instanceId: string;
-  private animationManager: AnimationManager;
-  private currentAnimation = "idle";
-  private lastAnimationFrame: any = null;
+  protected instanceId: string;
+  protected animationManager: AnimationManager;
+  protected currentAnimation = "idle";
+  protected lastAnimationFrame: any = null;
 
   constructor(x: number, y: number) {
     this.x = x;

@@ -1,4 +1,3 @@
-
 export class SpriteManager {
   private static instance: SpriteManager;
   private sprites: Map<string, HTMLImageElement> = new Map();

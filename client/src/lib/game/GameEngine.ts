@@ -460,7 +460,7 @@ export class GameEngine {
     });
 
     // Render player
-    this.player.render(this.ctx, this.spriteManager);
+    this.player.render(this.ctx, deltaTime);
 
     // Restore context
     this.ctx.restore();

@@ -15,82 +15,11 @@ export class AssassinPlayer extends Player {
     this.maxHealth = 80; // Less health than base player
     this.health = this.maxHealth;
     this.spiderWeapon = new AssassinSpiderWeapon();
-    this.setupAssassinAnimations();
-  }
-
-  private setupAssassinAnimations() {
-    // Clear existing animations and set up assassin-specific ones
-    this.animationManager = new AnimationManager();
     
-    // Assassin sprites are typically 32x32 frames in spritesheets
-    const frameWidth = 32;
-    const frameHeight = 32;
-    const framesPerRow = 8; // Assuming 8 frames per animation row
-
-    // Walking down animation
-    const walkDownFrames = [];
-    for (let i = 0; i < framesPerRow; i++) {
-      walkDownFrames.push({
-        x: i * frameWidth,
-        y: 0,
-        width: frameWidth,
-        height: frameHeight,
-      });
-    }
-
-    // Walking up animation
-    const walkUpFrames = [];
-    for (let i = 0; i < framesPerRow; i++) {
-      walkUpFrames.push({
-        x: i * frameWidth,
-        y: 0,
-        width: frameWidth,
-        height: frameHeight,
-      });
-    }
-
-    // Walking sideways animation
-    const walkSidewaysFrames = [];
-    for (let i = 0; i < framesPerRow; i++) {
-      walkSidewaysFrames.push({
-        x: i * frameWidth,
-        y: 0,
-        width: frameWidth,
-        height: frameHeight,
-      });
-    }
-
-    // Diagonal animations
-    const walkDiagonalBackFrames = [];
-    for (let i = 0; i < framesPerRow; i++) {
-      walkDiagonalBackFrames.push({
-        x: i * frameWidth,
-        y: 0,
-        width: frameWidth,
-        height: frameHeight,
-      });
-    }
-
-    const walkDiagonalFrontFrames = [];
-    for (let i = 0; i < framesPerRow; i++) {
-      walkDiagonalFrontFrames.push({
-        x: i * frameWidth,
-        y: 0,
-        width: frameWidth,
-        height: frameHeight,
-      });
-    }
-
-    // Add animations to manager
-    this.animationManager.addAnimation("walk_down", walkDownFrames, 0.1, true);
-    this.animationManager.addAnimation("walk_up", walkUpFrames, 0.1, true);
-    this.animationManager.addAnimation("walk_sideways", walkSidewaysFrames, 0.1, true);
-    this.animationManager.addAnimation("walk_diagonal_back", walkDiagonalBackFrames, 0.1, true);
-    this.animationManager.addAnimation("walk_diagonal_front", walkDiagonalFrontFrames, 0.1, true);
-    this.animationManager.addAnimation("idle", [walkDownFrames[0]], 1, true);
-
-    // Store the first frame as initial last frame
-    this.lastAnimationFrame = walkDownFrames[0];
+    // Ensure instanceId is set for assassin
+    this.instanceId = `assassin_${Date.now()}_${Math.random()}`;
+    
+    // Use inherited animation system from Player - no need for custom setup
   }
 
   public update(deltaTime: number, input: any, canvasWidth: number, canvasHeight: number, tileRenderer: any) {
@@ -117,31 +46,40 @@ export class AssassinPlayer extends Player {
     this.x = Math.max(0, Math.min(canvasWidth - this.width, this.x));
     this.y = Math.max(0, Math.min(canvasHeight - this.height, this.y));
 
-    // Determine animation based on movement
-    let newAnimation = "idle";
-    
+    // Update last move direction if player is moving
+    const wasMoving = this.isMoving;
     if (moveX !== 0 || moveY !== 0) {
-      if (moveY < 0) { // Moving up
-        if (moveX !== 0) {
-          newAnimation = "walk_diagonal_back"; // Diagonal up
-        } else {
-          newAnimation = "walk_up";
-        }
-      } else if (moveY > 0) { // Moving down
-        if (moveX !== 0) {
-          newAnimation = "walk_diagonal_front"; // Diagonal down
-        } else {
-          newAnimation = "walk_down";
-        }
-      } else { // Moving horizontally
-        newAnimation = "walk_sideways";
+      this.lastMoveDirection = { x: moveX, y: moveY };
+      this.isMoving = true;
+    } else {
+      this.isMoving = false;
+    }
+
+    // Determine which animation to use based on movement (same logic as Player)
+    let targetAnimation = "idle";
+    if (this.isMoving) {
+      if (moveY < 0 && Math.abs(moveX) > 0) {
+        targetAnimation = "walk_diagonal";
+      } else if (moveY > 0 && Math.abs(moveX) > 0) {
+        targetAnimation = "walk_diagonal_down";
+      } else if (moveY > 0) {
+        targetAnimation = "walk_down";
+      } else if (moveY < 0 && Math.abs(moveX) === 0) {
+        targetAnimation = "walk_up";
+      } else if (Math.abs(moveX) > 0 && moveY === 0) {
+        targetAnimation = "walk_sideways";
+      } else {
+        targetAnimation = "walk";
       }
     }
 
-    // Update animation if it changed
-    if (newAnimation !== this.currentAnimation) {
-      this.currentAnimation = newAnimation;
-      this.animationManager.startAnimation(newAnimation, this.id);
+    // Switch animation if needed
+    if (this.currentAnimation !== targetAnimation) {
+      if (targetAnimation === "idle" && this.lastAnimationFrame) {
+        this.animationManager.addAnimation("idle", [this.lastAnimationFrame], 1, true);
+      }
+      this.currentAnimation = targetAnimation;
+      this.animationManager.startAnimation(targetAnimation, this.instanceId);
     }
 
     // Update spider weapon
@@ -155,14 +93,17 @@ export class AssassinPlayer extends Player {
   public render(ctx: CanvasRenderingContext2D, deltaTime: number) {
     const spriteManager = SpriteManager.getInstance();
     
+    // Ensure deltaTime is a valid number
+    const validDeltaTime = typeof deltaTime === 'number' && !isNaN(deltaTime) ? deltaTime : 0.016;
+    
     // Get current animation frame
-    const frame = this.animationManager.update(deltaTime, this.id, this.currentAnimation);
+    const frame = this.animationManager.update(validDeltaTime, this.instanceId, this.currentAnimation);
     
     if (frame) {
       this.lastAnimationFrame = frame;
     }
 
-    // Use assassin-specific sprites based on current animation
+    // Use assassin-specific sprites based on current animation (map to Player animation names)
     let spriteToUse = null;
     if (this.currentAnimation === "walk_up") {
       spriteToUse = spriteManager.getSprite("assassin_up");
@@ -170,10 +111,12 @@ export class AssassinPlayer extends Player {
       spriteToUse = spriteManager.getSprite("assassin_down");
     } else if (this.currentAnimation === "walk_sideways") {
       spriteToUse = spriteManager.getSprite("assassin_sideways");
-    } else if (this.currentAnimation === "walk_diagonal_back") {
+    } else if (this.currentAnimation === "walk_diagonal") {
       spriteToUse = spriteManager.getSprite("assassin_diagonal_back");
-    } else if (this.currentAnimation === "walk_diagonal_front") {
+    } else if (this.currentAnimation === "walk_diagonal_down") {
       spriteToUse = spriteManager.getSprite("assassin_diagonal_front");
+    } else if (this.currentAnimation === "walk" || this.currentAnimation === "walk_forward") {
+      spriteToUse = spriteManager.getSprite("assassin_down"); // Use down as default walking
     }
 
     // Fallback to down sprite if no specific sprite found
@@ -181,41 +124,71 @@ export class AssassinPlayer extends Player {
       spriteToUse = spriteManager.getSprite("assassin_down");
     }
 
-    if (spriteToUse && this.lastAnimationFrame) {
-      const renderWidth = this.width;
-      const renderHeight = this.height;
+    if (spriteToUse) {
+      // Store the current frame as last animation frame for idle use
+      if (frame && this.currentAnimation !== "idle") {
+        this.lastAnimationFrame = frame;
+      }
+
+      // Calculate proper draw dimensions based on animation to preserve aspect ratio
+      let drawWidth = this.width;
+      let drawHeight = this.height;
+
+      // For assassin animations (800x450), maintain proper aspect ratio
+      const aspectRatio = 800 / 450; // ~1.78
+      drawWidth = this.height * aspectRatio; // Keep height, adjust width
+
+      // Calculate draw position (center the sprite)
+      const drawX = this.x - drawWidth / 2;
+      const drawY = this.y - drawHeight / 2;
+
+      // Handle sprite flipping based on movement direction (same logic as Player)
+      const shouldFlip =
+        (this.currentAnimation === "walk_diagonal" && this.lastMoveDirection.x > 0) ||
+        (this.currentAnimation === "walk_diagonal_down" && this.lastMoveDirection.x < 0) ||
+        (this.currentAnimation === "walk_sideways" && this.lastMoveDirection.x < 0) ||
+        (this.currentAnimation !== "walk_diagonal" && this.currentAnimation !== "walk_sideways" && 
+         this.currentAnimation !== "walk_down" && this.currentAnimation !== "walk_up" && 
+         this.currentAnimation !== "walk_diagonal_down" && this.lastMoveDirection.x > 0);
+
+      ctx.save();
+      if (shouldFlip) {
+        ctx.translate(this.x, this.y);
+        ctx.scale(-1, 1);
+        ctx.translate(-this.x, -this.y);
+      }
 
       try {
-        ctx.drawImage(
-          spriteToUse,
-          this.lastAnimationFrame.x,
-          this.lastAnimationFrame.y,
-          this.lastAnimationFrame.width,
-          this.lastAnimationFrame.height,
-          this.x,
-          this.y,
-          renderWidth,
-          renderHeight
-        );
+        if (frame) {
+          // Use animation frame
+          ctx.drawImage(
+            spriteToUse,
+            frame.x, frame.y,
+            frame.width, frame.height,
+            drawX, drawY,
+            drawWidth, drawHeight
+          );
+        } else {
+          // Fallback - use full sprite (800x450)
+          ctx.drawImage(
+            spriteToUse,
+            0, 0, 800, 450,
+            drawX, drawY,
+            drawWidth, drawHeight
+          );
+        }
       } catch (error) {
         console.error("Error drawing assassin sprite:", error);
-        // Fallback: render a colored rectangle with assassin theme
-        ctx.fillStyle = "#2a2a2a";
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.fillStyle = "#8b0000";
-        ctx.fillRect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+        // Fallback: render a colored rectangle
+        ctx.fillStyle = "#ff0000"; 
+        ctx.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
       }
+
+      ctx.restore();
     } else {
-      console.log("Sprite not found or no animation frame:", { 
-        spriteToUse: !!spriteToUse, 
-        lastAnimationFrame: !!this.lastAnimationFrame,
-        currentAnimation: this.currentAnimation
-      });
-      // Fallback: render a colored rectangle with assassin theme
-      ctx.fillStyle = "#2a2a2a";
-      ctx.fillRect(this.x, this.y, this.width, this.height);
-      ctx.fillStyle = "#8b0000";
-      ctx.fillRect(this.x + 2, this.y + 2, this.width - 4, this.height - 4);
+      // Fallback: render a colored rectangle
+      ctx.fillStyle = "#ff00ff"; 
+      ctx.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height);
     }
 
     // Render health bar
