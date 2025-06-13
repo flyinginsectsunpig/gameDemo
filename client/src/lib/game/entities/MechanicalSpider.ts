@@ -1,12 +1,13 @@
 
 import { GameObject } from "./Player";
 import { Enemy } from "./Enemy";
+import { SpriteManager } from "../rendering/SpriteManager";
 
 export class MechanicalSpider implements GameObject {
   public x: number;
   public y: number;
-  public width = 16;
-  public height = 16;
+  public width = 32;
+  public height = 32;
   private vx = 0;
   private vy = 0;
   private speed = 150;
@@ -21,6 +22,7 @@ export class MechanicalSpider implements GameObject {
   private searchRadius = 120;
   private animationTimer = 0;
   private animationFrame = 0;
+  private lastDirection = { x: 0, y: 1 }; // Track movement direction for sprite selection
 
   constructor(x: number, y: number) {
     this.x = x;
@@ -84,6 +86,10 @@ export class MechanicalSpider implements GameObject {
           this.vx = (dx / distance) * this.speed;
           this.vy = (dy / distance) * this.speed;
           
+          // Update direction for sprite selection
+          this.lastDirection.x = dx / distance;
+          this.lastDirection.y = dy / distance;
+          
           this.x += this.vx * deltaTime;
           this.y += this.vy * deltaTime;
         }
@@ -96,6 +102,10 @@ export class MechanicalSpider implements GameObject {
           // Move back towards player
           this.vx = Math.cos(angleToPlayer) * this.speed * 0.5;
           this.vy = Math.sin(angleToPlayer) * this.speed * 0.5;
+          
+          // Update direction
+          this.lastDirection.x = Math.cos(angleToPlayer);
+          this.lastDirection.y = Math.sin(angleToPlayer);
         } else {
           // Random movement around player
           this.vx += (Math.random() - 0.5) * 50;
@@ -106,6 +116,12 @@ export class MechanicalSpider implements GameObject {
           if (vel > this.speed * 0.3) {
             this.vx = (this.vx / vel) * this.speed * 0.3;
             this.vy = (this.vy / vel) * this.speed * 0.3;
+          }
+          
+          // Update direction if moving
+          if (vel > 0) {
+            this.lastDirection.x = this.vx / vel;
+            this.lastDirection.y = this.vy / vel;
           }
         }
         
@@ -139,58 +155,86 @@ export class MechanicalSpider implements GameObject {
     return this.alive;
   }
 
-  public render(ctx: CanvasRenderingContext2D) {
+  public render(ctx: CanvasRenderingContext2D, cameraX: number = 0, cameraY: number = 0) {
     if (!this.alive) return;
 
-    ctx.save();
-
-    if (this.isAttached) {
-      // Pulsing red when attached and dealing damage
-      const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
-      ctx.fillStyle = `rgba(255, 50, 50, ${pulse})`;
-      ctx.shadowColor = "#ff3333";
-      ctx.shadowBlur = 8;
+    const spriteManager = SpriteManager.getInstance();
+    
+    // Determine which sprite to use based on movement direction
+    let spriteName = "spider_down"; // default
+    
+    if (this.isAttached && this.target) {
+      // Use jumping sprite when attached
+      spriteName = "spider_jumping";
     } else {
-      // Metallic spider appearance when searching
-      ctx.fillStyle = "#666666";
-      ctx.shadowColor = "#333333";
-      ctx.shadowBlur = 4;
-    }
-
-    // Draw spider body (oval)
-    ctx.beginPath();
-    ctx.ellipse(this.x, this.y, 8, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw spider legs (animated)
-    ctx.strokeStyle = this.isAttached ? "#ff3333" : "#444444";
-    ctx.lineWidth = 2;
-    
-    const legOffset = Math.sin(this.animationFrame) * 2;
-    
-    // Draw 8 legs
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const legLength = 8 + legOffset;
+      // Choose sprite based on movement direction
+      const absX = Math.abs(this.lastDirection.x);
+      const absY = Math.abs(this.lastDirection.y);
       
-      ctx.beginPath();
-      ctx.moveTo(this.x, this.y);
-      ctx.lineTo(
-        this.x + Math.cos(angle) * legLength,
-        this.y + Math.sin(angle) * legLength
-      );
-      ctx.stroke();
+      if (absY > absX) {
+        // Vertical movement dominant
+        spriteName = this.lastDirection.y > 0 ? "spider_down" : "spider_up";
+      } else if (absX > 0.3) {
+        // Horizontal movement
+        spriteName = "spider_side";
+      } else {
+        // Diagonal movement
+        if (this.lastDirection.y > 0) {
+          spriteName = "spider_diagonal_down";
+        } else {
+          spriteName = "spider_diagonal_up";
+        }
+      }
     }
 
-    // Draw eyes
-    ctx.fillStyle = this.isAttached ? "#ffff00" : "#ff0000";
-    ctx.beginPath();
-    ctx.arc(this.x - 2, this.y - 2, 1, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(this.x + 2, this.y - 2, 1, 0, Math.PI * 2);
-    ctx.fill();
+    const sprite = spriteManager.getSprite(spriteName);
+    
+    if (sprite) {
+      ctx.save();
+      
+      // Apply visual effects based on spider state
+      if (this.isAttached) {
+        // Pulsing red tint when attached and dealing damage
+        const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+        ctx.globalAlpha = pulse;
+        ctx.filter = 'hue-rotate(0deg) saturate(2) brightness(1.2)';
+        ctx.shadowColor = "#ff3333";
+        ctx.shadowBlur = 8;
+      } else {
+        // Normal appearance when searching
+        ctx.shadowColor = "#333333";
+        ctx.shadowBlur = 4;
+      }
 
-    ctx.restore();
+      // Flip sprite horizontally if moving left
+      if (this.lastDirection.x < -0.3) {
+        ctx.scale(-1, 1);
+        ctx.drawImage(
+          sprite,
+          -(this.x - cameraX + this.width/2),
+          this.y - cameraY - this.height/2,
+          this.width,
+          this.height
+        );
+      } else {
+        ctx.drawImage(
+          sprite,
+          this.x - cameraX - this.width/2,
+          this.y - cameraY - this.height/2,
+          this.width,
+          this.height
+        );
+      }
+
+      ctx.restore();
+    } else {
+      // Fallback to simple circle if sprite not loaded
+      ctx.save();
+      ctx.fillStyle = this.isAttached ? "#ff3333" : "#666666";
+      ctx.beginPath();
+      ctx.arc(this.x - cameraX, this.y - cameraY, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 }

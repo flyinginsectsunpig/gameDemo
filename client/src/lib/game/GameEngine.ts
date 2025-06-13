@@ -177,6 +177,11 @@ export class GameEngine {
     // Update player with tile collision
     this.player.update(deltaTime, this.inputManager.getInput(), this.canvas.width, this.canvas.height, this.infiniteTileRenderer);
 
+    // If assassin player, update spiders with enemies
+    if (this.player instanceof AssassinPlayer) {
+      this.player.updateSpiders(deltaTime, this.enemies);
+    }
+
     // Update camera to follow player
     this.camera.update(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, deltaTime);
 
@@ -202,11 +207,13 @@ export class GameEngine {
     const newProjectiles = this.player.fireWeapon(deltaTime);
     this.projectiles.push(...newProjectiles);
 
-    // Update weapon (for SylphBloomsWeapon)
-    const weapon = this.player.getWeapon();
-    if (weapon instanceof SylphBloomsWeapon) {
-      weapon.setTileRenderer(this.infiniteTileRenderer);
-      weapon.update(deltaTime, this.enemies, this.player.x, this.player.y);
+    // Update weapon (for SylphBloomsWeapon) - only for non-assassin players
+    if (!(this.player instanceof AssassinPlayer)) {
+      const weapon = this.player.getWeapon();
+      if (weapon instanceof SylphBloomsWeapon) {
+        weapon.setTileRenderer(this.infiniteTileRenderer);
+        weapon.update(deltaTime, this.enemies, this.player.x, this.player.y);
+      }
     }
 
     // Update projectiles
@@ -343,31 +350,33 @@ export class GameEngine {
       });
     });
 
-    // Weapon vs Enemy collisions (for SylphBloomsWeapon)
-    const weapon = this.player.getWeapon();
-    if (weapon instanceof SylphBloomsWeapon) {
-      const orbCollisions = weapon.checkCollisions(this.enemies);
+    // Weapon vs Enemy collisions (for SylphBloomsWeapon) - only for non-assassin players
+    if (!(this.player instanceof AssassinPlayer)) {
+      const weapon = this.player.getWeapon();
+      if (weapon instanceof SylphBloomsWeapon) {
+        const orbCollisions = weapon.checkCollisions(this.enemies);
 
-      // Handle each orb collision
-      orbCollisions.forEach(collision => {
-        // Create hit particles
-        this.createHitParticles(collision.orbX, collision.orbY);
+        // Handle each orb collision
+        orbCollisions.forEach(collision => {
+          // Create hit particles
+          this.createHitParticles(collision.orbX, collision.orbY);
 
-        // Play hit sound
-        if (!audioState.isMuted) {
-          audioState.playHit();
-        }
+          // Play hit sound
+          if (!audioState.isMuted) {
+            audioState.playHit();
+          }
 
-        // If enemy died, add score and drop experience
-        if (!collision.enemy.isAlive()) {
-          gameState.addScore(collision.enemy.getScoreValue());
-          this.createDeathParticles(collision.enemy.x, collision.enemy.y);
+          // If enemy died, add score and drop experience
+          if (!collision.enemy.isAlive()) {
+            gameState.addScore(collision.enemy.getScoreValue());
+            this.createDeathParticles(collision.enemy.x, collision.enemy.y);
 
-          // Drop experience orb
-          const expValue = Math.max(1, Math.floor(collision.enemy.getScoreValue() / 2));
-          this.experienceOrbs.push(new ExperienceOrb(collision.enemy.x, collision.enemy.y, expValue));
-        }
-      });
+            // Drop experience orb
+            const expValue = Math.max(1, Math.floor(collision.enemy.getScoreValue() / 2));
+            this.experienceOrbs.push(new ExperienceOrb(collision.enemy.x, collision.enemy.y, expValue));
+          }
+        });
+      }
     }
 
     // Player vs Experience Orb collisions
@@ -448,19 +457,28 @@ export class GameEngine {
       projectile.render(this.ctx);
     });
 
-    // Render weapon effects if player has Sylph Blooms weapon
-    const weapon = this.player.getWeapon();
-    if (weapon instanceof SylphBloomsWeapon) {
-      weapon.render(this.ctx, this.camera.x, this.camera.y);
+    // Render weapon effects if player has Sylph Blooms weapon - only for non-assassin players
+    if (!(this.player instanceof AssassinPlayer)) {
+      const weapon = this.player.getWeapon();
+      if (weapon instanceof SylphBloomsWeapon) {
+        weapon.render(this.ctx, this.camera.x, this.camera.y);
+      }
+    }
+
+    // Render player
+    this.player.render(this.ctx, deltaTime);
+
+    // Render spiders if player is assassin
+    if (this.player instanceof AssassinPlayer) {
+      this.player.getSpiderWeapon().renderSpiders(this.ctx, deltaTime, this.camera.x, this.camera.y);
     }
 
     // Render enemies
     this.enemies.forEach(enemy => {
-      enemy.render(this.ctx);
+      if (enemy.isAlive()) {
+        enemy.render(this.ctx, this.camera.x, this.camera.y);
+      }
     });
-
-    // Render player
-    this.player.render(this.ctx, deltaTime);
 
     // Restore context
     this.ctx.restore();

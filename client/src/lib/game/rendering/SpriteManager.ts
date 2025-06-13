@@ -66,6 +66,13 @@ export class SpriteManager {
       { name: "enemy_basic", src: "/assets/sprites/enemy_basic.png" },
       { name: "enemy_fast", src: "/assets/sprites/enemy_fast.png" },
       { name: "enemy_tank", src: "/assets/sprites/enemy_tank.png" },
+      // Spider sprites
+      { name: "spider_down", src: "/assets/sprites/spider/spider_down.png" },
+      { name: "spider_up", src: "/assets/sprites/spider/spider_up.png" },
+      { name: "spider_side", src: "/assets/sprites/spider/spider_side.png" },
+      { name: "spider_diagonal_down", src: "/assets/sprites/spider/spider_diagonal_down.png" },
+      { name: "spider_diagonal_up", src: "/assets/sprites/spider/spider_diagonal_up.png" },
+      { name: "spider_jumping", src: "/assets/sprites/spider/spider_jumping.png" },
       { name: "objects", src: "/assets/tilesets/PNG/Objects.png" },
       { name: "details", src: "/assets/tilesets/PNG/Details.png" },
       { name: "flower_growing", src: "/assets/sprites/flower_growing.png" },

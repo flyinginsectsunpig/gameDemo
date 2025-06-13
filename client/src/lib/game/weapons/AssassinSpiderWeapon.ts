@@ -1,67 +1,67 @@
 
 import { BaseWeapon } from "./WeaponTypes";
 import { Projectile } from "./Projectile";
-import { MechanicalSpider } from "../entities/MechanicalSpider";
+import { FollowerSpider } from "../entities/FollowerSpider";
 import { Enemy } from "../entities/Enemy";
 
 export class AssassinSpiderWeapon extends BaseWeapon {
-  private spiders: MechanicalSpider[] = [];
-  private maxSpiders = 3;
+  private followerSpider: FollowerSpider | null = null;
   private spawnTimer = 0;
-  private spawnCooldown = 4; // spawn a spider every 4 seconds
+  private spawnDelay = 2; // spawn spider after 2 seconds
 
   constructor() {
     super(0.25, 0, 0); // No traditional projectiles
   }
 
   public fire(deltaTime: number, playerX: number, playerY: number, direction?: { x: number; y: number }): Projectile[] {
-    this.spawnTimer += deltaTime;
-
-    // Spawn new spiders if we have room and cooldown is ready
-    if (this.spiders.length < this.maxSpiders && this.spawnTimer >= this.spawnCooldown) {
-      // Spawn spider near player with slight random offset
-      const offsetX = (Math.random() - 0.5) * 40;
-      const offsetY = (Math.random() - 0.5) * 40;
-      
-      const spider = new MechanicalSpider(playerX + offsetX, playerY + offsetY);
-      this.spiders.push(spider);
-      this.spawnTimer = 0;
-    }
-
-    // No traditional projectiles
+    // No traditional projectiles for assassin
     return [];
   }
 
   public updateSpiders(deltaTime: number, enemies: Enemy[], playerPos: { x: number; y: number }) {
-    // Update all spiders
-    this.spiders.forEach(spider => {
-      spider.update(deltaTime, enemies, playerPos);
-    });
-
-    // Remove dead spiders
-    this.spiders = this.spiders.filter(spider => spider.isAlive());
+    // Spawn follower spider if we don't have one
+    if (!this.followerSpider) {
+      this.spawnTimer += deltaTime;
+      
+      if (this.spawnTimer >= this.spawnDelay) {
+        // Spawn spider behind player
+        const offsetX = -30; // Behind player
+        const offsetY = 0;
+        
+        this.followerSpider = new FollowerSpider(playerPos.x + offsetX, playerPos.y + offsetY);
+        console.log(`Spawned follower spider at (${playerPos.x + offsetX}, ${playerPos.y + offsetY})`);
+      }
+    } else {
+      // Update the follower spider
+      this.followerSpider.update(deltaTime, playerPos);
+      
+      // Remove if somehow died
+      if (!this.followerSpider.isAlive()) {
+        this.followerSpider = null;
+        this.spawnTimer = 0; // Reset spawn timer
+      }
+    }
   }
 
-  public renderSpiders(ctx: CanvasRenderingContext2D, cameraX: number = 0, cameraY: number = 0) {
-    this.spiders.forEach(spider => {
-      spider.render(ctx, cameraX, cameraY);
-    });
+  public renderSpiders(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
+    if (this.followerSpider) {
+      this.followerSpider.render(ctx, deltaTime, cameraX, cameraY);
+    }
   }
 
-  public getSpiders(): MechanicalSpider[] {
-    return this.spiders;
+  public getSpiders(): FollowerSpider[] {
+    return this.followerSpider ? [this.followerSpider] : [];
   }
 
   public upgradeMaxSpiders() {
-    this.maxSpiders = Math.min(this.maxSpiders + 1, 6);
+    // Could increase spider size or add abilities
   }
 
   public upgradeSpawnRate() {
-    this.spawnCooldown = Math.max(this.spawnCooldown - 0.5, 1.5);
+    // Could reduce spawn delay or add multiple spiders
   }
 
   public upgradeSpiderDamage() {
-    // This would need to be implemented in the spider class
-    // For now, we could track damage multiplier
+    // Could add combat abilities to the follower spider
   }
 }

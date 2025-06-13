@@ -1,8 +1,8 @@
-
 import { Player } from "./Player";
 import { AssassinSpiderWeapon } from "../weapons/AssassinSpiderWeapon";
 import { Enemy } from "./Enemy";
 import { Projectile } from "../weapons/Projectile";
+import { FollowerSpider } from "./FollowerSpider";
 import { SpriteManager } from "../rendering/SpriteManager";
 import { AnimationManager } from "../rendering/AnimationManager";
 
@@ -16,9 +16,12 @@ export class AssassinPlayer extends Player {
     this.health = this.maxHealth;
     this.spiderWeapon = new AssassinSpiderWeapon();
     
+    // Override the weapon from Player to prevent flower spawning
+    this.weapon = null;
+
     // Ensure instanceId is set for assassin
     this.instanceId = `assassin_${Date.now()}_${Math.random()}`;
-    
+
     // Use inherited animation system from Player - no need for custom setup
   }
 
@@ -38,13 +41,25 @@ export class AssassinPlayer extends Player {
       moveY *= 0.707;
     }
 
-    // Move the player
-    this.x += moveX * this.speed * deltaTime;
-    this.y += moveY * this.speed * deltaTime;
+    // Calculate new position
+    const newX = this.x + moveX * this.speed * deltaTime;
+    const newY = this.y + moveY * this.speed * deltaTime;
 
-    // Keep player within bounds
-    this.x = Math.max(0, Math.min(canvasWidth - this.width, this.x));
-    this.y = Math.max(0, Math.min(canvasHeight - this.height, this.y));
+    // Check tile collisions if tileRenderer is available
+    if (tileRenderer && tileRenderer.isSolidAt) {
+      // Check horizontal movement
+      if (!this.checkTileCollision(newX, this.y, tileRenderer)) {
+        this.x = newX;
+      }
+      // Check vertical movement
+      if (!this.checkTileCollision(this.x, newY, tileRenderer)) {
+        this.y = newY;
+      }
+    } else {
+      // Fallback: no tile collision, just update position
+      this.x = newX;
+      this.y = newY;
+    }
 
     // Update last move direction if player is moving
     const wasMoving = this.isMoving;
@@ -82,7 +97,7 @@ export class AssassinPlayer extends Player {
       this.animationManager.startAnimation(targetAnimation, this.instanceId);
     }
 
-    // Update spider weapon
+    // Update spider weapon - enemies will be passed from GameEngine
     this.spiderWeapon.updateSpiders(deltaTime, [], this.getPosition());
   }
 
@@ -90,15 +105,23 @@ export class AssassinPlayer extends Player {
     return this.spiderWeapon.getSpiders();
   }
 
+  public getSpiderWeapon() {
+    return this.spiderWeapon;
+  }
+
+  public updateSpiders(deltaTime: number, enemies: any[]) {
+    this.spiderWeapon.updateSpiders(deltaTime, enemies, this.getPosition());
+  }
+
   public render(ctx: CanvasRenderingContext2D, deltaTime: number) {
     const spriteManager = SpriteManager.getInstance();
-    
+
     // Ensure deltaTime is a valid number
     const validDeltaTime = typeof deltaTime === 'number' && !isNaN(deltaTime) ? deltaTime : 0.016;
-    
+
     // Get current animation frame
     const frame = this.animationManager.update(validDeltaTime, this.instanceId, this.currentAnimation);
-    
+
     if (frame) {
       this.lastAnimationFrame = frame;
     }
@@ -142,6 +165,46 @@ export class AssassinPlayer extends Player {
       const drawX = this.x - drawWidth / 2;
       const drawY = this.y - drawHeight / 2;
 
+      // Create a temporary canvas to process the sprite and remove white outline
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d')!;
+
+      if (frame && spriteToUse) {
+        tempCanvas.width = frame.width;
+        tempCanvas.height = frame.height;
+
+        // Draw the sprite frame to temp canvas
+        tempCtx.drawImage(
+          spriteToUse,
+          frame.x,
+          frame.y,
+          frame.width,
+          frame.height,
+          0,
+          0,
+          frame.width,
+          frame.height
+        );
+
+        // Remove white outline by making white pixels transparent
+        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+
+          // If pixel is white or very close to white, make it transparent
+          if (r > 240 && g > 240 && b > 240) {
+            data[i + 3] = 0; // Set alpha to 0 (transparent)
+          }
+        }
+
+        tempCtx.putImageData(imageData, 0, 0);
+        spriteToUse = tempCanvas as any; // Use processed canvas as sprite
+      }
+
       // Handle sprite flipping based on movement direction (same logic as Player)
       const shouldFlip =
         (this.currentAnimation === "walk_diagonal" && this.lastMoveDirection.x > 0) ||
@@ -163,7 +226,7 @@ export class AssassinPlayer extends Player {
           // Use animation frame
           ctx.drawImage(
             spriteToUse,
-            frame.x, frame.y,
+            0, 0,
             frame.width, frame.height,
             drawX, drawY,
             drawWidth, drawHeight
@@ -225,8 +288,31 @@ export class AssassinPlayer extends Player {
     }
   }
 
+  private checkTileCollision(x: number, y: number, tileRenderer: any): boolean {
+    // Check collision points around the player
+    const margin = 2; // Small margin to prevent getting stuck
+    const points = [
+      { x: x + margin, y: y + margin }, // Top-left
+      { x: x + this.width - margin, y: y + margin }, // Top-right
+      { x: x + margin, y: y + this.height - margin }, // Bottom-left
+      { x: x + this.width - margin, y: y + this.height - margin } // Bottom-right
+    ];
+
+    return points.some(point => tileRenderer.isSolidAt(point.x, point.y));
+  }
+
   public fire(deltaTime: number, direction?: { x: number; y: number }): Projectile[] {
     // Assassin doesn't fire traditional projectiles, uses spiders instead
     return this.spiderWeapon.fire(deltaTime, this.x, this.y, direction);
+  }
+
+  public fireWeapon(deltaTime: number): Projectile[] {
+    // Override parent method to prevent flower weapon firing
+    return [];
+  }
+
+  public getWeapon() {
+    // Return null to prevent flower weapon from being used
+    return null;
   }
 }
