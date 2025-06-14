@@ -6,15 +6,26 @@ import { FollowerSpider } from "./FollowerSpider";
 import { SpriteManager } from "../rendering/SpriteManager";
 import { AnimationManager } from "../rendering/AnimationManager";
 
+// Global tracking for assassin players
+let globalAssassinPlayerCount = 0;
+
 export class AssassinPlayer extends Player {
   private spiderWeapon: AssassinSpiderWeapon;
+  private spiderWeaponInitialized = false;
 
   constructor(x: number, y: number) {
     super(x, y);
     this.speed = 250; // Faster than base player
     this.maxHealth = 80; // Less health than base player
     this.health = this.maxHealth;
+    
+    globalAssassinPlayerCount++;
+    const instanceId = `assassin_${Date.now()}_${Math.random()}`;
+    console.log(`Creating AssassinPlayer instance: ${instanceId}. Global count: ${globalAssassinPlayerCount}`);
+    
+    // Always create a new spider weapon instance for each player
     this.spiderWeapon = new AssassinSpiderWeapon();
+    console.log(`Created AssassinSpiderWeapon instance for player: ${instanceId}`)
     
     // Override the weapon from Player to prevent flower spawning
     this.weapon = null;
@@ -257,8 +268,8 @@ export class AssassinPlayer extends Player {
     // Render health bar
     this.renderHealthBar(ctx);
 
-    // Render spiders
-    this.spiderWeapon.renderSpiders(ctx, 0, 0); // Camera offset will be handled by GameEngine
+    // Note: Spiders should be rendered by GameEngine to prevent double rendering
+    // this.spiderWeapon.renderSpiders(ctx, 0, 0);
   }
 
   private renderHealthBar(ctx: CanvasRenderingContext2D) {
