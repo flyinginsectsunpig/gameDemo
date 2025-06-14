@@ -523,10 +523,174 @@ export class InfiniteTileRenderer {
       const screenX = Math.floor(spider.x - camera.x);
       const screenY = Math.floor(spider.y - camera.y);
 
-      // Placeholder for spider rendering logic - replace with actual rendering code
-      ctx.fillStyle = 'black'; // Example spider color
-      ctx.fillRect(screenX, screenY, this.tileSize, this.tileSize);
+      // Check if spider is within camera bounds
+      const spiderSize = this.tileSize * 2; // Make spiders 2x larger than tiles, similar to flowers
+      if (
+        screenX < -spiderSize ||
+        screenX > camera.width + spiderSize ||
+        screenY < -spiderSize ||
+        screenY > camera.height + spiderSize
+      ) {
+        return;
+      }
+
+      this.drawSpider(ctx, spider, screenX, screenY);
     });
+  }
+
+  private drawSpider(ctx: CanvasRenderingContext2D, spider: any, screenX: number, screenY: number): void {
+    const spiderSize = this.tileSize * 2; // 2x larger than tiles for better visibility
+
+    ctx.save();
+
+    // Get the appropriate sprite for current animation
+    let spriteName = 'spider_down'; // Default sprite
+    if (spider.currentAnimation) {
+      switch (spider.currentAnimation) {
+        case 'spider_walk_up':
+          spriteName = 'spider_up';
+          break;
+        case 'spider_walk_down':
+          spriteName = 'spider_down';
+          break;
+        case 'spider_walk_side':
+          spriteName = 'spider_side';
+          break;
+        case 'spider_walk_diagonal_up':
+          spriteName = 'spider_diagonal_up';
+          break;
+        case 'spider_walk_diagonal_down':
+          spriteName = 'spider_diagonal_down';
+          break;
+        case 'spider_jumping':
+          spriteName = 'spider_jumping';
+          break;
+        default:
+          spriteName = 'spider_down';
+      }
+    }
+
+    const sprite = this.spriteManager.getSprite(spriteName);
+
+    if (sprite && sprite.complete) {
+      try {
+        // Add blue tint to distinguish mechanical spider
+        ctx.shadowColor = "#3333ff";
+        ctx.shadowBlur = 6;
+        ctx.globalAlpha = 0.9;
+
+        // Calculate animation frame similar to flower animation
+        const frameCount = spriteName === 'spider_jumping' ? 30 : 30; // Most spider sprites have 30 frames
+        const frameWidth = sprite.naturalWidth / frameCount;
+        const frameHeight = sprite.naturalHeight;
+
+        // Use spider's animation frame or default to 0
+        let frameIndex = 0;
+        if (spider.lastDirection && spider.lastDirection.x !== undefined) {
+          // Create a simple frame progression based on position for animation
+          frameIndex = Math.floor((Date.now() * 0.01) % frameCount);
+        }
+
+        // Handle special case for jumping sprite
+        if (spriteName === 'spider_jumping') {
+          const jumpingFrameWidth = sprite.naturalWidth / 30;
+          const jumpingFrameHeight = sprite.naturalHeight;
+          
+          ctx.drawImage(
+            sprite,
+            frameIndex * jumpingFrameWidth, 0, jumpingFrameWidth, jumpingFrameHeight,
+            screenX - (spiderSize - this.tileSize) / 2, screenY - (spiderSize - this.tileSize) / 2,
+            spiderSize, spiderSize
+          );
+        } else {
+          // Regular sprite handling
+          ctx.drawImage(
+            sprite,
+            frameIndex * frameWidth, 0, frameWidth, frameHeight,
+            screenX - (spiderSize - this.tileSize) / 2, screenY - (spiderSize - this.tileSize) / 2,
+            spiderSize, spiderSize
+          );
+        }
+
+        // Add mechanical sparkle effect similar to flowers
+        if (Math.random() < 0.1) {
+          ctx.globalAlpha = 0.8;
+          ctx.fillStyle = '#00ffff';
+          for (let i = 0; i < 2; i++) {
+            const sparkleX = screenX + Math.random() * spiderSize;
+            const sparkleY = screenY + Math.random() * spiderSize;
+            const sparkleSize = 1 + Math.random() * 2;
+            ctx.beginPath();
+            ctx.arc(sparkleX, sparkleY, sparkleSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+      } catch (error) {
+        console.error("Error drawing spider sprite:", error, spriteName);
+        this.renderFallbackSpider(ctx, screenX, screenY, spiderSize);
+      }
+
+      ctx.restore();
+    } else {
+      // Fallback spider rendering with enhanced visibility
+      this.renderFallbackSpider(ctx, screenX, screenY, spiderSize);
+    }
+  }
+
+  private renderFallbackSpider(ctx: CanvasRenderingContext2D, screenX: number, screenY: number, spiderSize: number): void {
+    ctx.save();
+    
+    // Enhanced fallback spider - much more visible like flowers
+    const centerX = screenX + this.tileSize / 2;
+    const centerY = screenY + this.tileSize / 2;
+
+    // Main body
+    ctx.fillStyle = '#333333';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, spiderSize * 0.3, spiderSize * 0.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Abdomen
+    ctx.fillStyle = '#444444';
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY + spiderSize * 0.1, spiderSize * 0.2, spiderSize * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Legs
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI) / 4;
+      const legLength = spiderSize * 0.4;
+      const startX = centerX + Math.cos(angle) * spiderSize * 0.15;
+      const startY = centerY + Math.sin(angle) * spiderSize * 0.1;
+      const endX = centerX + Math.cos(angle) * legLength;
+      const endY = centerY + Math.sin(angle) * legLength * 0.6;
+      
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    }
+
+    // Eyes
+    ctx.fillStyle = '#ff3333';
+    ctx.beginPath();
+    ctx.arc(centerX - spiderSize * 0.1, centerY - spiderSize * 0.05, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(centerX + spiderSize * 0.1, centerY - spiderSize * 0.05, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Blue glow for mechanical effect
+    ctx.shadowColor = "#3333ff";
+    ctx.shadowBlur = 4;
+    ctx.strokeStyle = "#6666ff";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(screenX, screenY, spiderSize, spiderSize);
+
+    ctx.restore();
   }
 
   // Spider management methods

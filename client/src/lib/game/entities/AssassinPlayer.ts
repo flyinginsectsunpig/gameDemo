@@ -17,11 +17,11 @@ export class AssassinPlayer extends Player {
     this.speed = 250; // Faster than base player
     this.maxHealth = 80; // Less health than base player
     this.health = this.maxHealth;
-    
+
     globalAssassinPlayerCount++;
     const instanceId = `assassin_${Date.now()}_${Math.random()}`;
     console.log(`Creating AssassinPlayer instance: ${instanceId}. Global count: ${globalAssassinPlayerCount}`);
-    
+
     // Override the weapon from Player to prevent flower spawning
     this.weapon = null;
 
@@ -111,14 +111,27 @@ export class AssassinPlayer extends Player {
       // Spawn spider close to player
       const offsetX = -60;
       const offsetY = -20;
-      
+
       this.followerSpider = new MechanicalSpider(this.x + offsetX, this.y + offsetY);
       this.spiderSpawned = true;
       console.log(`[${this.instanceId}] Spawned child spider at (${this.x + offsetX}, ${this.y + offsetY})`);
     }
   }
 
-  
+  public updateTileRenderer(tileRenderer: any) {
+    // Register spider with tile renderer if it exists and isn't already registered
+    if (this.followerSpider && tileRenderer) {
+      // Add spider to tile renderer for proper background rendering
+      tileRenderer.addSpider({
+        x: this.followerSpider.x,
+        y: this.followerSpider.y,
+        instanceId: this.followerSpider.instanceId || `mechanical_spider_${Date.now()}`,
+        currentAnimation: this.followerSpider.currentAnimation || 'spider_idle',
+        lastDirection: this.followerSpider.lastDirection || { x: 0, y: 1 }
+      });
+    }
+  }
+
 
   public updateSpiders(deltaTime: number, enemies: Enemy[], playerPos: { x: number; y: number }) {
     if (this.followerSpider && this.followerSpider.isAlive()) {
