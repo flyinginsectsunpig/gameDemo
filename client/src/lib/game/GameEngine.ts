@@ -177,9 +177,9 @@ export class GameEngine {
     // Update player with tile collision
     this.player.update(deltaTime, this.inputManager.getInput(), this.canvas.width, this.canvas.height, this.infiniteTileRenderer);
 
-    // If assassin player, update spiders with enemies
+    // If assassin player, update spiders
     if (this.player instanceof AssassinPlayer) {
-      this.player.updateSpiders(deltaTime, this.enemies);
+      this.player.updateSpiders(deltaTime, this.enemies, this.player.getPosition());
     }
 
     // Update camera to follow player
@@ -203,9 +203,12 @@ export class GameEngine {
       enemy.update(deltaTime, this.player.getPosition());
     });
 
-    // Player weapon firing
+    // Update player weapon and get projectiles
     const newProjectiles = this.player.fireWeapon(deltaTime);
     this.projectiles.push(...newProjectiles);
+
+    // Update spider weapon if player is AssassinPlayer (already handled above)
+    // Removed duplicate call
 
     // Update weapon (for SylphBloomsWeapon) - only for non-assassin players
     if (!(this.player instanceof AssassinPlayer)) {
@@ -470,7 +473,7 @@ export class GameEngine {
 
     // Render spiders if player is assassin
     if (this.player instanceof AssassinPlayer) {
-      this.player.getSpiderWeapon().renderSpiders(this.ctx, deltaTime, this.camera.x, this.camera.y);
+      this.player.renderSpiders(this.ctx, deltaTime, this.camera.x, this.camera.y);
     }
 
     // Render enemies

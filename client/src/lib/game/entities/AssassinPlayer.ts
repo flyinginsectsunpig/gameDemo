@@ -1,5 +1,4 @@
 import { Player } from "./Player";
-import { AssassinSpiderWeapon } from "../weapons/AssassinSpiderWeapon";
 import { Enemy } from "./Enemy";
 import { Projectile } from "../weapons/Projectile";
 import { FollowerSpider } from "./FollowerSpider";
@@ -10,8 +9,8 @@ import { AnimationManager } from "../rendering/AnimationManager";
 let globalAssassinPlayerCount = 0;
 
 export class AssassinPlayer extends Player {
-  private spiderWeapon: AssassinSpiderWeapon;
-  private spiderWeaponInitialized = false;
+  private followerSpider: FollowerSpider | null = null;
+  private spiderSpawned = false;
 
   constructor(x: number, y: number) {
     super(x, y);
@@ -23,15 +22,14 @@ export class AssassinPlayer extends Player {
     const instanceId = `assassin_${Date.now()}_${Math.random()}`;
     console.log(`Creating AssassinPlayer instance: ${instanceId}. Global count: ${globalAssassinPlayerCount}`);
     
-    // Always create a new spider weapon instance for each player
-    this.spiderWeapon = new AssassinSpiderWeapon();
-    console.log(`Created AssassinSpiderWeapon instance for player: ${instanceId}`)
-    
     // Override the weapon from Player to prevent flower spawning
     this.weapon = null;
 
     // Ensure instanceId is set for assassin
     this.instanceId = `assassin_${Date.now()}_${Math.random()}`;
+
+    // Spawn spider immediately as a child
+    this.spawnSpider();
 
     // Use inherited animation system from Player - no need for custom setup
   }
@@ -52,6 +50,14 @@ export class AssassinPlayer extends Player {
       moveY *= 0.707;
     }
 
+    // Update last move direction if player is moving
+    if (moveX !== 0 || moveY !== 0) {
+      this.lastMoveDirection = { x: moveX, y: moveY };
+      this.isMoving = true;
+    } else {
+      this.isMoving = false;
+    }
+
     // Calculate new position
     const newX = this.x + moveX * this.speed * deltaTime;
     const newY = this.y + moveY * this.speed * deltaTime;
@@ -70,15 +76,6 @@ export class AssassinPlayer extends Player {
       // Fallback: no tile collision, just update position
       this.x = newX;
       this.y = newY;
-    }
-
-    // Update last move direction if player is moving
-    const wasMoving = this.isMoving;
-    if (moveX !== 0 || moveY !== 0) {
-      this.lastMoveDirection = { x: moveX, y: moveY };
-      this.isMoving = true;
-    } else {
-      this.isMoving = false;
     }
 
     // Determine which animation to use based on movement (same logic as Player)
@@ -107,21 +104,44 @@ export class AssassinPlayer extends Player {
       this.currentAnimation = targetAnimation;
       this.animationManager.startAnimation(targetAnimation, this.instanceId);
     }
-
-    // Update spider weapon - enemies will be passed from GameEngine
-    this.spiderWeapon.updateSpiders(deltaTime, [], this.getPosition());
   }
 
-  public getSpiders() {
-    return this.spiderWeapon.getSpiders();
+  private spawnSpider() {
+    if (!this.spiderSpawned && !this.followerSpider) {
+      // Spawn spider close to player
+      const offsetX = -60;
+      const offsetY = -20;
+      
+      this.followerSpider = new FollowerSpider(this.x + offsetX, this.y + offsetY);
+      this.spiderSpawned = true;
+      console.log(`[${this.instanceId}] Spawned child spider at (${this.x + offsetX}, ${this.y + offsetY})`);
+    }
   }
 
-  public getSpiderWeapon() {
-    return this.spiderWeapon;
+  public updateSpiders(deltaTime: number, enemies: Enemy[], playerPos: { x: number; y: number }) {
+    if (this.followerSpider && this.followerSpider.isAlive()) {
+      // Update spider with current player position
+      this.followerSpider.update(deltaTime, this.getPosition());
+    } else if (this.followerSpider && !this.followerSpider.isAlive()) {
+      // Clean up dead spider
+      this.followerSpider.destroy();
+      this.followerSpider = null;
+      console.log(`[${this.instanceId}] Child spider died`);
+    }
   }
 
-  public updateSpiders(deltaTime: number, enemies: any[]) {
-    this.spiderWeapon.updateSpiders(deltaTime, enemies, this.getPosition());
+  public renderSpiders(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
+    if (this.followerSpider) {
+      this.followerSpider.render(ctx, deltaTime, cameraX, cameraY);
+    }
+  }
+
+  public getSpiders(): FollowerSpider[] {
+    return this.followerSpider ? [this.followerSpider] : [];
+  }
+
+  public getFollowerSpider(): FollowerSpider | null {
+    return this.followerSpider;
   }
 
   public render(ctx: CanvasRenderingContext2D, deltaTime: number) {
