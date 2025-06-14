@@ -179,6 +179,7 @@ export class GameEngine {
 
     // If assassin player, update spiders
     if (this.player instanceof AssassinPlayer) {
+      this.player.setTileRenderer(this.infiniteTileRenderer);
       this.player.updateSpiders(deltaTime, this.enemies, this.player.getPosition());
     }
 
@@ -470,11 +471,6 @@ export class GameEngine {
 
     // Render player
     this.player.render(this.ctx, deltaTime);
-
-    // Render spiders if player is assassin
-    if (this.player instanceof AssassinPlayer) {
-      this.player.renderSpiders(this.ctx, deltaTime, this.camera.x, this.camera.y);
-    }
 
     // Render enemies
     this.enemies.forEach(enemy => {

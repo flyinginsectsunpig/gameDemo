@@ -1,4 +1,3 @@
-
 import { SpriteManager } from './SpriteManager';
 
 export interface Camera {
@@ -41,6 +40,13 @@ export interface SylphOrb {
   targetY?: number;
 }
 
+// Assuming SpiderEntity is defined elsewhere - add its interface here
+export interface SpiderEntity {
+    x: number;
+    y: number;
+    // ... other spider properties
+}
+
 export class InfiniteTileRenderer {
   private spriteManager: SpriteManager;
   private tileSize = 32;
@@ -49,16 +55,19 @@ export class InfiniteTileRenderer {
   private chunkSize = 32; // 32x32 tiles per chunk
   private loadedChunks = new Map<string, number[][]>();
   private spriteLoaded = false;
-  
+
   // Flower management as part of tile system
   private flowers = new Map<string, FlowerTile>(); // Key: "tileX,tileY"
   private flowerTiles: HTMLImageElement[] = [];
   private flowersLoaded = false;
   private nextFlowerId = 0;
-  
+
   // Orb management as part of tile system
   private orbs: SylphOrb[] = [];
-  
+
+  // Spider management as part of tile system
+  private spiders: SpiderEntity[] = [];
+
   // Ground tile types using different tiles from the 4x4 grid in Ground_new.png
   private static readonly GROUND_TILES = {
     GRASS_1: 0,      // Top-left grass
@@ -78,7 +87,7 @@ export class InfiniteTileRenderer {
     DARK_3: 14,      // Bottom row, right dark
     DARK_4: 15,      // Bottom row, far-right dark
   };
-  
+
   constructor() {
     this.spriteManager = SpriteManager.getInstance();
     this.loadUndeadSprite();
@@ -110,7 +119,7 @@ export class InfiniteTileRenderer {
 
       const frameWidth = spritesheet.width / 6;
       const frameHeight = spritesheet.height;
-      
+
       // Create 6 individual flower tile images - much larger than tiles
       for (let i = 0; i < 6; i++) {
         const flowerSize = this.tileSize * 3; // Make flowers 3x larger than tiles
@@ -118,20 +127,20 @@ export class InfiniteTileRenderer {
         canvas.width = flowerSize;
         canvas.height = flowerSize;
         const ctx = canvas.getContext('2d')!;
-        
+
         // Calculate scale to fit the flower while maintaining aspect ratio
         // Use the smaller scale to ensure the entire flower fits
         const scaleX = flowerSize / frameWidth;
         const scaleY = flowerSize / frameHeight;
         const scale = Math.min(scaleX, scaleY) * 0.9; // Slightly smaller to ensure no cropping
-        
+
         const scaledWidth = frameWidth * scale;
         const scaledHeight = frameHeight * scale;
-        
+
         // Center the flower in the canvas
         const offsetX = (flowerSize - scaledWidth) / 2;
         const offsetY = (flowerSize - scaledHeight) / 2;
-        
+
         ctx.drawImage(
           spritesheet,
           i * frameWidth, 0,
@@ -139,12 +148,12 @@ export class InfiniteTileRenderer {
           offsetX, offsetY,
           scaledWidth, scaledHeight
         );
-        
+
         const tileImg = new Image();
         tileImg.src = canvas.toDataURL();
         this.flowerTiles.push(tileImg);
       }
-      
+
       this.flowersLoaded = true;
       console.log('Flower sprites loaded and integrated into tile system');
     } catch (error) {
@@ -158,7 +167,7 @@ export class InfiniteTileRenderer {
 
   private generateChunk(chunkX: number, chunkY: number): number[][] {
     const chunk: number[][] = [];
-    
+
     for (let y = 0; y < this.chunkSize; y++) {
       chunk[y] = [];
       for (let x = 0; x < this.chunkSize; x++) {
@@ -167,7 +176,7 @@ export class InfiniteTileRenderer {
         chunk[y][x] = this.generateCleanTileAt(worldX, worldY);
       }
     }
-    
+
     return chunk;
   }
 
@@ -176,23 +185,23 @@ export class InfiniteTileRenderer {
     const scale1 = 0.03; // Large regions
     const scale2 = 0.08; // Medium features  
     const scale3 = 0.15; // Fine details
-    
+
     // Base terrain noise
     const noise1 = Math.sin(worldX * scale1) * Math.cos(worldY * scale1);
     const noise2 = Math.sin(worldX * scale2 + 100) * Math.cos(worldY * scale2 + 100);
     const noise3 = Math.sin(worldX * scale3 + 200) * Math.cos(worldY * scale3 + 200);
-    
+
     // Combine noises with different weights
     const terrainNoise = (noise1 * 0.6 + noise2 * 0.3 + noise3 * 0.1);
-    
+
     // Path/feature noise
     const pathNoise = Math.sin(worldX * 0.01 + worldY * 0.015);
     const stoneNoise = Math.sin(worldX * 0.025 + 50) * Math.cos(worldY * 0.025 + 75);
-    
+
     // Add some deterministic variation based on position
     const posVariation = ((worldX * 7 + worldY * 11) % 1000) / 1000.0 - 0.5;
     const finalNoise = terrainNoise + posVariation * 0.2;
-    
+
     // Generate varied terrain with multiple tile types
     if (pathNoise > 0.75) {
       // Stone paths and rocky areas
@@ -236,7 +245,7 @@ export class InfiniteTileRenderer {
     const chunkY = Math.floor(worldY / this.chunkSize);
     const localX = worldX - chunkX * this.chunkSize;
     const localY = worldY - chunkY * this.chunkSize;
-    
+
     const chunk = this.getChunk(chunkX, chunkY);
     return chunk[localY] ? chunk[localY][localX] || InfiniteTileRenderer.GROUND_TILES.GRASS_1 : InfiniteTileRenderer.GROUND_TILES.GRASS_1;
   }
@@ -277,7 +286,7 @@ export class InfiniteTileRenderer {
         const screenY = Math.floor(tileY * this.tileSize - camera.y);
 
         this.drawTile(ctx, sprite, tileId, screenX, screenY);
-        
+
         // Render flower on this tile if it exists
         const flowerKey = `${tileX},${tileY}`;
         const flower = this.flowers.get(flowerKey);
@@ -287,7 +296,10 @@ export class InfiniteTileRenderer {
       }
     }
 
-    // Render orbs
+    // Render spiders as background layer
+    this.renderSpiders(ctx, camera);
+
+    // Render flowers and orbs
     this.renderOrbs(ctx, camera);
   }
 
@@ -296,13 +308,13 @@ export class InfiniteTileRenderer {
     // Ground_new.png has a 4x4 grid of 256x256 tiles
     const tileRow = Math.floor(tileId / this.tilesPerRow);
     const tileCol = tileId % this.tilesPerRow;
-    
+
     // Crop more aggressively to remove all borders and ensure seamless tiling
     const cropMargin = 16; // Crop 16 pixels from each side
     const srcX = cropMargin + (tileCol * this.srcTileSize);
     const srcY = cropMargin + (tileRow * this.srcTileSize);
     const actualTileSize = this.srcTileSize - (cropMargin * 2); // 224 pixels after cropping
-    
+
     // Render slightly larger to ensure no gaps between tiles
     const renderSize = this.tileSize + 1;
     const renderX = Math.floor(x);
@@ -338,7 +350,7 @@ export class InfiniteTileRenderer {
         const tileId = this.getTileAt(tileX, tileY);
         const screenX = tileX * this.tileSize - camera.x;
         const screenY = tileY * this.tileSize - camera.y;
-        
+
         ctx.fillStyle = getColorForTile(tileId);
         ctx.fillRect(screenX, screenY, this.tileSize, this.tileSize);
       }
@@ -347,28 +359,28 @@ export class InfiniteTileRenderer {
 
   private drawFlower(ctx: CanvasRenderingContext2D, flower: FlowerTile, screenX: number, screenY: number): void {
     const flowerSize = this.tileSize * 3; // 3x larger than tiles
-    
+
     if (!this.flowersLoaded || this.flowerTiles.length === 0) {
       // Fallback flower rendering - much larger and more visible
       ctx.save();
       const colors = ['#32cd32', '#90ee90', '#ff69b4', '#ff1493', '#9370db', '#4169e1'];
       ctx.fillStyle = colors[flower.bloomStage] || colors[0];
-      
+
       const size = flowerSize * 0.6; // Large visible size
       const centerX = screenX + this.tileSize / 2;
       const centerY = screenY + this.tileSize / 2;
-      
+
       // Draw flower with multiple petals for better visibility
       ctx.beginPath();
       ctx.arc(centerX, centerY, size / 2, 0, Math.PI * 2);
       ctx.fill();
-      
+
       // Add center
       ctx.fillStyle = '#ffff00';
       ctx.beginPath();
       ctx.arc(centerX, centerY, size / 6, 0, Math.PI * 2);
       ctx.fill();
-      
+
       ctx.restore();
       return;
     }
@@ -377,7 +389,7 @@ export class InfiniteTileRenderer {
     const flowerTile = this.flowerTiles[frameIndex];
 
     ctx.save();
-    
+
     // Fade out in last 20% of life
     const ageRatio = flower.age / flower.maxAge;
     if (ageRatio > 0.8) {
@@ -440,7 +452,7 @@ export class InfiniteTileRenderer {
 
       // Move to center position
       ctx.translate(screenX, screenY);
-      
+
       // Smooth rotation based on movement direction
       const rotationSpeed = Math.sqrt(orb.vx * orb.vx + orb.vy * orb.vy) * 0.01;
       ctx.rotate(orb.age * rotationSpeed * 0.003);
@@ -482,7 +494,7 @@ export class InfiniteTileRenderer {
       coreGradient.addColorStop(0, "#ffffff");
       coreGradient.addColorStop(0.3, "#ffff88");
       coreGradient.addColorStop(1, orb.color);
-      
+
       ctx.fillStyle = coreGradient;
       ctx.beginPath();
       ctx.arc(0, 0, orb.size * 0.2 * pulse, 0, Math.PI * 2);
@@ -505,9 +517,40 @@ export class InfiniteTileRenderer {
     });
   }
 
+  // New method to render spiders
+  private renderSpiders(ctx: CanvasRenderingContext2D, camera: Camera): void {
+    this.spiders.forEach((spider) => {
+      const screenX = Math.floor(spider.x - camera.x);
+      const screenY = Math.floor(spider.y - camera.y);
+
+      // Placeholder for spider rendering logic - replace with actual rendering code
+      ctx.fillStyle = 'black'; // Example spider color
+      ctx.fillRect(screenX, screenY, this.tileSize, this.tileSize);
+    });
+  }
+
+  // Spider management methods
+  public addSpider(spider: any): void {
+    this.spiders.push(spider);
+  }
+
+  public removeSpider(instanceId: string): void {
+    this.spiders = this.spiders.filter(spider => spider.instanceId !== instanceId);
+  }
+
+  public updateSpider(instanceId: string, x: number, y: number, currentAnimation: string, lastDirection: any): void {
+    const spider = this.spiders.find(s => s.instanceId === instanceId);
+    if (spider) {
+      spider.x = x;
+      spider.y = y;
+      spider.currentAnimation = currentAnimation;
+      spider.lastDirection = lastDirection;
+    }
+  }
+
   public addFlower(tileX: number, tileY: number, maxAge: number = 15000): FlowerTile | null {
     const flowerKey = `${tileX},${tileY}`;
-    
+
     // Don't place flower if tile is already occupied
     if (this.flowers.has(flowerKey)) {
       return null;
@@ -553,7 +596,7 @@ export class InfiniteTileRenderer {
       // Update bloom stage based on age - grow over 1.5 seconds (faster growth)
       const growthTime = 1500; // 1.5 seconds to fully grow
       const ageRatio = flower.age / flower.maxAge;
-      
+
       if (flower.age < growthTime) {
         // Growing phase - progress through stages 0-5 over 1.5 seconds
         const growthProgress = flower.age / growthTime;
@@ -599,7 +642,7 @@ export class InfiniteTileRenderer {
     for (const [key, _] of this.loadedChunks) {
       const [chunkX, chunkY] = key.split(',').map(Number);
       const distance = Math.max(Math.abs(chunkX - currentChunkX), Math.abs(chunkY - currentChunkY));
-      
+
       if (distance > maxDistance) {
         chunksToRemove.push(key);
       }
@@ -622,7 +665,7 @@ export class InfiniteTileRenderer {
 
       // Homing phase - fast tracking toward nearest enemy
       const nearestEnemy = this.findNearestEnemy(enemies, orb.x, orb.y, 400);
-      
+
       if (nearestEnemy) {
         const dx = nearestEnemy.x - orb.x;
         const dy = nearestEnemy.y - orb.y;
@@ -638,7 +681,7 @@ export class InfiniteTileRenderer {
           // Accelerating homing force
           const proximityBoost = Math.max(0.7, 1 - (distance / 250));
           const homingForce = orb.homingSpeed * deltaTime * proximityBoost * 1.5;
-          
+
           orb.vx += (dx / distance) * homingForce;
           orb.vy += (dy / distance) * homingForce;
 
@@ -673,10 +716,10 @@ export class InfiniteTileRenderer {
 
   public checkOrbCollisions(enemies: any[]): { enemy: any; damage: number; orbX: number; orbY: number }[] {
     const collisions: { enemy: any; damage: number; orbX: number; orbY: number }[] = [];
-    
+
     this.orbs.forEach((orb) => {
       if (orb.life <= 0) return;
-      
+
       enemies.forEach((enemy) => {
         if (enemy.health <= 0) return;
 
@@ -685,12 +728,12 @@ export class InfiniteTileRenderer {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         const collisionRadius = orb.size + 8;
-        
+
         if (distance < collisionRadius) {
           const wasAlive = enemy.isAlive();
           enemy.takeDamage(orb.damage);
           orb.life = 0;
-          
+
           // Record collision for experience orb spawning
           collisions.push({
             enemy: enemy,
@@ -741,8 +784,7 @@ export class InfiniteTileRenderer {
     // Calculate initial velocity toward target
     const dx = targetEnemy.x - flowerCenterX;
     const dy = targetEnemy.y - flowerBudY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const initialSpeed = 250;
+    const distance = Math.sqrt(dx * dx + dy * dy);    const initialSpeed = 250;
 
     const orb: SylphOrb = {
       x: flowerCenterX,

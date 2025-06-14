@@ -1,7 +1,7 @@
 import { Player } from "./Player";
 import { Enemy } from "./Enemy";
 import { Projectile } from "../weapons/Projectile";
-import { FollowerSpider } from "./FollowerSpider";
+import { MechanicalSpider } from "./MechanicalSpider";
 import { SpriteManager } from "../rendering/SpriteManager";
 import { AnimationManager } from "../rendering/AnimationManager";
 
@@ -9,7 +9,7 @@ import { AnimationManager } from "../rendering/AnimationManager";
 let globalAssassinPlayerCount = 0;
 
 export class AssassinPlayer extends Player {
-  private followerSpider: FollowerSpider | null = null;
+  private followerSpider: MechanicalSpider | null = null;
   private spiderSpawned = false;
 
   constructor(x: number, y: number) {
@@ -112,19 +112,24 @@ export class AssassinPlayer extends Player {
       const offsetX = -60;
       const offsetY = -20;
       
-      this.followerSpider = new FollowerSpider(this.x + offsetX, this.y + offsetY);
+      this.followerSpider = new MechanicalSpider(this.x + offsetX, this.y + offsetY);
       this.spiderSpawned = true;
       console.log(`[${this.instanceId}] Spawned child spider at (${this.x + offsetX}, ${this.y + offsetY})`);
     }
   }
 
+  public setTileRenderer(tileRenderer: any): void {
+    if (this.followerSpider) {
+      this.followerSpider.setTileRenderer(tileRenderer);
+    }
+  }
+
   public updateSpiders(deltaTime: number, enemies: Enemy[], playerPos: { x: number; y: number }) {
     if (this.followerSpider && this.followerSpider.isAlive()) {
-      // Update spider with current player position, direction, and movement state
-      this.followerSpider.update(deltaTime, this.getPosition(), this.lastMoveDirection, this.isMoving);
+      // Update spider with enemies but not player position (so it stays stationary)
+      this.followerSpider.update(deltaTime, enemies, { x: this.followerSpider.x, y: this.followerSpider.y });
     } else if (this.followerSpider && !this.followerSpider.isAlive()) {
       // Clean up dead spider
-      this.followerSpider.destroy();
       this.followerSpider = null;
       console.log(`[${this.instanceId}] Child spider died`);
     }
@@ -132,15 +137,15 @@ export class AssassinPlayer extends Player {
 
   public renderSpiders(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
     if (this.followerSpider) {
-      this.followerSpider.render(ctx, deltaTime, cameraX, cameraY);
+      this.followerSpider.render(ctx, cameraX, cameraY);
     }
   }
 
-  public getSpiders(): FollowerSpider[] {
+  public getSpiders(): MechanicalSpider[] {
     return this.followerSpider ? [this.followerSpider] : [];
   }
 
-  public getFollowerSpider(): FollowerSpider | null {
+  public getFollowerSpider(): MechanicalSpider | null {
     return this.followerSpider;
   }
 
