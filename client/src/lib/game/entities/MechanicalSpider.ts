@@ -196,34 +196,30 @@ export class MechanicalSpider implements GameObject {
     }
   }
 
-  public render(ctx: CanvasRenderingContext2D, cameraX: number = 0, cameraY: number = 0) {
+  public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
     if (!this.alive) return;
 
     const spriteManager = SpriteManager.getInstance();
 
-    // Determine which sprite to use based on movement direction
-    let spriteName = "spider_down"; // default
+    // Choose sprite based on actual movement direction (more accurate)
+    let spriteName = "spider_down";
+    const absX = Math.abs(this.lastDirection.x);
+    const absY = Math.abs(this.lastDirection.y);
 
     if (this.isAttached && this.target) {
       // Use jumping sprite when attached
       spriteName = "spider_jumping";
+    } else if (this.currentAnimation === "spider_idle") {
+      spriteName = "spider_down"; // Default idle sprite
     } else {
-      // Choose sprite based on movement direction
-      const absX = Math.abs(this.lastDirection.x);
-      const absY = Math.abs(this.lastDirection.y);
-
-      if (this.currentAnimation === "spider_idle") {
-        spriteName = "spider_down"; // Default idle sprite
+      // Use movement direction to determine sprite
+      if (absY > 0.6) {
+        spriteName = this.lastDirection.y > 0 ? "spider_up" : "spider_down";
+      } else if (absX > 0.6) {
+        spriteName = "spider_side";
       } else {
-        // Use movement direction to determine sprite
-        if (absY > 0.6) {
-          spriteName = this.lastDirection.y > 0 ? "spider_up" : "spider_down";
-        } else if (absX > 0.6) {
-          spriteName = "spider_side";
-        } else {
-          // Diagonal movement
-          spriteName = this.lastDirection.y > 0 ? "spider_diagonal_up" : "spider_diagonal_down";
-        }
+        // Diagonal movement
+        spriteName = this.lastDirection.y > 0 ? "spider_diagonal_up" : "spider_diagonal_down";
       }
     }
 
@@ -233,7 +229,7 @@ export class MechanicalSpider implements GameObject {
       ctx.save();
 
       // Update animation frame
-      const validDeltaTime = 0.016; // Fixed deltaTime for consistency
+      const validDeltaTime = typeof deltaTime === 'number' && !isNaN(deltaTime) ? deltaTime : 0.016;
       const currentFrame = this.animationManager.update(validDeltaTime, this.instanceId, this.currentAnimation);
 
       if (currentFrame) {
@@ -245,7 +241,6 @@ export class MechanicalSpider implements GameObject {
         // Pulsing red tint when attached and dealing damage
         const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
         ctx.globalAlpha = pulse;
-        ctx.filter = 'hue-rotate(0deg) saturate(2) brightness(1.2)';
         ctx.shadowColor = "#ff3333";
         ctx.shadowBlur = 8;
       } else {
@@ -270,36 +265,117 @@ export class MechanicalSpider implements GameObject {
         ctx.scale(-1, 1);
       }
 
-      if (frameToUse) {
-        ctx.drawImage(
-          sprite,
-          frameToUse.x, frameToUse.y, frameToUse.width, frameToUse.height,
-          shouldFlip ? -renderX - this.width : renderX,
-          renderY,
-          this.width,
-          this.height
-        );
-      } else {
-        // Fallback to full sprite
-        ctx.drawImage(
-          sprite,
-          shouldFlip ? -renderX - this.width : renderX,
-          renderY,
-          this.width,
-          this.height
-        );
+      // Verify sprite is loaded and has valid dimensions
+      if (!sprite.complete || sprite.naturalWidth === 0 || sprite.naturalHeight === 0) {
+        console.warn("Spider sprite not fully loaded, using fallback");
+        this.renderFallbackSpider(ctx, cameraX, cameraY);
+        ctx.restore();
+        return;
+      }
+
+      try {
+        // Reset any problematic context properties
+        ctx.filter = 'none';
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.imageSmoothingEnabled = true;
+        
+        // Debug sprite dimensions
+        if (sprite.naturalWidth === 0 || sprite.naturalHeight === 0) {
+          console.warn(`Spider sprite ${spriteName} has invalid dimensions: ${sprite.naturalWidth}x${sprite.naturalHeight}`);
+          this.renderFallbackSpider(ctx, cameraX, cameraY);
+          ctx.restore();
+          return;
+        }
+        
+        // Draw using animation frame coordinates
+        if (frameToUse) {
+          ctx.drawImage(
+            sprite,
+            frameToUse.x, frameToUse.y, frameToUse.width, frameToUse.height,
+            shouldFlip ? -renderX - this.width : renderX,
+            renderY,
+            this.width,
+            this.height
+          );
+        } else {
+          // Fallback - use first frame (800x450)
+          ctx.drawImage(
+            sprite,
+            0, 0, 800, 450,
+            shouldFlip ? -renderX - this.width : renderX,
+            renderY,
+            this.width,
+            this.height
+          );
+        }
+      } catch (error) {
+        console.error("Error drawing spider sprite:", error, spriteName);
+        // Fallback to shape rendering
+        this.renderFallbackSpider(ctx, cameraX, cameraY);
       }
 
       ctx.restore();
     } else {
-      // Fallback to simple circle if sprite not loaded
-      ctx.save();
-      ctx.fillStyle = this.isAttached ? "#ff3333" : "#3333ff";
-      ctx.globalAlpha = 0.7;
-      ctx.beginPath();
-      ctx.arc(this.x - cameraX, this.y - cameraY, 48, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      // Fallback to detailed shape if sprite not loaded
+      this.renderFallbackSpider(ctx, cameraX, cameraY);
     }
+  }
+
+  private renderFallbackSpider(ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number) {
+    ctx.save();
+    
+    // Create a more detailed spider shape instead of just a circle
+    const centerX = this.x - cameraX;
+    const centerY = this.y - cameraY;
+    const size = 24;
+    
+    if (this.isAttached) {
+      // Red spider when attached to enemy
+      ctx.fillStyle = "#ff4444";
+      ctx.strokeStyle = "#ff0000";
+      ctx.shadowColor = "#ff3333";
+      ctx.shadowBlur = 8;
+    } else {
+      // Blue/cyan spider when searching/moving
+      ctx.fillStyle = "#4444ff";
+      ctx.strokeStyle = "#0000ff";
+      ctx.shadowColor = "#3333ff";
+      ctx.shadowBlur = 4;
+    }
+    
+    ctx.globalAlpha = 0.9;
+    ctx.lineWidth = 2;
+    
+    // Draw spider body (oval)
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, size, size * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Draw spider legs (8 legs)
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI * 2) / 8;
+      const legLength = size * 1.5;
+      const legX = centerX + Math.cos(angle) * legLength;
+      const legY = centerY + Math.sin(angle) * legLength;
+      
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(legX, legY);
+      ctx.stroke();
+    }
+    
+    // Add pulsing effect when attached
+    if (this.isAttached) {
+      const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = "#ffaaaa";
+      ctx.beginPath();
+      ctx.ellipse(centerX, centerY, size * 1.2, size * 0.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    ctx.restore();
   }
 }

@@ -29,7 +29,13 @@ export class SpriteManager {
       img.onload = () => {
         this.sprites.set(name, img);
         this.loadingPromises.delete(name);
-        console.log(`Loaded sprite: ${name} from ${src}`);
+        console.log(`Loaded sprite: ${name} from ${src} (${img.naturalWidth}x${img.naturalHeight})`);
+        
+        // Debug spider sprites specifically
+        if (name.includes('spider')) {
+          console.log(`Spider sprite ${name}: dimensions ${img.naturalWidth}x${img.naturalHeight}, complete: ${img.complete}`);
+        }
+        
         resolve(img);
       };
       img.onerror = () => {

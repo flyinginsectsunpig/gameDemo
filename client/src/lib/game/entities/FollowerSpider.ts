@@ -205,24 +205,75 @@ export class FollowerSpider implements GameObject {
         ctx.scale(-1, 1);
       }
 
-      if (frameToUse) {
-        ctx.drawImage(
-          sprite,
-          frameToUse.x, frameToUse.y, frameToUse.width, frameToUse.height,
-          shouldFlip ? -renderX - this.width : renderX,
-          renderY,
-          this.width,
-          this.height
-        );
-      } else {
-        // Fallback to full sprite
-        ctx.drawImage(
-          sprite,
-          shouldFlip ? -renderX - this.width : renderX,
-          renderY,
-          this.width,
-          this.height
-        );
+      // Verify sprite is loaded and has valid dimensions
+      if (!sprite.complete || sprite.naturalWidth === 0 || sprite.naturalHeight === 0) {
+        console.warn("Follower spider sprite not fully loaded, using fallback");
+        ctx.save();
+        ctx.fillStyle = "#4444ff";
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.arc(this.x - cameraX, this.y - cameraY, 48, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        ctx.restore();
+        return;
+      }
+
+      // Reset any problematic context properties
+      ctx.filter = 'none';
+      ctx.globalCompositeOperation = 'source-over';
+      
+      try {
+        // Reset any problematic context properties
+        ctx.filter = 'none';
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.imageSmoothingEnabled = true;
+        
+        // Debug sprite dimensions
+        if (sprite.naturalWidth === 0 || sprite.naturalHeight === 0) {
+          console.warn(`Follower spider sprite ${spriteName} has invalid dimensions: ${sprite.naturalWidth}x${sprite.naturalHeight}`);
+          ctx.save();
+          ctx.fillStyle = "#4444ff";
+          ctx.globalAlpha = 0.7;
+          ctx.beginPath();
+          ctx.arc(this.x - cameraX, this.y - cameraY, 48, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          ctx.restore();
+          return;
+        }
+        
+        // Draw using animation frame coordinates
+        if (frameToUse) {
+          ctx.drawImage(
+            sprite,
+            frameToUse.x, frameToUse.y, frameToUse.width, frameToUse.height,
+            shouldFlip ? -renderX - this.width : renderX,
+            renderY,
+            this.width,
+            this.height
+          );
+        } else {
+          // Fallback - use first frame (800x450)
+          ctx.drawImage(
+            sprite,
+            0, 0, 800, 450,
+            shouldFlip ? -renderX - this.width : renderX,
+            renderY,
+            this.width,
+            this.height
+          );
+        }
+      } catch (error) {
+        console.error("Error drawing follower spider sprite:", error, spriteName);
+        // Fallback to simple circle if sprite fails
+        ctx.save();
+        ctx.fillStyle = "#4444ff";
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.arc(this.x - cameraX, this.y - cameraY, 48, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
 
       ctx.restore();
