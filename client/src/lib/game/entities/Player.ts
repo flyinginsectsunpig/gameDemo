@@ -419,6 +419,11 @@ export class Player implements GameObject {
     }
   }
 
+  public setTileRenderer(tileRenderer: any): void {
+    // Base Player class doesn't need tile renderer integration
+    // This method exists for compatibility with GameEngine
+  }
+
   public takeDamage(amount: number): void {
     this.health -= amount;
     this.lastDamageTime = Date.now();

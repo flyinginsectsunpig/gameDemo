@@ -24,8 +24,6 @@ export class MechanicalSpider implements GameObject {
   private currentAnimation = "spider_idle";
   private lastAnimationFrame: any = null;
   private lastAnimationSwitch = 0;
-  private tileRenderer: any; // Tile renderer instance
-
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
@@ -141,11 +139,6 @@ export class MechanicalSpider implements GameObject {
     if (this.currentAnimation !== targetAnimation) {
       this.currentAnimation = targetAnimation;
     }
-
-    // Update tile renderer with new position and animation
-    if (this.tileRenderer) {
-      this.tileRenderer.updateSpider(this.instanceId, this.x, this.y, this.currentAnimation, this.lastDirection);
-    }
   }
 
   private findNearestEnemy(enemies: Enemy[]) {
@@ -174,27 +167,9 @@ export class MechanicalSpider implements GameObject {
 
   public destroy(): void {
     this.alive = false;
-    // Remove from tile renderer when destroyed
-    if (this.tileRenderer) {
-      this.tileRenderer.removeSpider(this.instanceId);
-    }
   }
 
-  public setTileRenderer(tileRenderer: any): void {
-    this.tileRenderer = tileRenderer;
-    // Register spider with tile renderer for background rendering
-    if (this.tileRenderer) {
-      this.tileRenderer.addSpider({
-        x: this.x,
-        y: this.y,
-        width: this.width,
-        height: this.height,
-        currentAnimation: this.currentAnimation,
-        instanceId: this.instanceId,
-        lastDirection: this.lastDirection
-      });
-    }
-  }
+  
 
   public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
     if (!this.alive) return;

@@ -118,11 +118,7 @@ export class AssassinPlayer extends Player {
     }
   }
 
-  public setTileRenderer(tileRenderer: any): void {
-    if (this.followerSpider) {
-      this.followerSpider.setTileRenderer(tileRenderer);
-    }
-  }
+  
 
   public updateSpiders(deltaTime: number, enemies: Enemy[], playerPos: { x: number; y: number }) {
     if (this.followerSpider && this.followerSpider.isAlive()) {
@@ -137,7 +133,7 @@ export class AssassinPlayer extends Player {
 
   public renderSpiders(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
     if (this.followerSpider) {
-      this.followerSpider.render(ctx, cameraX, cameraY);
+      this.followerSpider.render(ctx, deltaTime, cameraX, cameraY);
     }
   }
 
