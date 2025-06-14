@@ -120,8 +120,8 @@ export class AssassinPlayer extends Player {
 
   public updateSpiders(deltaTime: number, enemies: Enemy[], playerPos: { x: number; y: number }) {
     if (this.followerSpider && this.followerSpider.isAlive()) {
-      // Update spider with current player position
-      this.followerSpider.update(deltaTime, this.getPosition());
+      // Update spider with current player position, direction, and movement state
+      this.followerSpider.update(deltaTime, this.getPosition(), this.lastMoveDirection, this.isMoving);
     } else if (this.followerSpider && !this.followerSpider.isAlive()) {
       // Clean up dead spider
       this.followerSpider.destroy();

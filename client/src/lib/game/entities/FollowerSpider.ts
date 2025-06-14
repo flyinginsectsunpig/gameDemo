@@ -58,67 +58,45 @@ export class FollowerSpider implements GameObject {
     this.lastAnimationFrame = idleFrames[0];
   }
 
-  public update(deltaTime: number, playerPos: { x: number; y: number }) {
+  public update(deltaTime: number, playerPos: { x: number; y: number }, playerDirection?: { x: number; y: number }, playerMoving?: boolean) {
     if (!this.alive) return;
-
-    // Calculate vector from spider to player (this should point towards player)
-    const dx = playerPos.x - this.x;
-    const dy = playerPos.y - this.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    // Simple follow behavior with clear thresholds
-    const followDistance = 30; // Ideal distance to maintain behind player
-    const minDistance = 15; // Don't get too close
-    const maxDistance = 60; // Start catching up if too far
 
     let targetAnimation = "spider_idle";
 
-    if (distance > minDistance) {
-      // Calculate normalized direction towards player
-      const dirX = dx / distance;
-      const dirY = dy / distance;
+    // Duplicate player movement exactly
+    if (playerMoving && playerDirection) {
+      // Copy player's exact position with small offset to distinguish visually
+      this.x = playerPos.x + 5; // Small offset so it's not exactly on top
+      this.y = playerPos.y + 5;
 
-      // Adjust speed based on distance
-      let moveSpeed = this.speed;
-      if (distance > maxDistance) {
-        // Far away - catch up quickly
-        moveSpeed = this.speed * 2;
-      } else if (distance > followDistance) {
-        // Moderate distance - normal speed
-        moveSpeed = this.speed;
-      } else {
-        // Close but not too close - slow down
-        moveSpeed = this.speed * 0.6;
-      }
+      // Copy player's movement direction
+      this.lastDirection.x = playerDirection.x;
+      this.lastDirection.y = playerDirection.y;
 
-      // Apply movement towards player
-      this.vx = dirX * moveSpeed;
-      this.vy = dirY * moveSpeed;
+      // Set velocity to match player movement pattern
+      this.vx = playerDirection.x * this.speed;
+      this.vy = playerDirection.y * this.speed;
 
-      // Update position
-      this.x += this.vx * deltaTime;
-      this.y += this.vy * deltaTime;
-
-      // Update direction for animation and sprite flipping
-      this.lastDirection.x = dirX;
-      this.lastDirection.y = dirY;
-
-      // Choose animation based on movement direction
-      const absX = Math.abs(dirX);
-      const absY = Math.abs(dirY);
+      // Choose animation based on player's movement direction
+      const absX = Math.abs(playerDirection.x);
+      const absY = Math.abs(playerDirection.y);
 
       if (absY > 0.6) {
-        targetAnimation = dirY > 0 ? "spider_walk_down" : "spider_walk_up";
+        targetAnimation = playerDirection.y > 0 ? "spider_walk_down" : "spider_walk_up";
       } else if (absX > 0.6) {
         targetAnimation = "spider_walk_side";
       } else {
         targetAnimation = "spider_walk_diagonal";
       }
     } else {
-      // Too close - stop moving
+      // Player is idle, spider should be idle too
       this.vx = 0;
       this.vy = 0;
       targetAnimation = "spider_idle";
+      
+      // Still maintain position near player when idle
+      this.x = playerPos.x + 5;
+      this.y = playerPos.y + 5;
     }
 
     // Update animation

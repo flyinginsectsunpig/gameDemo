@@ -1,4 +1,3 @@
-
 import { BaseWeapon } from "./WeaponTypes";
 import { Projectile } from "./Projectile";
 import { FollowerSpider } from "../entities/FollowerSpider";
@@ -8,10 +7,11 @@ import { Enemy } from "../entities/Enemy";
 let globalWeaponCount = 0;
 
 export class AssassinSpiderWeapon extends BaseWeapon {
-  private followerSpider: FollowerSpider | null = null;
+  private followerSpiders: FollowerSpider[] = [];
+  private hasSpawned = false;
   private spawnTimer = 0;
-  private spawnDelay = 0; // spawn spider immediately
-  private hasSpawned = false; // track if spider has been spawned
+  private spawnDelay = 2; // seconds before first spider spawns
+  private maxSpiders = 2; // Maximum number of spiders
   private weaponId: string;
 
   constructor() {
@@ -27,60 +27,57 @@ export class AssassinSpiderWeapon extends BaseWeapon {
   }
 
   public updateSpiders(deltaTime: number, enemies: Enemy[], playerPos: { x: number; y: number }) {
-    // Additional check: if we somehow have spawned flag but no spider, don't spawn again
-    if (this.hasSpawned && !this.followerSpider) {
-      console.log(`[${this.weaponId}] Spider was spawned before but is now missing - not respawning`);
-      return;
-    }
-    
-    // Spawn follower spider if we don't have one and haven't spawned before
-    if (!this.followerSpider && !this.hasSpawned) {
+    // Clean up dead spiders
+    this.followerSpiders = this.followerSpiders.filter(spider => {
+      if (!spider.isAlive()) {
+        spider.destroy();
+        console.log(`[${this.weaponId}] Spider died - Total spiders: ${this.followerSpiders.length - 1}`);
+        return false;
+      }
+      return true;
+    });
+
+    // Spawn spiders if we don't have enough and haven't spawned before
+    if (this.followerSpiders.length < this.maxSpiders && !this.hasSpawned) {
       this.spawnTimer += deltaTime;
-      
+
       if (this.spawnTimer >= this.spawnDelay) {
-        // Triple check we don't already have a spider
-        if (this.followerSpider) {
-          console.log(`[${this.weaponId}] Spider already exists, preventing duplicate spawn`);
-          return;
+        // Spawn multiple spiders with different positions
+        for (let i = this.followerSpiders.length; i < this.maxSpiders; i++) {
+          // Different offset positions for each spider
+          const offsetX = -80 - (i * 50); // Spread them out more behind player
+          const offsetY = -30 + (i * 40); // More vertical spread
+
+          const newSpider = new FollowerSpider(playerPos.x + offsetX, playerPos.y + offsetY);
+          this.followerSpiders.push(newSpider);
+          console.log(`[${this.weaponId}] Spawned follower spider ${i + 1} at (${playerPos.x + offsetX}, ${playerPos.y + offsetY}) - Total spiders: ${this.followerSpiders.length}`);
         }
-        
-        // Additional safeguard: check if hasSpawned somehow got set
-        if (this.hasSpawned) {
-          console.log(`[${this.weaponId}] hasSpawned flag already set, preventing duplicate`);
-          return;
-        }
-        
-        // Spawn spider very close to player
-        const offsetX = -60; // Closer behind player
-        const offsetY = -20; // Slightly offset vertically
-        
-        this.followerSpider = new FollowerSpider(playerPos.x + offsetX, playerPos.y + offsetY);
+
         this.hasSpawned = true; // Mark as spawned to prevent duplicates
-        console.log(`[${this.weaponId}] Spawned follower spider at (${playerPos.x + offsetX}, ${playerPos.y + offsetY}) - Total spiders: 1`);
-      }
-    } else if (this.followerSpider) {
-      // Update the follower spider
-      this.followerSpider.update(deltaTime, playerPos);
-      
-      // Remove if somehow died (but don't respawn automatically)
-      if (!this.followerSpider.isAlive()) {
-        this.followerSpider.destroy();
-        this.followerSpider = null;
-        console.log(`[${this.weaponId}] Spider died - not respawning`);
-        // Don't reset hasSpawned - this prevents automatic respawning
-        // If you want respawning, you can add upgrade logic later
       }
     }
+
+    // Update all spiders with current player position
+    this.followerSpiders.forEach((spider, index) => {
+      // Each spider follows directly on top of player with minimal offset
+      const followPos = {
+        x: playerPos.x - (index * 10), // Very small offset to distinguish multiple spiders
+        y: playerPos.y - (index * 10)
+      };
+      // Note: For weapon spiders, we don't have access to player movement direction
+      // so they'll use the basic following behavior
+      spider.update(deltaTime, followPos);
+    });
   }
 
   public renderSpiders(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
-    if (this.followerSpider) {
-      this.followerSpider.render(ctx, deltaTime, cameraX, cameraY);
-    }
+    this.followerSpiders.forEach(spider => {
+      spider.render(ctx, deltaTime, cameraX, cameraY);
+    });
   }
 
   public getSpiders(): FollowerSpider[] {
-    return this.followerSpider ? [this.followerSpider] : [];
+    return this.followerSpiders;
   }
 
   public upgradeMaxSpiders() {
