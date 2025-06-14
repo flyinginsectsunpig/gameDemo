@@ -63,40 +63,56 @@ export class FollowerSpider implements GameObject {
 
     let targetAnimation = "spider_idle";
 
-    // Duplicate player movement exactly
-    if (playerMoving && playerDirection) {
-      // Copy player's exact position with small offset to distinguish visually
-      this.x = playerPos.x + 5; // Small offset so it's not exactly on top
-      this.y = playerPos.y + 5;
+    // Calculate target position (offset behind player)
+    const targetX = playerPos.x - 60;
+    const targetY = playerPos.y - 20;
 
-      // Copy player's movement direction
-      this.lastDirection.x = playerDirection.x;
-      this.lastDirection.y = playerDirection.y;
+    // Calculate distance to target
+    const dx = targetX - this.x;
+    const dy = targetY - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
 
-      // Set velocity to match player movement pattern
-      this.vx = playerDirection.x * this.speed;
-      this.vy = playerDirection.y * this.speed;
+    // Only move if spider is far enough from target position
+    const followDistance = 50; // Increased minimum distance before spider starts following
+    
+    if (distance > followDistance) {
+      // Normalize direction
+      const directionX = dx / distance;
+      const directionY = dy / distance;
 
-      // Choose animation based on player's movement direction
-      const absX = Math.abs(playerDirection.x);
-      const absY = Math.abs(playerDirection.y);
+      // Update spider's direction immediately when moving
+      this.lastDirection.x = directionX;
+      this.lastDirection.y = directionY;
+
+      // Smooth movement with lerp-like behavior
+      const followSpeed = Math.min(this.speed * deltaTime, distance * 0.1);
+      const moveX = directionX * followSpeed;
+      const moveY = directionY * followSpeed;
+
+      // Move spider towards target with smoothed movement
+      this.x += moveX;
+      this.y += moveY;
+
+      // Set velocity for animation purposes
+      this.vx = moveX / deltaTime;
+      this.vy = moveY / deltaTime;
+
+      // Choose animation based on movement direction
+      const absX = Math.abs(this.lastDirection.x);
+      const absY = Math.abs(this.lastDirection.y);
 
       if (absY > 0.6) {
-        targetAnimation = playerDirection.y > 0 ? "spider_walk_down" : "spider_walk_up";
+        targetAnimation = this.lastDirection.y > 0 ? "spider_walk_up" : "spider_walk_down";
       } else if (absX > 0.6) {
         targetAnimation = "spider_walk_side";
       } else {
         targetAnimation = "spider_walk_diagonal";
       }
     } else {
-      // Player is idle, spider should be idle too
+      // Spider is close enough to target, go idle
       this.vx = 0;
       this.vy = 0;
       targetAnimation = "spider_idle";
-      
-      // Still maintain position near player when idle
-      this.x = playerPos.x + 5;
-      this.y = playerPos.y + 5;
     }
 
     // Update animation
@@ -129,7 +145,7 @@ export class FollowerSpider implements GameObject {
   }
 
   private shouldFlipSprite(): boolean {
-    return this.lastDirection.x < -0.3;
+    return this.lastDirection.x > 0.3;
   }
 
   public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
@@ -137,17 +153,23 @@ export class FollowerSpider implements GameObject {
 
     const spriteManager = SpriteManager.getInstance();
 
-    // Choose sprite based on current animation
+    // Choose sprite based on actual movement direction (more accurate)
     let spriteName = "spider_down";
+    const absX = Math.abs(this.lastDirection.x);
+    const absY = Math.abs(this.lastDirection.y);
 
-    if (this.currentAnimation === "spider_walk_up") {
-      spriteName = "spider_up";
-    } else if (this.currentAnimation === "spider_walk_side") {
-      spriteName = "spider_side";
-    } else if (this.currentAnimation === "spider_walk_diagonal") {
-      spriteName = this.lastDirection.y > 0 ? "spider_diagonal_down" : "spider_diagonal_up";
-    } else if (this.currentAnimation === "spider_walk_down" || this.currentAnimation === "spider_idle") {
-      spriteName = "spider_down";
+    if (this.currentAnimation === "spider_idle") {
+      spriteName = "spider_down"; // Default idle sprite
+    } else {
+      // Use movement direction to determine sprite
+      if (absY > 0.6) {
+        spriteName = this.lastDirection.y > 0 ? "spider_up" : "spider_down";
+      } else if (absX > 0.6) {
+        spriteName = "spider_side";
+      } else {
+        // Diagonal movement
+        spriteName = this.lastDirection.y > 0 ? "spider_diagonal_up" : "spider_diagonal_down";
+      }
     }
 
     const sprite = spriteManager.getSprite(spriteName);
@@ -175,8 +197,9 @@ export class FollowerSpider implements GameObject {
       // Use animation frame if available
       const frameToUse = currentFrame || this.lastAnimationFrame;
 
-      // Handle sprite flipping
-      const shouldFlip = this.shouldFlipSprite();
+      // Handle sprite flipping based on horizontal movement
+      // Only flip for side movement, and flip when moving left (negative x)
+      const shouldFlip = spriteName === "spider_side" && this.lastDirection.x < 0;
 
       if (shouldFlip) {
         ctx.scale(-1, 1);
