@@ -13,16 +13,17 @@ export class FollowerSpider implements GameObject {
   public height = 68; // Maintains 800:450 aspect ratio at larger scale
   private vx = 0;
   private vy = 0;
-  private speed = 180; // Slightly slower than player to create following effect
+  private speed = 200; // Slightly faster for better following
   private alive = true;
   private lastDirection = { x: 0, y: 1 }; // Track movement direction for sprite selection
   private animationManager: AnimationManager;
   private instanceId: string;
   private currentAnimation = "spider_idle";
   private lastAnimationFrame: any = null;
-  private optimalDistance = 80; // Preferred distance from player (closer)
-  private followThreshold = 150; // Threshold to start following
-  private minimumDistance = 40; // Minimum distance to maintain from player
+  private lastAnimationSwitch = 0; // For animation debouncing
+  private optimalDistance = 90; // Preferred distance from player
+  private followThreshold = 140; // Threshold to start following aggressively  
+  private minimumDistance = 50; // Minimum distance to maintain from player
 
   constructor(x: number, y: number) {
     this.x = x;
@@ -69,116 +70,97 @@ export class FollowerSpider implements GameObject {
     const dy = playerPos.y - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Debug: Log position and distance occasionally
-    if (Math.random() < 0.02) {
+    // Debug: Log position and distance occasionally (reduced frequency)
+    if (Math.random() < 0.001) {
       console.log(`[${this.instanceId}] Spider at (${this.x.toFixed(1)}, ${this.y.toFixed(1)}), Player at (${playerPos.x.toFixed(1)}, ${playerPos.y.toFixed(1)}), Distance: ${distance.toFixed(1)}`);
     }
 
     let targetAnimation = "spider_idle";
+    let isMoving = false;
     
-    // If too close to player, move away
+    // Simplified movement logic with division by zero guard
+    const safeDistance = distance || 0.0001; // Prevent divide by zero
+    const normalizedDx = dx / safeDistance;
+    const normalizedDy = dy / safeDistance;
+    
+    // Use wider dead zone to prevent oscillation
+    const deadZone = 15; // Larger dead zone around optimal distance
+    
     if (distance < this.minimumDistance) {
-      // Move away from player
-      this.vx = -(dx / distance) * this.speed * 0.6;
-      this.vy = -(dy / distance) * this.speed * 0.6;
+      // Too close - move away
+      this.vx = -normalizedDx * this.speed * 0.8;
+      this.vy = -normalizedDy * this.speed * 0.8;
+      isMoving = true;
       
-      this.x += this.vx * deltaTime;
-      this.y += this.vy * deltaTime;
+    } else if (distance > this.followThreshold) {
+      // Too far - move aggressively toward player
+      const urgency = Math.min((distance - this.followThreshold) / 100, 2.0);
+      this.vx = normalizedDx * this.speed * (1.0 + urgency);
+      this.vy = normalizedDy * this.speed * (1.0 + urgency);
+      isMoving = true;
       
-      // Update direction for sprite selection (moving away)
-      this.lastDirection.x = -dx / distance;
-      this.lastDirection.y = -dy / distance;
+    } else if (Math.abs(distance - this.optimalDistance) > deadZone) {
+      // Outside dead zone - move toward optimal distance
+      const distanceError = distance - this.optimalDistance;
+      const moveIntensity = Math.min(Math.abs(distanceError) / 50, 0.8);
+      this.vx = normalizedDx * this.speed * Math.sign(distanceError) * moveIntensity;
+      this.vy = normalizedDy * this.speed * Math.sign(distanceError) * moveIntensity;
+      isMoving = true;
       
-      // Choose animation based on movement direction
-      const absX = Math.abs(this.lastDirection.x);
-      const absY = Math.abs(this.lastDirection.y);
-      
-      if (absY > 0.7) {
-        targetAnimation = this.lastDirection.y > 0 ? "spider_walk_down" : "spider_walk_up";
-      } else if (absX > 0.7) {
-        targetAnimation = "spider_walk_side";
-      } else {
-        targetAnimation = "spider_walk_diagonal";
-      }
-    } else if (distance > this.optimalDistance) {
-      // Spider is too far, move towards player
-      // Calculate speed based on distance - further away = faster movement
-      const distanceRatio = Math.min(distance / this.optimalDistance, 3.0); // Allow up to 3x speed for very far distances
-      const adjustedSpeed = this.speed * distanceRatio;
-      
-      // Normalize direction vector
-      const normalizedDx = dx / distance;
-      const normalizedDy = dy / distance;
-      
-      // Move towards player
-      this.vx = normalizedDx * adjustedSpeed;
-      this.vy = normalizedDy * adjustedSpeed;
-      
-      // Update direction for sprite selection
-      this.lastDirection.x = normalizedDx;
-      this.lastDirection.y = normalizedDy;
-      
-      this.x += this.vx * deltaTime;
-      this.y += this.vy * deltaTime;
-
-      // Choose animation based on movement direction
-      const absX = Math.abs(this.lastDirection.x);
-      const absY = Math.abs(this.lastDirection.y);
-      
-      if (absY > 0.7) {
-        targetAnimation = this.lastDirection.y > 0 ? "spider_walk_down" : "spider_walk_up";
-      } else if (absX > 0.7) {
-        targetAnimation = "spider_walk_side";
-      } else {
-        targetAnimation = "spider_walk_diagonal";
-      }
     } else {
-      // Within acceptable range - mostly idle with slight movement towards optimal position
-      const targetX = playerPos.x - this.optimalDistance * 0.7; // Stay slightly behind player
-      const targetY = playerPos.y;
+      // In dead zone - apply strong decay to stop micro-movements
+      const decay = Math.pow(0.5, deltaTime * 60); // Stronger decay
+      this.vx *= decay;
+      this.vy *= decay;
       
-      const targetDx = targetX - this.x;
-      const targetDy = targetY - this.y;
-      const targetDistance = Math.sqrt(targetDx * targetDx + targetDy * targetDy);
-      
-      if (targetDistance > 10) {
-        // Gentle movement towards ideal position
-        this.vx = (targetDx / targetDistance) * this.speed * 0.3;
-        this.vy = (targetDy / targetDistance) * this.speed * 0.3;
-        
-        this.x += this.vx * deltaTime;
-        this.y += this.vy * deltaTime;
-        
-        // Update direction
-        this.lastDirection.x = targetDx / targetDistance;
-        this.lastDirection.y = targetDy / targetDistance;
-        
-        // Choose walking animation
-        const absX = Math.abs(this.lastDirection.x);
-        const absY = Math.abs(this.lastDirection.y);
-        
-        if (absY > 0.7) {
-          targetAnimation = this.lastDirection.y > 0 ? "spider_walk_down" : "spider_walk_up";
-        } else if (absX > 0.7) {
-          targetAnimation = "spider_walk_side";
-        } else {
-          targetAnimation = "spider_walk_diagonal";
-        }
-      } else {
-        // Close enough to ideal position - stay idle
-        this.vx *= 0.8;
-        this.vy *= 0.8;
-        this.x += this.vx * deltaTime;
-        this.y += this.vy * deltaTime;
-        targetAnimation = "spider_idle";
+      const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+      isMoving = currentSpeed > 20; // Higher threshold for "moving"
+    }
+    
+    // Update movement direction for animation with stability threshold
+    if (isMoving) {
+      const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+      if (speed > 20) { // Only update direction if moving with significant speed
+        this.lastDirection.x = this.vx / speed;
+        this.lastDirection.y = this.vy / speed;
       }
     }
+    
+    // Update position
+    this.x += this.vx * deltaTime;
+    this.y += this.vy * deltaTime;
+    
+    // Determine animation based on movement state and direction with hysteresis
+    if (isMoving) {
+      const absX = Math.abs(this.lastDirection.x);
+      const absY = Math.abs(this.lastDirection.y);
+      
+      // Use clearer thresholds for animation selection with hysteresis to prevent flickering
+      if (absY > 0.7) {
+        // Primarily vertical movement
+        targetAnimation = this.lastDirection.y > 0 ? "spider_walk_down" : "spider_walk_up";
+      } else if (absX > 0.7) {
+        // Primarily horizontal movement
+        targetAnimation = "spider_walk_side";
+      } else if (absX > 0.4 && absY > 0.4) {
+        // Diagonal movement
+        targetAnimation = "spider_walk_diagonal";
+      } else {
+        // Default movement animation - stick with current if already moving
+        targetAnimation = this.currentAnimation.includes("walk") ? this.currentAnimation : "spider_walk_down";
+      }
+    } else {
+      targetAnimation = "spider_idle";
+    }
 
-    // Switch animation if needed
-    if (this.currentAnimation !== targetAnimation) {
+    // Only switch animation if it's different and add debounce to prevent rapid switching
+    if (this.currentAnimation !== targetAnimation && performance.now() - this.lastAnimationSwitch > 100) {
       this.currentAnimation = targetAnimation;
+      this.lastAnimationSwitch = performance.now();
       this.animationManager.startAnimation(targetAnimation, this.instanceId);
-      console.log(`Spider switching to animation: ${targetAnimation}`);
+      if (Math.random() < 0.01) { // Further reduce console spam
+        console.log(`Spider switching to animation: ${targetAnimation}`);
+      }
     }
   }
 
@@ -192,6 +174,19 @@ export class FollowerSpider implements GameObject {
       globalSpiderCount--;
       console.log(`[${this.instanceId}] Spider destroyed. Global count: ${globalSpiderCount}`);
     }
+  }
+
+  public getBounds(): { x: number; y: number; width: number; height: number } {
+    return {
+      x: this.x - this.width / 2,
+      y: this.y - this.height / 2,
+      width: this.width,
+      height: this.height
+    };
+  }
+
+  private shouldFlipSprite(): boolean {
+    return this.lastDirection.x < -0.3;
   }
 
   public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
@@ -227,8 +222,8 @@ export class FollowerSpider implements GameObject {
 
       if (currentFrame) {
         this.lastAnimationFrame = currentFrame;
-        // Debug: log frame position more frequently to track animation
-        if (Math.random() < 0.2) {
+        // Debug: log frame position occasionally
+        if (Math.random() < 0.001) {
           console.log(`Spider frame: x=${currentFrame.x}, animation=${this.currentAnimation}, frameIndex: ${Math.floor(currentFrame.x / 800)}`);
         }
       }
@@ -245,57 +240,36 @@ export class FollowerSpider implements GameObject {
       // Use animation frame if available
       const frameToUse = currentFrame || this.lastAnimationFrame;
       
-      // Debug: log render calls to detect double rendering
-      if (Math.random() < 0.1) {
+      // Debug: log render calls occasionally
+      if (Math.random() < 0.001) {
         console.log(`[${this.instanceId}] Rendering spider at (${renderX}, ${renderY}) - direction: (${this.lastDirection.x.toFixed(2)}, ${this.lastDirection.y.toFixed(2)})`);
       }
 
+      // Consolidate flipping logic
+      const shouldFlip = this.shouldFlipSprite();
+      
+      if (shouldFlip) {
+        ctx.scale(-1, 1);
+      }
+
       if (frameToUse) {
-        // Flip sprite horizontally if moving left (for sideways movement)
-        const shouldFlip = this.lastDirection.x < -0.3;
-        
-        if (shouldFlip) {
-          ctx.scale(-1, 1);
-          ctx.drawImage(
-            sprite,
-            frameToUse.x, frameToUse.y, frameToUse.width, frameToUse.height,
-            -renderX - this.width,
-            renderY,
-            this.width,
-            this.height
-          );
-        } else {
-          ctx.drawImage(
-            sprite,
-            frameToUse.x, frameToUse.y, frameToUse.width, frameToUse.height,
-            renderX,
-            renderY,
-            this.width,
-            this.height
-          );
-        }
+        ctx.drawImage(
+          sprite,
+          frameToUse.x, frameToUse.y, frameToUse.width, frameToUse.height,
+          shouldFlip ? -renderX - this.width : renderX,
+          renderY,
+          this.width,
+          this.height
+        );
       } else {
         // Fallback to full sprite
-        const shouldFlip = this.lastDirection.x < -0.3;
-        
-        if (shouldFlip) {
-          ctx.scale(-1, 1);
-          ctx.drawImage(
-            sprite,
-            -renderX - this.width,
-            renderY,
-            this.width,
-            this.height
-          );
-        } else {
-          ctx.drawImage(
-            sprite,
-            renderX,
-            renderY,
-            this.width,
-            this.height
-          );
-        }
+        ctx.drawImage(
+          sprite,
+          shouldFlip ? -renderX - this.width : renderX,
+          renderY,
+          this.width,
+          this.height
+        );
       }
 
       ctx.restore();
