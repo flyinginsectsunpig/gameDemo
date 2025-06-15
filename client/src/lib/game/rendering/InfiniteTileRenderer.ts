@@ -67,6 +67,7 @@ export class InfiniteTileRenderer {
 
   // Spider management as part of tile system
   private spiders: SpiderEntity[] = [];
+  private lastSpiderRender = 0;
 
   // Ground tile types using different tiles from the 4x4 grid in Ground_new.png
   private static readonly GROUND_TILES = {
@@ -519,6 +520,16 @@ export class InfiniteTileRenderer {
 
   // New method to render spiders
   private renderSpiders(ctx: CanvasRenderingContext2D, camera: Camera): void {
+    // Limit spider rendering frequency to reduce lag and trails
+    const now = Date.now();
+    if (!this.lastSpiderRender) this.lastSpiderRender = 0;
+    
+    // Only render spiders every 50ms to reduce load
+    if (now - this.lastSpiderRender < 50) {
+      return;
+    }
+    this.lastSpiderRender = now;
+    
     this.spiders.forEach((spider) => {
       const screenX = Math.floor(spider.x - camera.x);
       const screenY = Math.floor(spider.y - camera.y);
@@ -539,12 +550,27 @@ export class InfiniteTileRenderer {
   }
 
   private drawSpider(ctx: CanvasRenderingContext2D, spider: any, screenX: number, screenY: number): void {
-    const spiderSize = this.tileSize * 2; // 2x larger than tiles for better visibility
+    const spiderSize = this.tileSize * 2;
 
     ctx.save();
+    
+    // Store previous position for clearing
+    if (!spider.previousScreenX) spider.previousScreenX = screenX;
+    if (!spider.previousScreenY) spider.previousScreenY = screenY;
+    
+    // Clear previous position if spider moved
+    if (spider.previousScreenX !== screenX || spider.previousScreenY !== screenY) {
+      const prevDrawX = Math.floor(spider.previousScreenX - (spiderSize - this.tileSize) / 2);
+      const prevDrawY = Math.floor(spider.previousScreenY - (spiderSize - this.tileSize) / 2);
+      ctx.clearRect(prevDrawX - 10, prevDrawY - 10, spiderSize + 20, spiderSize + 20);
+    }
+    
+    // Update stored position
+    spider.previousScreenX = screenX;
+    spider.previousScreenY = screenY;
 
     // Get the appropriate sprite for current animation
-    let spriteName = 'spider_down'; // Default sprite
+    let spriteName = 'spider_down';
     if (spider.currentAnimation) {
       switch (spider.currentAnimation) {
         case 'spider_walk_up':
@@ -574,71 +600,73 @@ export class InfiniteTileRenderer {
 
     if (sprite && sprite.complete) {
       try {
-        // Add blue tint to distinguish mechanical spider
-        ctx.shadowColor = "#3333ff";
-        ctx.shadowBlur = 6;
-        ctx.globalAlpha = 0.9;
+        // Disable smoothing for crisp sprites
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalCompositeOperation = 'source-over'; // Ensure normal drawing mode
+        
+        // No shadow effects to prevent trails
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1.0;
 
-        // Calculate animation frame similar to flower animation
-        const frameCount = spriteName === 'spider_jumping' ? 4 : 30; // Jumping has 4 stages, others have 30 frames
+        // Calculate animation frame efficiently with even slower updates
+        const frameCount = spriteName === 'spider_jumping' ? 4 : 30;
         const frameWidth = sprite.naturalWidth / frameCount;
         const frameHeight = sprite.naturalHeight;
 
-        // Use spider's animation frame or default to 0
+        // Much slower frame updates to reduce rendering calls
         let frameIndex = 0;
-        if (spider.lastDirection && spider.lastDirection.x !== undefined) {
-          // Create a simple frame progression based on position for animation
-          frameIndex = Math.floor((Date.now() * 0.01) % frameCount);
+        if (!spider.cachedFrameIndex) spider.cachedFrameIndex = 0;
+        if (!spider.lastFrameTime) spider.lastFrameTime = 0;
+        
+        const currentTime = Date.now();
+        if (currentTime - spider.lastFrameTime > 200) { // Even slower frame updates
+          spider.cachedFrameIndex = (spider.cachedFrameIndex + 1) % frameCount;
+          spider.lastFrameTime = currentTime;
         }
+        frameIndex = spider.cachedFrameIndex;
 
-        // Handle special case for jumping sprite (4 stages)
+        const drawX = Math.floor(screenX - (spiderSize - this.tileSize) / 2);
+        const drawY = Math.floor(screenY - (spiderSize - this.tileSize) / 2);
+        
+        // Handle special case for jumping sprite
         if (spriteName === 'spider_jumping') {
-          const jumpingFrameWidth = sprite.naturalWidth / 4; // 4 stages: idle, jumping, landing, idle
+          const jumpingFrameWidth = sprite.naturalWidth / 4;
           const jumpingFrameHeight = sprite.naturalHeight;
           
-          // Slower frame progression for jumping animation to show each stage clearly
-          frameIndex = Math.floor((Date.now() * 0.005) % 4);
+          if (!spider.jumpingFrameIndex) spider.jumpingFrameIndex = 0;
+          if (!spider.jumpingFrameTime) spider.jumpingFrameTime = 0;
+          
+          if (currentTime - spider.jumpingFrameTime > 250) { // Slower jumping animation
+            spider.jumpingFrameIndex = (spider.jumpingFrameIndex + 1) % 4;
+            spider.jumpingFrameTime = currentTime;
+          }
           
           ctx.drawImage(
             sprite,
-            frameIndex * jumpingFrameWidth, 0, jumpingFrameWidth, jumpingFrameHeight,
-            screenX - (spiderSize - this.tileSize) / 2, screenY - (spiderSize - this.tileSize) / 2,
-            spiderSize, spiderSize
+            spider.jumpingFrameIndex * jumpingFrameWidth, 0, jumpingFrameWidth, jumpingFrameHeight,
+            drawX, drawY, spiderSize, spiderSize
           );
         } else {
-          // Regular sprite handling
           ctx.drawImage(
             sprite,
             frameIndex * frameWidth, 0, frameWidth, frameHeight,
-            screenX - (spiderSize - this.tileSize) / 2, screenY - (spiderSize - this.tileSize) / 2,
-            spiderSize, spiderSize
+            drawX, drawY, spiderSize, spiderSize
           );
         }
 
-        // Add mechanical sparkle effect similar to flowers
-        if (Math.random() < 0.1) {
-          ctx.globalAlpha = 0.8;
-          ctx.fillStyle = '#00ffff';
-          for (let i = 0; i < 2; i++) {
-            const sparkleX = screenX + Math.random() * spiderSize;
-            const sparkleY = screenY + Math.random() * spiderSize;
-            const sparkleSize = 1 + Math.random() * 2;
-            ctx.beginPath();
-            ctx.arc(sparkleX, sparkleY, sparkleSize, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
+        // Remove sparkle effects entirely to prevent trails
+        // No sparkle effects
 
       } catch (error) {
         console.error("Error drawing spider sprite:", error, spriteName);
         this.renderFallbackSpider(ctx, screenX, screenY, spiderSize);
       }
-
-      ctx.restore();
     } else {
-      // Fallback spider rendering with enhanced visibility
       this.renderFallbackSpider(ctx, screenX, screenY, spiderSize);
     }
+
+    ctx.restore();
   }
 
   private renderFallbackSpider(ctx: CanvasRenderingContext2D, screenX: number, screenY: number, spiderSize: number): void {

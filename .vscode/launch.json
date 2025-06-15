@@ -1,0 +1,21 @@
+
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Development Server",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/server/index.ts",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "runtimeArgs": [
+        "--loader",
+        "tsx/esm"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+}

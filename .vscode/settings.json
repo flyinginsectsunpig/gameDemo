@@ -1,0 +1,10 @@
+
+{
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "path-intellisense.mappings": {
+    "@": "${workspaceRoot}/client/src",
+    "@shared": "${workspaceRoot}/shared"
+  }
+}

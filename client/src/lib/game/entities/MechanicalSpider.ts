@@ -85,6 +85,7 @@ export class MechanicalSpider implements GameObject {
     if (!this.alive) return;
 
     let targetAnimation = "spider_idle";
+    let positionChanged = false;
 
     if (this.isAttached && this.target) {
       // Spider is attached to enemy - deal damage over time
@@ -97,9 +98,12 @@ export class MechanicalSpider implements GameObject {
         return;
       }
 
-      // Follow the target enemy
-      this.x = this.target.x;
-      this.y = this.target.y;
+      // Follow the target enemy only if position actually changed
+      if (this.x !== this.target.x || this.y !== this.target.y) {
+        this.x = this.target.x;
+        this.y = this.target.y;
+        positionChanged = true;
+      }
 
       // Deal damage periodically
       if (this.damageTimer >= this.damageCooldown) {
@@ -107,7 +111,6 @@ export class MechanicalSpider implements GameObject {
         this.damageTimer = 0;
       }
 
-      // Use idle animation when attached
       targetAnimation = "spider_idle";
     } else {
       // Spider is searching for a target
@@ -121,24 +124,25 @@ export class MechanicalSpider implements GameObject {
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < 35) {
-          // Attach to enemy (increased range to prevent bouncing)
+          // Attach to enemy
           this.isAttached = true;
           this.isJumping = false;
-          // Snap to enemy position when attaching
           this.x = this.target.x;
           this.y = this.target.y;
+          positionChanged = true;
         } else if (this.isJumping) {
           // Handle jumping animation
           this.jumpProgress += deltaTime / this.jumpDuration;
           
           if (this.jumpProgress >= 1) {
-            // Jump complete - arrive at target and check for immediate attachment
+            // Jump complete
             this.x = this.jumpTargetPos.x;
             this.y = this.jumpTargetPos.y;
             this.isJumping = false;
             this.jumpProgress = 0;
+            positionChanged = true;
             
-            // Check if we can immediately attach after landing
+            // Check for immediate attachment
             if (this.target && this.target.isAlive()) {
               const finalDx = this.target.x - this.x;
               const finalDy = this.target.y - this.y;
@@ -153,45 +157,51 @@ export class MechanicalSpider implements GameObject {
             
             targetAnimation = "spider_idle";
           } else {
-            // Interpolate position during jump with arc
+            // Smooth interpolation during jump
             const t = this.jumpProgress;
-            this.x = this.jumpStartPos.x + (this.jumpTargetPos.x - this.jumpStartPos.x) * t;
-            this.y = this.jumpStartPos.y + (this.jumpTargetPos.y - this.jumpStartPos.y) * t;
+            const newX = this.jumpStartPos.x + (this.jumpTargetPos.x - this.jumpStartPos.x) * t;
+            const newY = this.jumpStartPos.y + (this.jumpTargetPos.y - this.jumpStartPos.y) * t;
             
-            // Update direction for sprite selection
-            this.lastDirection.x = (this.jumpTargetPos.x - this.jumpStartPos.x) / distance;
-            this.lastDirection.y = (this.jumpTargetPos.y - this.jumpStartPos.y) / distance;
+            if (Math.abs(newX - this.x) > 1 || Math.abs(newY - this.y) > 1) {
+              this.x = newX;
+              this.y = newY;
+              positionChanged = true;
+            }
+            
+            // Only update direction when starting jump or major direction change
+            if (this.jumpProgress < 0.1) {
+              this.lastDirection.x = (this.jumpTargetPos.x - this.jumpStartPos.x) / distance;
+              this.lastDirection.y = (this.jumpTargetPos.y - this.jumpStartPos.y) / distance;
+            }
             
             targetAnimation = "spider_jumping";
           }
         } else {
-          // Always jump to enemies near the player, regardless of spider's current position
+          // Start jumping
           this.isJumping = true;
           this.jumpStartPos = { x: this.x, y: this.y };
-          
-          // Jump directly to the enemy's position (they're already verified to be within player's radius)
           this.jumpTargetPos = { x: this.target.x, y: this.target.y };
           this.jumpProgress = 0;
           
-          // Update direction for sprite selection
           this.lastDirection.x = dx / distance;
           this.lastDirection.y = dy / distance;
           
           targetAnimation = "spider_jumping";
-        
         }
       } else {
-        // No target found - stay idle at current position
-        this.vx = 0;
-        this.vy = 0;
         targetAnimation = "spider_idle";
       }
     }
 
-    // Update animation
-    this.animationManager.update(deltaTime, this.instanceId, targetAnimation);
+    // Only update animation when absolutely necessary to reduce lag
     if (this.currentAnimation !== targetAnimation) {
+      this.animationManager.update(deltaTime, this.instanceId, targetAnimation);
       this.currentAnimation = targetAnimation;
+      this.lastAnimationSwitch = Date.now();
+    } else if (positionChanged && Date.now() - this.lastAnimationSwitch > 50) {
+      // Throttle animation updates to reduce lag
+      this.animationManager.update(deltaTime, this.instanceId, targetAnimation);
+      this.lastAnimationSwitch = Date.now();
     }
   }
 
@@ -232,20 +242,9 @@ export class MechanicalSpider implements GameObject {
   
 
   public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
-    if (!this.alive) return;
-
-    // This method should not be called if the spider is properly registered with tile renderer
-    // The tile renderer handles all sprite-based rendering
-    // This is kept as a fallback only
-    console.warn("Spider render method called - should be handled by tile renderer");
-    
-    // Minimal fallback rendering - just a small indicator
-    ctx.save();
-    ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-    ctx.beginPath();
-    ctx.arc(this.x - cameraX, this.y - cameraY, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    // Spider rendering is completely disabled - handled by InfiniteTileRenderer
+    // This prevents any double rendering or trails
+    return;
   }
 
   private renderFallbackSpider(ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number) {
