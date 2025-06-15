@@ -55,12 +55,25 @@ export class MechanicalSpider implements GameObject {
       { x: 0, y: 0, width: 800, height: 450 }
     ];
 
+    // Jumping animation - 4 stages from the 1408x272 spritesheet
+    // Stage 1: idle, Stage 2: jumping, Stage 3: landing, Stage 4: idle again
+    const jumpingFrames = [];
+    const jumpFrameWidth = 1408 / 4; // 352px per frame
+    for (let i = 0; i < 4; i++) {
+      jumpingFrames.push({
+        x: i * jumpFrameWidth,
+        y: 0,
+        width: jumpFrameWidth,
+        height: 272
+      });
+    }
+
     this.animationManager.addAnimation("spider_idle", idleFrames, 0.5, true);
     this.animationManager.addAnimation("spider_walk_down", walkFrames, 0.05, true);
     this.animationManager.addAnimation("spider_walk_up", walkFrames, 0.05, true);
     this.animationManager.addAnimation("spider_walk_side", walkFrames, 0.05, true);
     this.animationManager.addAnimation("spider_walk_diagonal", walkFrames, 0.05, true);
-    this.animationManager.addAnimation("spider_jumping", walkFrames, 0.03, true);
+    this.animationManager.addAnimation("spider_jumping", jumpingFrames, 0.1, false); // Don't loop, play once
 
     this.lastAnimationFrame = idleFrames[0];
     
@@ -107,20 +120,37 @@ export class MechanicalSpider implements GameObject {
         const dy = this.target.y - this.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < 20) {
-          // Attach to enemy
+        if (distance < 35) {
+          // Attach to enemy (increased range to prevent bouncing)
           this.isAttached = true;
           this.isJumping = false;
+          // Snap to enemy position when attaching
+          this.x = this.target.x;
+          this.y = this.target.y;
         } else if (this.isJumping) {
           // Handle jumping animation
           this.jumpProgress += deltaTime / this.jumpDuration;
           
           if (this.jumpProgress >= 1) {
-            // Jump complete - arrive at target
+            // Jump complete - arrive at target and check for immediate attachment
             this.x = this.jumpTargetPos.x;
             this.y = this.jumpTargetPos.y;
             this.isJumping = false;
             this.jumpProgress = 0;
+            
+            // Check if we can immediately attach after landing
+            if (this.target && this.target.isAlive()) {
+              const finalDx = this.target.x - this.x;
+              const finalDy = this.target.y - this.y;
+              const finalDistance = Math.sqrt(finalDx * finalDx + finalDy * finalDy);
+              
+              if (finalDistance < 35) {
+                this.isAttached = true;
+                this.x = this.target.x;
+                this.y = this.target.y;
+              }
+            }
+            
             targetAnimation = "spider_idle";
           } else {
             // Interpolate position during jump with arc
@@ -134,10 +164,12 @@ export class MechanicalSpider implements GameObject {
             
             targetAnimation = "spider_jumping";
           }
-        } else if (distance > 60) {
-          // Start jump if enemy is far enough
+        } else {
+          // Always jump to enemies near the player, regardless of spider's current position
           this.isJumping = true;
           this.jumpStartPos = { x: this.x, y: this.y };
+          
+          // Jump directly to the enemy's position (they're already verified to be within player's radius)
           this.jumpTargetPos = { x: this.target.x, y: this.target.y };
           this.jumpProgress = 0;
           
@@ -146,30 +178,7 @@ export class MechanicalSpider implements GameObject {
           this.lastDirection.y = dy / distance;
           
           targetAnimation = "spider_jumping";
-        } else {
-          // Walk normally when close to target
-          this.vx = (dx / distance) * this.speed;
-          this.vy = (dy / distance) * this.speed;
-
-          // Update direction for sprite selection
-          this.lastDirection.x = dx / distance;
-          this.lastDirection.y = dy / distance;
-
-          // Update position
-          this.x += this.vx * deltaTime;
-          this.y += this.vy * deltaTime;
-
-          // Choose animation based on movement direction
-          const absX = Math.abs(this.lastDirection.x);
-          const absY = Math.abs(this.lastDirection.y);
-
-          if (absY > 0.6) {
-            targetAnimation = this.lastDirection.y > 0 ? "spider_walk_up" : "spider_walk_down";
-          } else if (absX > 0.6) {
-            targetAnimation = "spider_walk_side";
-          } else {
-            targetAnimation = "spider_walk_diagonal";
-          }
+        
         }
       } else {
         // No target found - stay idle at current position
@@ -188,17 +197,18 @@ export class MechanicalSpider implements GameObject {
 
   private findNearestEnemy(enemies: Enemy[], playerPos: { x: number; y: number }) {
     let nearestEnemy: Enemy | null = null;
-    let nearestDistance = this.searchRadius;
+    let nearestDistance = Infinity;
 
     for (const enemy of enemies) {
       if (!enemy.isAlive()) continue;
 
-      // Check if enemy is within radius of player, not spider
+      // Check if enemy is within radius of player
       const dx = enemy.x - playerPos.x;
       const dy = enemy.y - playerPos.y;
       const distanceFromPlayer = Math.sqrt(dx * dx + dy * dy);
 
-      if (distanceFromPlayer < nearestDistance) {
+      // Only consider enemies within player's radius
+      if (distanceFromPlayer <= this.searchRadius && distanceFromPlayer < nearestDistance) {
         nearestDistance = distanceFromPlayer;
         nearestEnemy = enemy;
       }
@@ -219,86 +229,22 @@ export class MechanicalSpider implements GameObject {
 
   
 
+  
+
   public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
     if (!this.alive) return;
 
-    // Simple circle rendering for testing
+    // This method should not be called if the spider is properly registered with tile renderer
+    // The tile renderer handles all sprite-based rendering
+    // This is kept as a fallback only
+    console.warn("Spider render method called - should be handled by tile renderer");
+    
+    // Minimal fallback rendering - just a small indicator
     ctx.save();
-    
-    // Don't apply camera offset here - it should be handled by the parent rendering context
-    const centerX = this.x;
-    // Add jump height effect during jumping
-    let jumpOffset = 0;
-    if (this.isJumping) {
-      // Create arc effect - highest at middle of jump
-      const t = this.jumpProgress;
-      jumpOffset = -this.jumpHeight * Math.sin(t * Math.PI);
-    }
-    const centerY = this.y + jumpOffset;
-    const radius = 30;
-    
-    // Different colors based on spider state
-    if (this.isAttached && this.target) {
-      // Red when attached and dealing damage
-      ctx.fillStyle = "#ff0000";
-      ctx.strokeStyle = "#ff6666";
-      ctx.shadowColor = "#ff0000";
-      ctx.shadowBlur = 10;
-      
-      // Pulsing effect
-      const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
-      ctx.globalAlpha = pulse;
-    } else if (this.isJumping) {
-      // Yellow/orange when jumping
-      ctx.fillStyle = "#ffaa00";
-      ctx.strokeStyle = "#ff8800";
-      ctx.shadowColor = "#ffaa00";
-      ctx.shadowBlur = 15;
-      ctx.globalAlpha = 1.0;
-    } else {
-      // Blue when searching/moving
-      ctx.fillStyle = "#0066ff";
-      ctx.strokeStyle = "#3399ff";
-      ctx.shadowColor = "#0066ff";
-      ctx.shadowBlur = 5;
-      ctx.globalAlpha = 1.0;
-    }
-    
-    ctx.lineWidth = 3;
-    
-    // Draw main circle
+    ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
     ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.arc(this.x - cameraX, this.y - cameraY, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.stroke();
-    
-    // Add a white center dot for visibility
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * 0.3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Add direction indicator (small line showing movement direction)
-    if (this.lastDirection.x !== 0 || this.lastDirection.y !== 0) {
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.lineTo(
-        centerX + this.lastDirection.x * radius * 0.8,
-        centerY + this.lastDirection.y * radius * 0.8
-      );
-      ctx.stroke();
-    }
-    
-    // Add shadow when jumping
-    if (this.isJumping) {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-      ctx.beginPath();
-      ctx.ellipse(this.x, this.y, radius * 0.8, radius * 0.4, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
     ctx.restore();
   }
 

@@ -580,7 +580,7 @@ export class InfiniteTileRenderer {
         ctx.globalAlpha = 0.9;
 
         // Calculate animation frame similar to flower animation
-        const frameCount = spriteName === 'spider_jumping' ? 30 : 30; // Most spider sprites have 30 frames
+        const frameCount = spriteName === 'spider_jumping' ? 4 : 30; // Jumping has 4 stages, others have 30 frames
         const frameWidth = sprite.naturalWidth / frameCount;
         const frameHeight = sprite.naturalHeight;
 
@@ -591,10 +591,13 @@ export class InfiniteTileRenderer {
           frameIndex = Math.floor((Date.now() * 0.01) % frameCount);
         }
 
-        // Handle special case for jumping sprite
+        // Handle special case for jumping sprite (4 stages)
         if (spriteName === 'spider_jumping') {
-          const jumpingFrameWidth = sprite.naturalWidth / 30;
+          const jumpingFrameWidth = sprite.naturalWidth / 4; // 4 stages: idle, jumping, landing, idle
           const jumpingFrameHeight = sprite.naturalHeight;
+          
+          // Slower frame progression for jumping animation to show each stage clearly
+          frameIndex = Math.floor((Date.now() * 0.005) % 4);
           
           ctx.drawImage(
             sprite,

@@ -472,11 +472,6 @@ export class GameEngine {
     // Render player
     this.player.render(this.ctx, deltaTime);
 
-    // Render spiders if player is AssassinPlayer
-    if (this.player instanceof AssassinPlayer) {
-      this.player.renderSpiders(this.ctx, deltaTime, this.camera.x, this.camera.y);
-    }
-
     // Render enemies
     this.enemies.forEach(enemy => {
       if (enemy.isAlive()) {

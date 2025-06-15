@@ -11,6 +11,7 @@ let globalAssassinPlayerCount = 0;
 export class AssassinPlayer extends Player {
   private followerSpider: MechanicalSpider | null = null;
   private spiderSpawned = false;
+  private tileRenderer: any = null;
 
   constructor(x: number, y: number) {
     super(x, y);
@@ -115,6 +116,31 @@ export class AssassinPlayer extends Player {
       this.followerSpider = new MechanicalSpider(this.x + offsetX, this.y + offsetY);
       this.spiderSpawned = true;
       console.log(`[${this.instanceId}] Spawned child spider at (${this.x + offsetX}, ${this.y + offsetY})`);
+      
+      // Register with tile renderer if available
+      if (this.tileRenderer) {
+        this.registerSpiderWithTileRenderer();
+      }
+    }
+  }
+
+  private registerSpiderWithTileRenderer() {
+    if (this.followerSpider && this.tileRenderer) {
+      this.tileRenderer.addSpider({
+        x: this.followerSpider.x,
+        y: this.followerSpider.y,
+        instanceId: this.followerSpider.instanceId || `mechanical_spider_${Date.now()}`,
+        currentAnimation: this.followerSpider.currentAnimation || 'spider_idle',
+        lastDirection: this.followerSpider.lastDirection || { x: 0, y: 1 }
+      });
+    }
+  }
+
+  public setTileRenderer(tileRenderer: any) {
+    this.tileRenderer = tileRenderer;
+    // Register spider if it exists
+    if (this.followerSpider) {
+      this.registerSpiderWithTileRenderer();
     }
   }
 
@@ -134,9 +160,20 @@ export class AssassinPlayer extends Player {
 
 
   public updateSpiders(deltaTime: number, enemies: Enemy[], playerPos: { x: number; y: number }) {
-    if (this.followerSpider && this.followerSpider.isAlive()) {
-      // Update spider with enemies but not player position (so it stays stationary)
-      this.followerSpider.update(deltaTime, enemies, { x: this.followerSpider.x, y: this.followerSpider.y });
+    // Update child spider if it exists
+    if (this.followerSpider) {
+      this.followerSpider.update(deltaTime, enemies, { x: this.x, y: this.y });
+
+      // Update tile renderer with spider position and animation state
+      if (this.tileRenderer) {
+        this.tileRenderer.updateSpider(
+          this.followerSpider.instanceId || `mechanical_spider_${Date.now()}`,
+          this.followerSpider.x,
+          this.followerSpider.y,
+          this.followerSpider.currentAnimation || 'spider_idle',
+          this.followerSpider.lastDirection || { x: 0, y: 1 }
+        );
+      }
     } else if (this.followerSpider && !this.followerSpider.isAlive()) {
       // Clean up dead spider
       this.followerSpider = null;
