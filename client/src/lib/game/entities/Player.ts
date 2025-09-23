@@ -22,6 +22,7 @@ export class Player implements GameObject {
   public collisionHeight = 70; // Taller collision box for better vertical collision
   public speed = 200;
   public health = 100;
+  public maxHealth = 100;
   private lastDamageTime = 0;
   private orbitalWeapons: OrbitalWeapon[] = [];
   private orbitalPositions: { x: number; y: number }[] = [];
@@ -427,6 +428,10 @@ export class Player implements GameObject {
   public takeDamage(amount: number): void {
     this.health -= amount;
     this.lastDamageTime = Date.now();
+  }
+
+  public heal(amount: number): void {
+    this.health = Math.min(this.maxHealth, this.health + amount);
   }
 
   private checkTileCollision(x: number, y: number, tileRenderer: any): boolean {

@@ -40,7 +40,7 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     color: "#45b7d1",
     apply: (player: Player) => {
       if (player.weapon instanceof SylphBloomsWeapon) {
-        player.weapon.upgradeCapacity();
+        player.weapon.upgradeFlowerCapacity();
       }
     }
   },
@@ -51,7 +51,7 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     color: "#96ceb4",
     apply: (player: Player) => {
       if (player.weapon instanceof SylphBloomsWeapon) {
-        player.weapon.upgradeLifespan();
+        player.weapon.upgradeFlowerLifespan();
       }
     }
   },
