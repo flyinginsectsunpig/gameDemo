@@ -1,0 +1,22 @@
+require is not defined
+at AssassinPlayer.setSmallSpidersMode (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/src/lib/game/entities/AssassinPlayer.ts:308:32)
+at Object.apply (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/src/lib/game/entities/PowerUp.ts:74:16)
+at handlePowerUpSelect (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/src/components/Game.tsx:67:15)
+at handleSelect (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/src/components/PowerUpSelection.tsx:39:5)
+at onClick (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/src/components/PowerUpSelection.tsx:57:26)
+at HTMLUnknownElement.callCallback2 (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LGZLQBMG.js?v=d0525cd9:3674:22)
+at Object.invokeGuardedCallbackDev (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LGZLQBMG.js?v=d0525cd9:3699:24)
+at invokeGuardedCallback (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LGZLQBMG.js?v=d0525cd9:3733:39)
+at invokeGuardedCallbackAndCatchFirstError (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LGZLQBMG.js?v=d0525cd9:3736:33)
+at executeDispatch (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LGZLQBMG.js?v=d0525cd9:7014:11)
+require is not defined
+at AssassinPlayer.setSmallSpidersMode (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/src/lib/game/entities/AssassinPlayer.ts:308:32)
+at Object.apply (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/src/lib/game/entities/PowerUp.ts:74:16)
+at handlePowerUpSelect (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/src/components/Game.tsx:67:15)
+at handleSelect (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/src/components/PowerUpSelection.tsx:39:5)
+at onClick (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/src/components/PowerUpSelection.tsx:57:26)
+at HTMLUnknownElement.callCallback2 (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LGZLQBMG.js?v=d0525cd9:3674:22)
+at Object.invokeGuardedCallbackDev (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LGZLQBMG.js?v=d0525cd9:3699:24)
+at invokeGuardedCallback (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LGZLQBMG.js?v=d0525cd9:3733:39)
+at invokeGuardedCallbackAndCatchFirstError (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LGZLQBMG.js?v=d0525cd9:3736:33)
+at executeDispatch (https://4d79dd85-b0b6-4cc5-ba18-679a21eea8f3-00-3egcfr7mivcqq.kirk.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LGZLQBMG.js?v=d0525cd
