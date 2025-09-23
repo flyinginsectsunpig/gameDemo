@@ -432,32 +432,29 @@ export class GameEngine {
     const gameState = useGameState.getState();
     const audioState = useAudio.getState();
 
-    // Check for dead enemies that were killed by spiders
-    this.enemies.forEach(enemy => {
-      if (!enemy.isAlive()) {
-        // Check if any spider is near this dead enemy (indicating spider kill)
-        const spiders = (this.player as AssassinPlayer).getSpiders();
-        const isSpiderKill = spiders.some(spider => {
-          const dx = spider.x - enemy.x;
-          const dy = spider.y - enemy.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          return distance < 30; // Spider was close enough to be the killer
-        });
+    // Track enemies that just died this frame (not processed yet)
+    const deadEnemies = this.enemies.filter(enemy => !enemy.isAlive());
+    
+    deadEnemies.forEach(enemy => {
+      // Check if any spider is attached to this dead enemy (indicating spider kill)
+      const spiders = (this.player as AssassinPlayer).getSpiders();
+      const isSpiderKill = spiders.some(spider => {
+        return spider.isAttached && Math.abs(spider.x - enemy.x) < 5 && Math.abs(spider.y - enemy.y) < 5;
+      });
 
-        if (isSpiderKill) {
-          // Award score and drop experience
-          gameState.addScore(enemy.getScoreValue());
-          this.createDeathParticles(enemy.x, enemy.y);
+      if (isSpiderKill) {
+        // Award score and drop experience
+        gameState.addScore(enemy.getScoreValue());
+        this.createDeathParticles(enemy.x, enemy.y);
 
-          // Play hit sound
-          if (!audioState.isMuted) {
-            audioState.playHit();
-          }
-
-          // Drop experience orb
-          const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
-          this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
+        // Play hit sound
+        if (!audioState.isMuted) {
+          audioState.playHit();
         }
+
+        // Drop experience orb
+        const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
+        this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
       }
     });
   }

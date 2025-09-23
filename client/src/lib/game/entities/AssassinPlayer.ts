@@ -404,8 +404,9 @@ export class AssassinPlayer extends Player {
       this.spiderMode = "big";
       this.respawnSpider();
       // Update game state
-      const { useGameState } = require("../../stores/useGameState");
-      useGameState.getState().setSpiderMode("big");
+      import("../../stores/useGameState").then(({ useGameState }) => {
+        useGameState.getState().setSpiderMode("big");
+      });
     }
   }
 
@@ -414,8 +415,9 @@ export class AssassinPlayer extends Player {
       this.spiderMode = "small";
       this.respawnSpider();
       // Update game state
-      const { useGameState } = require("../../stores/useGameState");
-      useGameState.getState().setSpiderMode("small");
+      import("../../stores/useGameState").then(({ useGameState }) => {
+        useGameState.getState().setSpiderMode("small");
+      });
     }
   }
 
