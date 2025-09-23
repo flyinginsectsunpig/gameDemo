@@ -1,6 +1,7 @@
 
 import { SylphBloomsWeapon } from "../weapons/SylphBloomsWeapon";
 import { Player } from "./Player";
+import { AssassinPlayer } from "./AssassinPlayer";
 
 export interface PowerUpDefinition {
   id: string;
@@ -8,14 +9,17 @@ export interface PowerUpDefinition {
   description: string;
   color: string;
   apply: (player: Player) => void;
+  characterRestriction?: "sylph" | "assassin";
 }
 
 export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
+  // Sylph-specific powerups
   {
     id: "damage",
     name: "Flower Power",
     description: "Your flowers deal more damage to enemies",
     color: "#ff6b6b",
+    characterRestriction: "sylph",
     apply: (player: Player) => {
       if (player.weapon instanceof SylphBloomsWeapon) {
         player.weapon.upgradeDamage();
@@ -27,6 +31,7 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     name: "Rapid Bloom",
     description: "Spawn flowers more frequently",
     color: "#4ecdc4",
+    characterRestriction: "sylph",
     apply: (player: Player) => {
       if (player.weapon instanceof SylphBloomsWeapon) {
         player.weapon.upgradeFireRate();
@@ -38,6 +43,7 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     name: "Garden Growth",
     description: "Maintain more flowers at once",
     color: "#45b7d1",
+    characterRestriction: "sylph",
     apply: (player: Player) => {
       if (player.weapon instanceof SylphBloomsWeapon) {
         player.weapon.upgradeFlowerCapacity();
@@ -49,12 +55,39 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     name: "Eternal Bloom",
     description: "Flowers last longer before wilting",
     color: "#96ceb4",
+    characterRestriction: "sylph",
     apply: (player: Player) => {
       if (player.weapon instanceof SylphBloomsWeapon) {
         player.weapon.upgradeFlowerLifespan();
       }
     }
   },
+  // Assassin-specific powerups (mutually exclusive)
+  {
+    id: "big_spider",
+    name: "Big Spider",
+    description: "Replace spider with a powerful tank-killer (high single-target DPS)",
+    color: "#8b0000",
+    characterRestriction: "assassin",
+    apply: (player: Player) => {
+      if (player instanceof AssassinPlayer) {
+        player.setBigSpiderMode(true);
+      }
+    }
+  },
+  {
+    id: "small_spiders",
+    name: "Small Spiders",
+    description: "Replace spider with multiple fast swarm-killers (die faster but excel vs. hordes)",
+    color: "#4169e1",
+    characterRestriction: "assassin",
+    apply: (player: Player) => {
+      if (player instanceof AssassinPlayer) {
+        player.setSmallSpidersMode(true);
+      }
+    }
+  },
+  // Universal powerups
   {
     id: "health",
     name: "Nature's Blessing",

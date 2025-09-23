@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PowerUpDefinition, POWERUP_DEFINITIONS } from "../lib/game/entities/PowerUp";
+import { useGameState } from "../lib/stores/useGameState";
 
 interface PowerUpSelectionProps {
   onSelect: (powerUp: PowerUpDefinition) => void;
@@ -7,9 +8,28 @@ interface PowerUpSelectionProps {
 }
 
 export default function PowerUpSelection({ onSelect, onClose }: PowerUpSelectionProps) {
+  const { selectedCharacter, spiderMode } = useGameState();
+  
   const [selectedPowerUps] = useState(() => {
+    // Filter powerups based on character
+    let availablePowerUps = POWERUP_DEFINITIONS.filter(powerUp => {
+      // Universal powerups are always available
+      if (!powerUp.characterRestriction) return true;
+      
+      // Character-specific powerups
+      if (selectedCharacter?.id === "sylph" && powerUp.characterRestriction === "sylph") return true;
+      if (selectedCharacter?.id === "assassin" && powerUp.characterRestriction === "assassin") {
+        // For assassin, filter out spider modes if one is already selected
+        if (powerUp.id === "big_spider" && spiderMode === "small") return false;
+        if (powerUp.id === "small_spiders" && spiderMode === "big") return false;
+        return true;
+      }
+      
+      return false;
+    });
+    
     // Randomly select 3 power-ups
-    const shuffled = [...POWERUP_DEFINITIONS].sort(() => 0.5 - Math.random());
+    const shuffled = [...availablePowerUps].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, 3);
   });
 

@@ -381,6 +381,35 @@ export class GameEngine {
           }
         });
       }
+    } else {
+      // Spider vs Enemy collisions for AssassinPlayer
+      const spiders = this.player.getSpiders();
+      spiders.forEach(spider => {
+        this.enemies.forEach(enemy => {
+          if (!enemy.isAlive()) return;
+
+          // Check if spider is attached to enemy (they share same position)
+          const dx = spider.x - enemy.x;
+          const dy = spider.y - enemy.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 20 && spider.isAttached) {
+            // Spider is dealing damage to enemy
+            const prevHealth = enemy.health;
+            // Let spider handle its own damage timing
+            
+            // Check if enemy just died
+            if (prevHealth > 0 && !enemy.isAlive()) {
+              gameState.addScore(enemy.getScoreValue());
+              this.createDeathParticles(enemy.x, enemy.y);
+
+              // Drop experience orb
+              const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
+              this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
+            }
+          }
+        });
+      });
     }
 
     // Player vs Experience Orb collisions

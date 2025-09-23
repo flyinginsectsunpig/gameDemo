@@ -12,6 +12,7 @@ export class AssassinPlayer extends Player {
   private followerSpider: MechanicalSpider | null = null;
   private spiderSpawned = false;
   private tileRenderer: any = null;
+  private spiderMode: "normal" | "big" | "small" = "normal";
 
   constructor(x: number, y: number) {
     super(x, y);
@@ -113,9 +114,9 @@ export class AssassinPlayer extends Player {
       const offsetX = -60;
       const offsetY = -20;
 
-      this.followerSpider = new MechanicalSpider(this.x + offsetX, this.y + offsetY);
+      this.followerSpider = new MechanicalSpider(this.x + offsetX, this.y + offsetY, this.spiderMode);
       this.spiderSpawned = true;
-      console.log(`[${this.instanceId}] Spawned child spider at (${this.x + offsetX}, ${this.y + offsetY})`);
+      console.log(`[${this.instanceId}] Spawned ${this.spiderMode} spider at (${this.x + offsetX}, ${this.y + offsetY})`);
       
       // Register with tile renderer if available
       if (this.tileRenderer) {
@@ -396,5 +397,37 @@ export class AssassinPlayer extends Player {
   public getWeapon() {
     // Return null to prevent flower weapon from being used
     return null;
+  }
+
+  public setBigSpiderMode(enable: boolean) {
+    if (enable && this.spiderMode !== "big") {
+      this.spiderMode = "big";
+      this.respawnSpider();
+      // Update game state
+      const { useGameState } = require("../../stores/useGameState");
+      useGameState.getState().setSpiderMode("big");
+    }
+  }
+
+  public setSmallSpidersMode(enable: boolean) {
+    if (enable && this.spiderMode !== "small") {
+      this.spiderMode = "small";
+      this.respawnSpider();
+      // Update game state
+      const { useGameState } = require("../../stores/useGameState");
+      useGameState.getState().setSpiderMode("small");
+    }
+  }
+
+  private respawnSpider() {
+    // Remove existing spider
+    if (this.followerSpider) {
+      this.followerSpider.destroy();
+      this.followerSpider = null;
+      this.spiderSpawned = false;
+    }
+
+    // Spawn new spider with mode-specific stats
+    this.spawnSpider();
   }
 }

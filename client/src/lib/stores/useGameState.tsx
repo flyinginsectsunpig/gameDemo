@@ -22,6 +22,7 @@ interface GameState {
   experienceToNext: number;
   level: number;
   selectedCharacter: CharacterType | null;
+  spiderMode: "normal" | "big" | "small";
 
   // Actions
   start: () => void;
@@ -42,6 +43,7 @@ interface GameState {
   setScore: (score: number) => void;
   setHealth: (health: number) => void;
   setWave: (wave: number) => void;
+  setSpiderMode: (mode: "normal" | "big" | "small") => void;
 }
 
 export const useGameState = create<GameState>()(
@@ -55,6 +57,7 @@ export const useGameState = create<GameState>()(
     experienceToNext: 100,
     level: 1,
     selectedCharacter: null,
+    spiderMode: "normal",
 
     start: () => {
       set((state) => {
@@ -67,15 +70,16 @@ export const useGameState = create<GameState>()(
 
     restart: () => {
       set(() => ({
-        phase: "ready",
+        phase: "characterSelect",
         score: 0,
         health: 100,
         maxHealth: 100,
         wave: 1,
+        level: 1,
         experience: 0,
         experienceToNext: 100,
-        level: 1,
         selectedCharacter: null,
+        spiderMode: "normal"
       }));
     },
 
@@ -101,12 +105,7 @@ export const useGameState = create<GameState>()(
     },
 
     selectCharacter: (character: CharacterType) => {
-      set(() => ({ 
-        selectedCharacter: character,
-        health: character.stats.health,
-        maxHealth: character.stats.health,
-        phase: "playing" 
-      }));
+      set({ selectedCharacter: character, phase: "playing" });
     },
 
     setScore: (score) => set({ score }),
@@ -170,6 +169,10 @@ export const useGameState = create<GameState>()(
       const newMaxHealth = maxHealth + 25;
       const newHealth = Math.min(health + 50, newMaxHealth);
       set({ health: newHealth, maxHealth: newMaxHealth });
+    },
+
+    setSpiderMode: (mode: "normal" | "big" | "small") => {
+      set({ spiderMode: mode });
     },
   }))
 );

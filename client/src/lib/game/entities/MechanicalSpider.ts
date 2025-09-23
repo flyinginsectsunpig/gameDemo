@@ -18,6 +18,8 @@ export class MechanicalSpider implements GameObject {
   private damageTimer = 0;
   private damageCooldown = 0.5; // damage every 0.5 seconds
   private searchRadius = 120;
+  private spiderMode: "normal" | "big" | "small" = "normal";
+  private maxHealth = 1;
   private lastDirection = { x: 0, y: 1 }; // Track movement direction for sprite selection
   private isJumping = false;
   private jumpStartPos = { x: 0, y: 0 };
@@ -30,12 +32,48 @@ export class MechanicalSpider implements GameObject {
   private currentAnimation = "spider_idle";
   private lastAnimationFrame: any = null;
   private lastAnimationSwitch = 0;
-  constructor(x: number, y: number) {
+  constructor(x: number, y: number, mode: "normal" | "big" | "small" = "normal") {
     this.x = x;
     this.y = y;
+    this.spiderMode = mode;
     this.instanceId = `mechanical_spider_${Date.now()}_${Math.random()}`;
     this.animationManager = new AnimationManager();
+    
+    // Set stats based on mode
+    this.applyModeStats();
     this.setupAnimations();
+  }
+
+  private applyModeStats() {
+    switch (this.spiderMode) {
+      case "big":
+        this.damage = 8; // Much higher damage
+        this.maxHealth = 3; // More durable
+        this.damageCooldown = 0.3; // Faster attack rate
+        this.speed = 120; // Slightly slower
+        this.searchRadius = 150; // Larger search radius
+        this.width = 160; // Bigger size
+        this.height = 90;
+        break;
+      case "small":
+        this.damage = 1; // Lower damage
+        this.maxHealth = 1; // Dies in one hit
+        this.damageCooldown = 0.8; // Slower attack rate
+        this.speed = 200; // Much faster
+        this.searchRadius = 100; // Smaller search radius
+        this.width = 80; // Smaller size
+        this.height = 45;
+        break;
+      default: // normal
+        this.damage = 2;
+        this.maxHealth = 1;
+        this.damageCooldown = 0.5;
+        this.speed = 150;
+        this.searchRadius = 120;
+        this.width = 120;
+        this.height = 68;
+        break;
+    }
   }
 
   private setupAnimations() {
@@ -229,6 +267,14 @@ export class MechanicalSpider implements GameObject {
 
   public destroy(): void {
     this.alive = false;
+  }
+
+  public get isAttached(): boolean {
+    return this.isAttached;
+  }
+
+  public get health(): number {
+    return this.target?.health || 0;
   }
 
   
