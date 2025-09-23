@@ -13,7 +13,7 @@ export class MechanicalSpider implements GameObject {
   private speed = 150;
   private alive = true;
   private target: Enemy | null = null;
-  private isAttached = false;
+  private attachedToEnemy = false; // Renamed from isAttached to avoid getter conflict
   private damage = 2;
   private damageTimer = 0;
   private damageCooldown = 0.5; // damage every 0.5 seconds
@@ -38,7 +38,7 @@ export class MechanicalSpider implements GameObject {
     this.spiderMode = mode;
     this.instanceId = `mechanical_spider_${Date.now()}_${Math.random()}`;
     this.animationManager = new AnimationManager();
-    
+
     // Set stats based on mode
     this.applyModeStats();
     this.setupAnimations();
@@ -114,7 +114,7 @@ export class MechanicalSpider implements GameObject {
     this.animationManager.addAnimation("spider_jumping", jumpingFrames, 0.1, false); // Don't loop, play once
 
     this.lastAnimationFrame = idleFrames[0];
-    
+
     // Start with idle animation
     this.animationManager.startAnimation("spider_idle", this.instanceId);
   }
@@ -125,13 +125,13 @@ export class MechanicalSpider implements GameObject {
     let targetAnimation = "spider_idle";
     let positionChanged = false;
 
-    if (this.isAttached && this.target) {
+    if (this.attachedToEnemy && this.target) {
       // Spider is attached to enemy - deal damage over time
       this.damageTimer += deltaTime;
 
       if (!this.target.isAlive()) {
         // When target dies, detach and find new target
-        this.isAttached = false;
+        this.attachedToEnemy = false;
         this.target = null;
         return;
       }
@@ -163,7 +163,7 @@ export class MechanicalSpider implements GameObject {
 
         if (distance < 35) {
           // Attach to enemy
-          this.isAttached = true;
+          this.attachedToEnemy = true;
           this.isJumping = false;
           this.x = this.target.x;
           this.y = this.target.y;
@@ -171,7 +171,7 @@ export class MechanicalSpider implements GameObject {
         } else if (this.isJumping) {
           // Handle jumping animation
           this.jumpProgress += deltaTime / this.jumpDuration;
-          
+
           if (this.jumpProgress >= 1) {
             // Jump complete
             this.x = this.jumpTargetPos.x;
@@ -179,39 +179,39 @@ export class MechanicalSpider implements GameObject {
             this.isJumping = false;
             this.jumpProgress = 0;
             positionChanged = true;
-            
+
             // Check for immediate attachment
             if (this.target && this.target.isAlive()) {
               const finalDx = this.target.x - this.x;
               const finalDy = this.target.y - this.y;
               const finalDistance = Math.sqrt(finalDx * finalDx + finalDy * finalDy);
-              
+
               if (finalDistance < 35) {
-                this.isAttached = true;
+                this.attachedToEnemy = true;
                 this.x = this.target.x;
                 this.y = this.target.y;
               }
             }
-            
+
             targetAnimation = "spider_idle";
           } else {
             // Smooth interpolation during jump
             const t = this.jumpProgress;
             const newX = this.jumpStartPos.x + (this.jumpTargetPos.x - this.jumpStartPos.x) * t;
             const newY = this.jumpStartPos.y + (this.jumpTargetPos.y - this.jumpStartPos.y) * t;
-            
+
             if (Math.abs(newX - this.x) > 1 || Math.abs(newY - this.y) > 1) {
               this.x = newX;
               this.y = newY;
               positionChanged = true;
             }
-            
+
             // Only update direction when starting jump or major direction change
             if (this.jumpProgress < 0.1) {
               this.lastDirection.x = (this.jumpTargetPos.x - this.jumpStartPos.x) / distance;
               this.lastDirection.y = (this.jumpTargetPos.y - this.jumpStartPos.y) / distance;
             }
-            
+
             targetAnimation = "spider_jumping";
           }
         } else {
@@ -220,10 +220,10 @@ export class MechanicalSpider implements GameObject {
           this.jumpStartPos = { x: this.x, y: this.y };
           this.jumpTargetPos = { x: this.target.x, y: this.target.y };
           this.jumpProgress = 0;
-          
+
           this.lastDirection.x = dx / distance;
           this.lastDirection.y = dy / distance;
-          
+
           targetAnimation = "spider_jumping";
         }
       } else {
@@ -270,18 +270,18 @@ export class MechanicalSpider implements GameObject {
   }
 
   public get isAttached(): boolean {
-    return this.isAttached;
+    return this.attachedToEnemy; // Return the renamed property
   }
 
   public get health(): number {
     return this.target?.health || 0;
   }
 
-  
 
-  
 
-  
+
+
+
 
   public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
     // Spider rendering is handled by InfiniteTileRenderer to prevent double rendering
@@ -291,13 +291,13 @@ export class MechanicalSpider implements GameObject {
 
   private renderFallbackSpider(ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number) {
     ctx.save();
-    
+
     // Create a more detailed spider shape instead of just a circle
     const centerX = this.x - cameraX;
     const centerY = this.y - cameraY;
     const size = 32; // Increased size for better visibility
-    
-    if (this.isAttached) {
+
+    if (this.attachedToEnemy) {
       // Red spider when attached to enemy
       ctx.fillStyle = "#ff4444";
       ctx.strokeStyle = "#ff0000";
@@ -310,16 +310,16 @@ export class MechanicalSpider implements GameObject {
       ctx.shadowColor = "#3333ff";
       ctx.shadowBlur = 6;
     }
-    
+
     ctx.globalAlpha = 1.0; // Full opacity for better visibility
     ctx.lineWidth = 3;
-    
+
     // Draw spider body (oval)
     ctx.beginPath();
     ctx.ellipse(centerX, centerY, size, size * 0.6, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    
+
     // Draw spider legs (8 legs)
     ctx.lineWidth = 4;
     for (let i = 0; i < 8; i++) {
@@ -327,21 +327,21 @@ export class MechanicalSpider implements GameObject {
       const legLength = size * 1.8;
       const legX = centerX + Math.cos(angle) * legLength;
       const legY = centerY + Math.sin(angle) * legLength;
-      
+
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
       ctx.lineTo(legX, legY);
       ctx.stroke();
     }
-    
+
     // Add bright center dot for visibility
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
     ctx.arc(centerX, centerY, size * 0.3, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Add pulsing effect when attached
-    if (this.isAttached) {
+    if (this.attachedToEnemy) {
       const pulse = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
       ctx.globalAlpha = pulse;
       ctx.fillStyle = "#ffaaaa";
@@ -349,7 +349,7 @@ export class MechanicalSpider implements GameObject {
       ctx.ellipse(centerX, centerY, size * 1.2, size * 0.8, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    
+
     ctx.restore();
   }
 }
