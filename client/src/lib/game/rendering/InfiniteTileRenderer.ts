@@ -520,27 +520,20 @@ export class InfiniteTileRenderer {
 
   // New method to render spiders
   private renderSpiders(ctx: CanvasRenderingContext2D, camera: Camera): void {
-    // Limit spider rendering frequency to reduce lag and trails
-    const now = Date.now();
-    if (!this.lastSpiderRender) this.lastSpiderRender = 0;
-    
-    // Only render spiders every 50ms to reduce load
-    if (now - this.lastSpiderRender < 50) {
-      return;
-    }
-    this.lastSpiderRender = now;
+    // Render spiders every frame for smooth animation (no throttling)
     
     this.spiders.forEach((spider) => {
       const screenX = Math.floor(spider.x - camera.x);
       const screenY = Math.floor(spider.y - camera.y);
 
       // Check if spider is within camera bounds
-      const spiderSize = this.tileSize * 2; // Make spiders 2x larger than tiles, similar to flowers
+      const spiderHeight = this.tileSize * 1.5;
+      const spiderWidth = spiderHeight * (800 / 450);
       if (
-        screenX < -spiderSize ||
-        screenX > camera.width + spiderSize ||
-        screenY < -spiderSize ||
-        screenY > camera.height + spiderSize
+        screenX < -spiderWidth ||
+        screenX > camera.width + spiderWidth ||
+        screenY < -spiderHeight ||
+        screenY > camera.height + spiderHeight
       ) {
         return;
       }
@@ -550,7 +543,8 @@ export class InfiniteTileRenderer {
   }
 
   private drawSpider(ctx: CanvasRenderingContext2D, spider: any, screenX: number, screenY: number): void {
-    const spiderSize = this.tileSize * 2;
+    const spiderHeight = this.tileSize * 1.5; // Height based on tile size
+    const spiderWidth = spiderHeight * (800 / 450); // Maintain 800:450 aspect ratio
 
     ctx.save();
     
@@ -558,12 +552,7 @@ export class InfiniteTileRenderer {
     if (!spider.previousScreenX) spider.previousScreenX = screenX;
     if (!spider.previousScreenY) spider.previousScreenY = screenY;
     
-    // Clear previous position if spider moved
-    if (spider.previousScreenX !== screenX || spider.previousScreenY !== screenY) {
-      const prevDrawX = Math.floor(spider.previousScreenX - (spiderSize - this.tileSize) / 2);
-      const prevDrawY = Math.floor(spider.previousScreenY - (spiderSize - this.tileSize) / 2);
-      ctx.clearRect(prevDrawX - 10, prevDrawY - 10, spiderSize + 20, spiderSize + 20);
-    }
+    // Remove clearRect to prevent black squares - canvas is cleared each frame by GameEngine
     
     // Update stored position
     spider.previousScreenX = screenX;
@@ -626,8 +615,8 @@ export class InfiniteTileRenderer {
         }
         frameIndex = spider.cachedFrameIndex;
 
-        const drawX = Math.floor(screenX - (spiderSize - this.tileSize) / 2);
-        const drawY = Math.floor(screenY - (spiderSize - this.tileSize) / 2);
+        const drawX = Math.floor(screenX - (spiderWidth - this.tileSize) / 2);
+        const drawY = Math.floor(screenY - (spiderHeight - this.tileSize) / 2);
         
         // Handle special case for jumping sprite
         if (spriteName === 'spider_jumping') {
@@ -645,13 +634,13 @@ export class InfiniteTileRenderer {
           ctx.drawImage(
             sprite,
             spider.jumpingFrameIndex * jumpingFrameWidth, 0, jumpingFrameWidth, jumpingFrameHeight,
-            drawX, drawY, spiderSize, spiderSize
+            drawX, drawY, spiderWidth, spiderHeight
           );
         } else {
           ctx.drawImage(
             sprite,
             frameIndex * frameWidth, 0, frameWidth, frameHeight,
-            drawX, drawY, spiderSize, spiderSize
+            drawX, drawY, spiderWidth, spiderHeight
           );
         }
 
@@ -726,6 +715,9 @@ export class InfiniteTileRenderer {
 
   // Spider management methods
   public addSpider(spider: any): void {
+    // Remove any existing spider with the same instanceId to prevent duplicates
+    this.spiders = this.spiders.filter(s => s.instanceId !== spider.instanceId);
+    // Add the new/updated spider
     this.spiders.push(spider);
   }
 

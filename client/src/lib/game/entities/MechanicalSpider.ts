@@ -238,68 +238,9 @@ export class MechanicalSpider implements GameObject {
   
 
   public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
-    if (!this.alive) return;
-    
-    const spriteManager = SpriteManager.getInstance();
-    
-    // Get the current animation frame
-    const currentFrame = this.animationManager.update(deltaTime, this.instanceId, this.currentAnimation);
-    
-    // Select appropriate sprite based on animation
-    let spriteName = "spider_side"; // default fallback
-    switch (this.currentAnimation) {
-      case "spider_jumping":
-        spriteName = "spider_jumping";
-        break;
-      case "spider_walk_down":
-        spriteName = "spider_down";
-        break;
-      case "spider_walk_up":
-        spriteName = "spider_up";
-        break;
-      case "spider_walk_side":
-        spriteName = "spider_side";
-        break;
-      case "spider_walk_diagonal":
-        if (this.lastDirection.y < 0) {
-          spriteName = "spider_diagonal_up";
-        } else {
-          spriteName = "spider_diagonal_down";
-        }
-        break;
-      case "spider_idle":
-      default:
-        spriteName = "spider_side";
-        break;
-    }
-    
-    const sprite = spriteManager.getSprite(spriteName);
-    
-    if (sprite && currentFrame) {
-      ctx.save();
-      
-      // Handle sprite flipping based on direction
-      const shouldFlip = this.lastDirection.x < 0;
-      
-      if (shouldFlip) {
-        ctx.translate(this.x - cameraX, this.y - cameraY);
-        ctx.scale(-1, 1);
-        ctx.translate(-(this.x - cameraX), -(this.y - cameraY));
-      }
-      
-      // Draw the animated sprite
-      ctx.drawImage(
-        sprite,
-        currentFrame.x, currentFrame.y, currentFrame.width, currentFrame.height,
-        (this.x - cameraX) - this.width / 2, (this.y - cameraY) - this.height / 2,
-        this.width, this.height
-      );
-      
-      ctx.restore();
-    } else {
-      // Fallback rendering
-      this.renderFallbackSpider(ctx, cameraX, cameraY);
-    }
+    // Spider rendering is handled by InfiniteTileRenderer to prevent double rendering
+    // and eliminate afterimage/black square issues
+    return;
   }
 
   private renderFallbackSpider(ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number) {
