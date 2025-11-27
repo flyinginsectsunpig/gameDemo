@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { PowerUpDefinition, POWERUP_DEFINITIONS } from "../lib/game/entities/PowerUp";
+import { PowerUpDefinition } from "../lib/game/entities/collectibles/PowerUp";
+import { POWERUP_DEFINITIONS } from "../lib/game/config/PowerUpDefinitions";
 import { useGameState } from "../lib/stores/useGameState";
 
 interface PowerUpSelectionProps {
