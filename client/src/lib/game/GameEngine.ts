@@ -234,8 +234,14 @@ export class GameEngine {
     }
     this.lastPauseState = input.pause;
 
-    // Don't update game if paused
-    if (gameState.phase === "paused") {
+    // Don't update game if paused or game over
+    if (gameState.phase === "paused" || gameState.phase === "gameOver") {
+      return;
+    }
+
+    // Check for player death
+    if (gameState.health <= 0 && gameState.phase === "playing") {
+      this.handlePlayerDeath();
       return;
     }
 
@@ -435,11 +441,56 @@ export class GameEngine {
     
     this.waveManager.onBossDefeated();
     gameState.setBossActive(false);
+    gameState.addBossKill();
     
     this.currentBoss = null;
     this.isBossActive = false;
     
     console.log("Boss defeated! Bonus XP and score awarded!");
+  }
+
+  private handlePlayerDeath() {
+    const gameState = useGameState.getState();
+    const audioState = useAudio.getState();
+    
+    // Create death particles
+    for (let i = 0; i < 50; i++) {
+      this.particles.push(new Particle(
+        this.player.x + (Math.random() - 0.5) * 60,
+        this.player.y + (Math.random() - 0.5) * 60,
+        (Math.random() - 0.5) * 200,
+        (Math.random() - 0.5) * 200,
+        Math.random() > 0.5 ? "#ff0000" : "#880000",
+        1.5
+      ));
+    }
+    
+    // Record statistics
+    const playTime = Math.floor((Date.now() - this.gameStartTime) / 1000);
+    const characterId = gameState.selectedCharacter?.id || "guardian";
+    
+    const { StatisticsSystem } = require('./systems/StatisticsSystem');
+    StatisticsSystem.recordRun({
+      characterId,
+      kills: gameState.totalKills,
+      wave: gameState.wave,
+      level: gameState.level,
+      score: gameState.score,
+      playTime,
+      damageTaken: this.totalDamageTaken,
+      damageDealt: this.totalDamageDealt,
+      experienceGained: gameState.experience,
+      maxCombo: gameState.maxCombo,
+      bossesDefeated: gameState.bossesDefeated
+    });
+    
+    // Play death sound
+    if (!audioState.isMuted) {
+      audioState.playPlayerHurt();
+    }
+    
+    // Trigger game over
+    gameState.end();
   }
 
   private createCelebrationParticles() {

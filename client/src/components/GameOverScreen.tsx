@@ -1,9 +1,8 @@
 
 import { useGameState } from "../lib/stores/useGameState";
-import { SaveSystem } from "../lib/game/systems/SaveSystem";
 
 export default function GameOverScreen() {
-  const { phase, score, level, wave, maxCombo, restart } = useGameState();
+  const { phase, score, level, wave, maxCombo, totalKills, bossesDefeated, restart } = useGameState();
 
   if (phase !== "gameOver") return null;
 
@@ -17,27 +16,40 @@ export default function GameOverScreen() {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 animate-fadeIn">
-      <div className="bg-gradient-to-b from-red-900 to-black p-8 rounded-lg border-4 border-red-600 text-white max-w-md w-full">
+      <div className="bg-gradient-to-b from-red-900 to-black p-8 rounded-lg border-4 border-red-600 text-white max-w-2xl w-full">
         <h1 className="text-6xl font-bold text-center mb-6 text-red-500 animate-pulse">
           GAME OVER
         </h1>
         
-        <div className="space-y-4 mb-8">
-          <div className="flex justify-between text-xl">
-            <span className="text-gray-300">Final Score:</span>
-            <span className="font-bold text-yellow-400">{score.toLocaleString()}</span>
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
+            <div className="text-sm text-gray-400 uppercase mb-1">Final Score</div>
+            <div className="text-3xl font-bold text-yellow-400">{score.toLocaleString()}</div>
           </div>
-          <div className="flex justify-between text-xl">
-            <span className="text-gray-300">Level Reached:</span>
-            <span className="font-bold text-purple-400">{level}</span>
+          
+          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
+            <div className="text-sm text-gray-400 uppercase mb-1">Level Reached</div>
+            <div className="text-3xl font-bold text-purple-400">{level}</div>
           </div>
-          <div className="flex justify-between text-xl">
-            <span className="text-gray-300">Wave Survived:</span>
-            <span className="font-bold text-blue-400">{wave}</span>
+          
+          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
+            <div className="text-sm text-gray-400 uppercase mb-1">Wave Survived</div>
+            <div className="text-3xl font-bold text-blue-400">{wave}</div>
           </div>
-          <div className="flex justify-between text-xl">
-            <span className="text-gray-300">Max Combo:</span>
-            <span className="font-bold text-orange-400">{maxCombo}x</span>
+          
+          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
+            <div className="text-sm text-gray-400 uppercase mb-1">Max Combo</div>
+            <div className="text-3xl font-bold text-orange-400">{maxCombo}x</div>
+          </div>
+          
+          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
+            <div className="text-sm text-gray-400 uppercase mb-1">Total Kills</div>
+            <div className="text-3xl font-bold text-red-400">{totalKills}</div>
+          </div>
+          
+          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
+            <div className="text-sm text-gray-400 uppercase mb-1">Bosses Defeated</div>
+            <div className="text-3xl font-bold text-yellow-400">{bossesDefeated}</div>
           </div>
         </div>
 

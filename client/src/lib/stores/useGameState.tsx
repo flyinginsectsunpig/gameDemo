@@ -340,6 +340,14 @@ export const useGameState = create<GameState>()(
       set((state) => ({ bossesDefeated: state.bossesDefeated + 1 }));
     },
 
+    setCombo: (combo: number, multiplier: number) => {
+      set((state) => ({
+        comboCount: combo,
+        comboMultiplier: multiplier,
+        maxCombo: Math.max(state.maxCombo, combo)
+      }));
+    },
+
     updateCombo: (combo: number, multiplier: number) => {
       set((state) => ({
         comboCount: combo,

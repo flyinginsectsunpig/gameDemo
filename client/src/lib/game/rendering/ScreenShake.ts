@@ -34,3 +34,36 @@ export class ScreenShake {
     return this.duration > 0;
   }
 }
+export class ScreenShakeSystem {
+  private intensity: number = 0;
+  private duration: number = 0;
+  private offsetX: number = 0;
+  private offsetY: number = 0;
+
+  public trigger(intensity: number, duration: number = 0.3) {
+    this.intensity = Math.max(this.intensity, intensity);
+    this.duration = Math.max(this.duration, duration);
+  }
+
+  public update(deltaTime: number) {
+    if (this.duration > 0) {
+      this.duration -= deltaTime;
+      
+      const shake = this.intensity * (this.duration / 0.3);
+      this.offsetX = (Math.random() - 0.5) * shake * 2;
+      this.offsetY = (Math.random() - 0.5) * shake * 2;
+    } else {
+      this.offsetX = 0;
+      this.offsetY = 0;
+      this.intensity = 0;
+    }
+  }
+
+  public getOffset(): { x: number; y: number } {
+    return { x: this.offsetX, y: this.offsetY };
+  }
+
+  public isActive(): boolean {
+    return this.duration > 0;
+  }
+}

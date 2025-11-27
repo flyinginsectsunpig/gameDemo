@@ -38,79 +38,63 @@ export const useAudio = create<AudioState>((set, get) => ({
   setPlayerHurtSound: (audio) => set({ playerHurtSound: audio }),
 
   toggleMute: () => {
-    const { isMuted } = get();
-    const newMutedState = !isMuted;
+    const { isMuted, backgroundMusic } = get();
+    const newMuted = !isMuted;
 
-    // Just update the muted state
-    set({ isMuted: newMutedState });
+    if (backgroundMusic) {
+      if (newMuted) {
+        backgroundMusic.pause();
+      } else {
+        backgroundMusic.play().catch((e) => {
+          console.log("Background music play prevented:", e);
+        });
+      }
+    }
 
-    // Log the change
-    console.log(`Sound ${newMutedState ? 'muted' : 'unmuted'}`);
+    set({ isMuted: newMuted });
   },
 
   playHit: () => {
     const { hitSound, isMuted } = get();
-    if (hitSound) {
-      // If sound is muted, don't play anything
-      if (isMuted) {
-        console.log("Hit sound skipped (muted)");
-        return;
-      }
-
-      // Clone the sound to allow overlapping playback
-      const soundClone = hitSound.cloneNode() as HTMLAudioElement;
-      soundClone.volume = 0.3;
-      soundClone.play().catch(error => {
-        console.log("Hit sound play prevented:", error);
+    if (hitSound && !isMuted) {
+      const clone = hitSound.cloneNode() as HTMLAudioElement;
+      clone.volume = hitSound.volume;
+      clone.play().catch((e) => {
+        console.log("Hit sound play prevented:", e);
       });
     }
   },
 
   playSuccess: () => {
     const { successSound, isMuted } = get();
-    if (successSound) {
-      // If sound is muted, don't play anything
-      if (isMuted) {
-        console.log("Success sound skipped (muted)");
-        return;
-      }
-
-      successSound.currentTime = 0;
-      successSound.play().catch(error => {
-        console.log("Success sound play prevented:", error);
+    if (successSound && !isMuted) {
+      const clone = successSound.cloneNode() as HTMLAudioElement;
+      clone.volume = successSound.volume;
+      clone.play().catch((e) => {
+        console.log("Success sound play prevented:", e);
       });
     }
   },
 
   playLevelUp: () => {
     const { levelUpSound, isMuted } = get();
-    if (levelUpSound) {
-      // If sound is muted, don't play anything
-      if (isMuted) {
-        console.log("Level up sound skipped (muted)");
-        return;
-      }
-
-      levelUpSound.currentTime = 0;
-      levelUpSound.play().catch(error => {
-        console.log("Level up sound play prevented:", error);
+    if (levelUpSound && !isMuted) {
+      const clone = levelUpSound.cloneNode() as HTMLAudioElement;
+      clone.volume = 0.8;
+      clone.play().catch((e) => {
+        console.log("Level up sound play prevented:", e);
       });
     }
   },
 
   playPlayerHurt: () => {
     const { playerHurtSound, isMuted } = get();
-    if (playerHurtSound) {
-      // If sound is muted, don't play anything
-      if (isMuted) {
-        console.log("Player hurt sound skipped (muted)");
-        return;
-      }
-
-      playerHurtSound.currentTime = 0;
-      playerHurtSound.play().catch(error => {
-        console.log("Player hurt sound play prevented:", error);
+    if (playerHurtSound && !isMuted) {
+      const clone = playerHurtSound.cloneNode() as HTMLAudioElement;
+      clone.volume = 0.6;
+      clone.play().catch((e) => {
+        console.log("Player hurt sound play prevented:", e);
       });
     }
-  }
+  },
 }));

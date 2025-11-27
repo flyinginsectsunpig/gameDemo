@@ -11,7 +11,8 @@ import PauseMenu from "./PauseMenu";
 import SettingsMenu from "./SettingsMenu";
 import { GameEngine } from "../lib/game/GameEngine";
 import GameOverScreen from "./GameOverScreen";
-import StatisticsScreen from "./StatisticsScreen"; // Assuming this component will be created
+import StatisticsScreen from "./StatisticsScreen";
+import LevelUpEffect from "./LevelUpEffect";
 
 export default function Game() {
   const { phase, restart, resumeFromLevelUp, selectCharacter, resume, pause, playerStats, setPlayerStats } = useGameState();
@@ -121,6 +122,7 @@ export default function Game() {
     <div className="relative w-full h-full flex flex-col bg-gray-900 text-white overflow-hidden">
       <GameCanvas onEngineReady={setEngine} />
       <GameUI />
+      <LevelUpEffect />
 
       {phase === "levelUp" && (
         <PowerUpSelection
@@ -144,7 +146,7 @@ export default function Game() {
             resume();
           }}
           onSettings={() => setShowSettings(true)}
-          onShowStatistics={() => setShowStatistics(true)} // Add handler to show statistics
+          onShowStatistics={() => setShowStatistics(true)}
         />
       )}
 
