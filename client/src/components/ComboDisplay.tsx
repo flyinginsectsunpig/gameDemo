@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { useGameState } from '../lib/stores/useGameState';
 
 interface ComboDisplayProps {
@@ -8,17 +8,17 @@ interface ComboDisplayProps {
 }
 
 export default function ComboDisplay({ combo, multiplier, timeRemaining }: ComboDisplayProps) {
-  const { comboCount, comboMultiplier } = useGameState();
+  const [visible, setVisible] = useState(false);
 
-  // Use props if provided, otherwise fall back to state
-  const displayCombo = combo !== undefined ? combo : comboCount;
-  const displayMultiplier = multiplier !== undefined ? multiplier : comboMultiplier;
+  useEffect(() => {
+    setVisible(combo > 0);
+  }, [combo]);
 
-  if (displayCombo < 5) return null;
+  if (!visible || combo === 0) return null;
 
-  const percentage = (timeRemaining / 3) * 100;
-  const isHighCombo = displayCombo >= 20;
-  const isMediumCombo = displayCombo >= 10;
+  const timePercentage = Math.max(0, Math.min(100, (timeRemaining / 3) * 100));
+  const isHighCombo = combo >= 20;
+  const isMediumCombo = combo >= 10;
 
   return (
     <div className="fixed top-1/2 right-8 transform -translate-y-1/2 z-40">
@@ -32,10 +32,10 @@ export default function ComboDisplay({ combo, multiplier, timeRemaining }: Combo
             isHighCombo ? 'text-yellow-400' : 
             isMediumCombo ? 'text-orange-400' : 'text-blue-400'
           }`}>
-            {displayCombo}
+            {combo}
           </div>
           <div className="text-lg text-white mt-1">
-            {displayMultiplier.toFixed(2)}x
+            {multiplier.toFixed(2)}x
           </div>
 
           <div className="mt-2 w-full h-2 bg-gray-700 rounded-full overflow-hidden">
@@ -44,7 +44,7 @@ export default function ComboDisplay({ combo, multiplier, timeRemaining }: Combo
                 isHighCombo ? 'bg-yellow-400' : 
                 isMediumCombo ? 'bg-orange-400' : 'bg-blue-400'
               }`}
-              style={{ width: `${percentage}%` }}
+              style={{ width: `${timePercentage}%` }}
             />
           </div>
         </div>

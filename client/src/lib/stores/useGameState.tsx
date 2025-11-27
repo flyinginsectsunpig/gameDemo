@@ -36,6 +36,7 @@ interface GameState {
   comboCount: number;
   comboMultiplier: number;
   maxCombo: number;
+  comboTimeRemaining: number;
 
   start: () => void;
   restart: () => void;
@@ -98,6 +99,7 @@ export const useGameState = create<GameState>()(
     comboCount: 0,
     comboMultiplier: 1,
     maxCombo: 0,
+    comboTimeRemaining: 0,
 
     start: () => {
       set((state) => {
@@ -340,11 +342,12 @@ export const useGameState = create<GameState>()(
       set((state) => ({ bossesDefeated: state.bossesDefeated + 1 }));
     },
 
-    setCombo: (combo: number, multiplier: number) => {
+    setCombo: (combo: number, multiplier: number, timeRemaining: number = 0) => {
       set((state) => ({
         comboCount: combo,
         comboMultiplier: multiplier,
-        maxCombo: Math.max(state.maxCombo, combo)
+        maxCombo: Math.max(state.maxCombo, combo),
+        comboTimeRemaining: timeRemaining
       }));
     },
 

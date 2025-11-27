@@ -29,23 +29,35 @@ export default function Game() {
       if (audioInitialized.current) return;
 
       try {
-        // Load background music
-        const bgMusic = new Audio("/sounds/background.mp3");
-        bgMusic.loop = true;
-        bgMusic.volume = 0.3;
-        setBackgroundMusic(bgMusic);
+        // Try to load background music
+        try {
+          const bgMusic = new Audio("/sounds/background.mp3");
+          bgMusic.loop = true;
+          bgMusic.volume = 0.3;
+          setBackgroundMusic(bgMusic);
+        } catch (e) {
+          console.warn("Background music not available");
+        }
 
-        // Load sound effects
-        const hitSound = new Audio("/sounds/hit.mp3");
-        hitSound.volume = 0.5;
-        setHitSound(hitSound);
+        // Try to load sound effects
+        try {
+          const hitSound = new Audio("/sounds/hit.mp3");
+          hitSound.volume = 0.5;
+          setHitSound(hitSound);
+        } catch (e) {
+          console.warn("Hit sound not available");
+        }
 
-        const successSound = new Audio("/sounds/success.mp3");
-        successSound.volume = 0.7;
-        setSuccessSound(successSound);
+        try {
+          const successSound = new Audio("/sounds/success.mp3");
+          successSound.volume = 0.7;
+          setSuccessSound(successSound);
+        } catch (e) {
+          console.warn("Success sound not available");
+        }
 
         audioInitialized.current = true;
-        console.log("Audio initialized");
+        console.log("Audio initialized (some sounds may be unavailable)");
       } catch (error) {
         console.warn("Audio initialization failed:", error);
       }

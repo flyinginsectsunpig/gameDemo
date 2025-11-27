@@ -27,6 +27,7 @@ import { PassiveItemManager } from './entities/collectibles/PassiveItem';
 import { DamageNumberManager } from './rendering/DamageNumber';
 import { BossLoot, generateBossLoot } from './entities/collectibles/BossLoot';
 import { ComboSystem } from './systems/ComboSystem';
+import { ScreenShakeSystem } from './rendering/ScreenShake';
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -65,6 +66,7 @@ export class GameEngine {
   private gameStartTime: number = 0;
   private totalDamageDealt: number = 0;
   private totalDamageTaken: number = 0;
+  private screenShake: ScreenShakeSystem;
 
   constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.gameStartTime = Date.now();
@@ -82,6 +84,7 @@ export class GameEngine {
     this.passiveItems = new PassiveItemManager();
     this.damageNumbers = new DamageNumberManager();
     this.comboSystem = new ComboSystem();
+    this.screenShake = new ScreenShakeSystem();
 
     this.setupBossCallbacks();
     this.setupInput();
@@ -133,8 +136,10 @@ export class GameEngine {
     const handleRestart = (e: KeyboardEvent) => {
       if (e.key === "r" || e.key === "R") {
         const gameState = useGameState.getState();
-        gameState.restart();
-        this.resetGame();
+        if (gameState.phase === "gameOver" || gameState.phase === "playing") {
+          gameState.restart();
+          this.resetGame();
+        }
       }
     };
 
@@ -153,10 +158,18 @@ export class GameEngine {
       }
     };
 
+    const handleWindowBlur = () => {
+      const gameState = useGameState.getState();
+      if (gameState.phase === "playing") {
+        gameState.pause();
+      }
+    };
+
     document.addEventListener("keydown", handleStart);
     document.addEventListener("click", handleStart);
     document.addEventListener("keydown", handleRestart);
     document.addEventListener("keydown", handleSoundToggle);
+    window.addEventListener("blur", handleWindowBlur);
 
     this.inputManager.addEventListeners();
   }
@@ -301,6 +314,7 @@ export class GameEngine {
         
         if (distance <= groundPoundRadius) {
           gameState.takeDamage(groundPoundDamage * deltaTime);
+          this.screenShake.trigger(15, 0.4);
         }
       }
     }
@@ -334,7 +348,13 @@ export class GameEngine {
     this.damageNumbers.update(deltaTime);
     
     this.comboSystem.update(deltaTime);
-    gameState.setCombo(this.comboSystem.getComboCount(), this.comboSystem.getComboMultiplier());
+    gameState.setCombo(
+      this.comboSystem.getComboCount(), 
+      this.comboSystem.getComboMultiplier(),
+      this.comboSystem.getTimeRemaining()
+    );
+    
+    this.screenShake.update(deltaTime);
 
     this.passiveItems.applyEffects(this.player);
 
@@ -433,6 +453,7 @@ export class GameEngine {
       ));
     }
     
+    this.screenShake.trigger(20, 0.8);
     this.bossDefeatedCelebrationTimer = 3;
     
     if (!audioState.isMuted) {
@@ -537,6 +558,7 @@ export class GameEngine {
           if (!enemy.isAlive()) {
             if (!(enemy instanceof BossEnemy)) {
               this.comboSystem.addKill();
+              gameState.addKill();
               const scoreWithCombo = Math.floor(enemy.getScoreValue() * this.comboSystem.getComboMultiplier());
               gameState.addScore(scoreWithCombo);
               this.createDeathParticles(enemy.x, enemy.y);
@@ -569,6 +591,8 @@ export class GameEngine {
         const damage = enemy.getDamage();
         this.totalDamageTaken += damage;
         gameState.takeDamage(damage);
+        
+        this.screenShake.trigger(5, 0.2);
 
         const dx = enemy.x - this.player.x;
         const dy = enemy.y - this.player.y;
@@ -604,6 +628,7 @@ export class GameEngine {
 
             if (!enemy.isAlive() && !(enemy instanceof BossEnemy)) {
               this.comboSystem.addKill();
+              gameState.addKill();
               const scoreWithCombo = Math.floor(enemy.getScoreValue() * this.comboSystem.getComboMultiplier());
               gameState.addScore(scoreWithCombo);
               this.createDeathParticles(enemy.x, enemy.y);
@@ -629,6 +654,7 @@ export class GameEngine {
 
           if (!collision.enemy.isAlive() && !(collision.enemy instanceof BossEnemy)) {
             this.comboSystem.addKill();
+            gameState.addKill();
             const scoreWithCombo = Math.floor(collision.enemy.getScoreValue() * this.comboSystem.getComboMultiplier());
             gameState.addScore(scoreWithCombo);
             this.createDeathParticles(collision.enemy.x, collision.enemy.y);
@@ -693,6 +719,7 @@ export class GameEngine {
 
       if (isSpiderKill && !(enemy instanceof BossEnemy)) {
         this.comboSystem.addKill();
+        gameState.addKill();
         const scoreWithCombo = Math.floor(enemy.getScoreValue() * this.comboSystem.getComboMultiplier());
         gameState.addScore(scoreWithCombo);
         this.createDeathParticles(enemy.x, enemy.y);
@@ -723,7 +750,8 @@ export class GameEngine {
     if (gameState.phase !== "playing") return;
 
     this.ctx.save();
-    this.ctx.translate(-this.camera.x, -this.camera.y);
+    const shakeOffset = this.screenShake.getOffset();
+    this.ctx.translate(-this.camera.x + shakeOffset.x, -this.camera.y + shakeOffset.y);
 
     this.particles.forEach(particle => {
       particle.render(this.ctx);

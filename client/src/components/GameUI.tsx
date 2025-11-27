@@ -6,7 +6,7 @@ import ComboDisplay from "./ComboDisplay";
 import Minimap from "./Minimap";
 
 export default function GameUI() {
-  const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning, comboCount, comboMultiplier, currency } = useGameState();
+  const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning, comboCount, comboMultiplier, currency, totalKills } = useGameState();
   const { isMuted, toggleMute } = useAudio();
 
   if (phase === "ready") {
@@ -44,18 +44,18 @@ export default function GameUI() {
   return (
     <div className="absolute inset-0 pointer-events-none">
       <BossWarning />
-      
+
       {isBossActive && <BossHealthBar />}
-      
+
       <ComboDisplay combo={comboCount} multiplier={comboMultiplier} timeRemaining={3} />
-      
+
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-auto">
         <div className="bg-black bg-opacity-70 p-4 rounded-lg text-white">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
               <span className="text-red-400 font-bold">HP</span>
               <div className="w-32 h-4 bg-red-900 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-red-500 transition-all duration-200"
                   style={{ width: `${healthPercentage}%` }}
                 />
@@ -67,38 +67,34 @@ export default function GameUI() {
               <span className="text-yellow-400 font-bold">Score</span>
               <span className="text-xl font-bold">{score.toLocaleString()}</span>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <span className="text-green-400 font-bold">💰</span>
               <span className="text-lg font-bold text-green-300">{currency.toLocaleString()}</span>
             </div>
 
             <div className="flex items-center space-x-2">
-              <span className="text-purple-400 font-bold">Lv</span>
+              <span className="text-purple-400 font-bold">LVL</span>
               <span className="text-xl font-bold">{level}</span>
             </div>
 
-            <div className={`flex items-center space-x-2 ${isBossWave ? 'animate-pulse' : ''}`}>
-              <span className={`font-bold ${isBossWave ? 'text-red-400' : 'text-blue-400'}`}>
-                {isBossWave ? 'BOSS' : 'Wave'}
-              </span>
-              <span className={`text-xl font-bold ${isBossWave ? 'text-red-400' : 'text-white'}`}>
-                {wave}
-              </span>
+            <div className="flex items-center space-x-2">
+              <span className="text-orange-400 font-bold">💀</span>
+              <span className="text-sm">{totalKills}</span>
             </div>
           </div>
-          
+
           <div className="mt-3 flex items-center space-x-2">
             <span className="text-green-400 font-bold text-sm">EXP</span>
             <div className="w-48 h-3 bg-green-900 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-green-500 transition-all duration-200"
                 style={{ width: `${experiencePercentage}%` }}
               />
             </div>
             <span className="text-xs text-green-300">{experience}/{experienceToNext}</span>
           </div>
-          
+
           {isBossWave && !isBossActive && (
             <div className="mt-2 text-xs text-red-400 animate-pulse">
               Boss wave! Prepare for battle...
@@ -117,7 +113,7 @@ export default function GameUI() {
       <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 p-2 rounded text-white text-sm">
         <div>WASD/Arrows: Move | M: Sound | R: Restart</div>
       </div>
-      
+
       <div className="absolute bottom-4 right-4 space-y-2">
         {isBossActive && (
           <div className="bg-red-900/80 p-3 rounded-lg text-white border border-red-500">
