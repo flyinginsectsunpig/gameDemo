@@ -28,39 +28,45 @@ export default function Game() {
     const initAudio = async () => {
       if (audioInitialized.current) return;
 
-      try {
-        // Try to load background music
+      const audioStore = useAudio.getState();
+      
+      // Create placeholder audio elements that won't throw errors if files are missing
+      const createSafeAudio = (path: string) => {
         try {
-          const bgMusic = new Audio("/sounds/background.mp3");
-          bgMusic.loop = true;
-          bgMusic.volume = 0.3;
-          setBackgroundMusic(bgMusic);
+          const audio = new Audio();
+          audio.src = path;
+          audio.addEventListener('error', () => {
+            console.warn(`Audio file not found: ${path}`);
+          });
+          return audio;
         } catch (e) {
-          console.warn("Background music not available");
+          console.warn(`Failed to create audio for ${path}`);
+          return null;
         }
+      };
 
-        // Try to load sound effects
-        try {
-          const hitSound = new Audio("/sounds/hit.mp3");
-          hitSound.volume = 0.5;
-          setHitSound(hitSound);
-        } catch (e) {
-          console.warn("Hit sound not available");
-        }
-
-        try {
-          const successSound = new Audio("/sounds/success.mp3");
-          successSound.volume = 0.7;
-          setSuccessSound(successSound);
-        } catch (e) {
-          console.warn("Success sound not available");
-        }
-
-        audioInitialized.current = true;
-        console.log("Audio initialized (some sounds may be unavailable)");
-      } catch (error) {
-        console.warn("Audio initialization failed:", error);
+      // Try to load all audio files
+      const bgMusic = createSafeAudio("/assets/audio/background.mp3");
+      if (bgMusic) {
+        bgMusic.loop = true;
+        bgMusic.volume = 0.3;
+        audioStore.setBackgroundMusic(bgMusic);
       }
+
+      const hitSound = createSafeAudio("/assets/audio/hit.mp3");
+      if (hitSound) {
+        hitSound.volume = 0.5;
+        audioStore.setHitSound(hitSound);
+      }
+
+      const successSound = createSafeAudio("/assets/audio/success.mp3");
+      if (successSound) {
+        successSound.volume = 0.7;
+        audioStore.setSuccessSound(successSound);
+      }
+
+      audioInitialized.current = true;
+      console.log("Audio system initialized");
     };
 
     const handleFirstInteraction = () => {
@@ -78,7 +84,7 @@ export default function Game() {
       document.removeEventListener("click", handleFirstInteraction);
       document.removeEventListener("keydown", handleFirstInteraction);
     };
-  }, [setBackgroundMusic, setHitSound, setSuccessSound, toggleMute]);
+  }, [toggleMute]);
 
   const handlePowerUpSelect = (powerUp: PowerUpDefinition) => {
     if (engine?.getPlayer) {

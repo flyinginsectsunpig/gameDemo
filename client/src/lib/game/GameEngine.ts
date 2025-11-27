@@ -23,6 +23,7 @@ import { InputManager } from './systems/InputManager';
 import { useGameState } from "../stores/useGameState";
 import { useAudio } from "../stores/useAudio";
 import { WeaponEvolutionSystem } from './systems/WeaponEvolution';
+import { ComboSystem } from './systems/ComboSystem';
 import { PassiveItemManager } from './entities/collectibles/PassiveItem';
 import { DamageNumberManager } from './rendering/DamageNumber';
 import { BossLoot, generateBossLoot } from './entities/collectibles/BossLoot';

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import { useAudio } from "./useAudio";
 
 export type GamePhase = "ready" | "playing" | "ended" | "levelUp" | "characterSelect" | "paused" | "gameOver";
 

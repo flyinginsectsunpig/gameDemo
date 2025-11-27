@@ -7,21 +7,20 @@ interface SettingsMenuProps {
 }
 
 export default function SettingsMenu({ onClose }: SettingsMenuProps) {
-  const { isMuted, toggleMute, backgroundMusic } = useAudio();
-  const [musicVolume, setMusicVolume] = useState(backgroundMusic?.volume ?? 0.3);
-  const [sfxVolume, setSfxVolume] = useState(0.5);
+  const { isMuted, toggleMute, musicVolume: globalMusicVolume, sfxVolume: globalSfxVolume, setMusicVolume: setGlobalMusicVolume, setSfxVolume: setGlobalSfxVolume } = useAudio();
+  const [musicVolume, setMusicVolume] = useState(globalMusicVolume);
+  const [sfxVolume, setSfxVolume] = useState(globalSfxVolume);
 
   const handleMusicVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const volume = parseFloat(e.target.value);
     setMusicVolume(volume);
-    if (backgroundMusic) {
-      backgroundMusic.volume = volume;
-    }
+    setGlobalMusicVolume(volume);
   };
 
   const handleSfxVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const volume = parseFloat(e.target.value);
     setSfxVolume(volume);
+    setGlobalSfxVolume(volume);
   };
 
   return (
@@ -55,6 +54,21 @@ export default function SettingsMenu({ onClose }: SettingsMenuProps) {
               step="0.1"
               value={musicVolume}
               onChange={handleMusicVolumeChange}
+              className="w-full"
+            />
+          </div>
+
+          <div>
+            <label className="block text-white font-bold mb-2">
+              SFX Volume: {Math.round(sfxVolume * 100)}%
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={sfxVolume}
+              onChange={handleSfxVolumeChange}
               className="w-full"
             />
           </div>
