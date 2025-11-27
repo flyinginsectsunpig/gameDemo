@@ -1,3 +1,5 @@
+import React from 'react';
+import { useGameState } from '../lib/stores/useGameState';
 
 interface ComboDisplayProps {
   combo: number;
@@ -6,11 +8,17 @@ interface ComboDisplayProps {
 }
 
 export default function ComboDisplay({ combo, multiplier, timeRemaining }: ComboDisplayProps) {
-  if (combo < 2) return null;
+  const { comboCount, comboMultiplier } = useGameState();
+
+  // Use props if provided, otherwise fall back to state
+  const displayCombo = combo !== undefined ? combo : comboCount;
+  const displayMultiplier = multiplier !== undefined ? multiplier : comboMultiplier;
+
+  if (displayCombo < 5) return null;
 
   const percentage = (timeRemaining / 3) * 100;
-  const isHighCombo = combo >= 20;
-  const isMediumCombo = combo >= 10;
+  const isHighCombo = displayCombo >= 20;
+  const isMediumCombo = displayCombo >= 10;
 
   return (
     <div className="fixed top-1/2 right-8 transform -translate-y-1/2 z-40">
@@ -24,12 +32,12 @@ export default function ComboDisplay({ combo, multiplier, timeRemaining }: Combo
             isHighCombo ? 'text-yellow-400' : 
             isMediumCombo ? 'text-orange-400' : 'text-blue-400'
           }`}>
-            {combo}
+            {displayCombo}
           </div>
           <div className="text-lg text-white mt-1">
-            {multiplier.toFixed(2)}x
+            {displayMultiplier.toFixed(2)}x
           </div>
-          
+
           <div className="mt-2 w-full h-2 bg-gray-700 rounded-full overflow-hidden">
             <div 
               className={`h-full transition-all duration-100 ${

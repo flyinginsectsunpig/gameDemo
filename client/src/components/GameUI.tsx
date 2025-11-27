@@ -5,7 +5,7 @@ import BossWarning from "./BossWarning";
 import ComboDisplay from "./ComboDisplay";
 
 export default function GameUI() {
-  const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning, comboCount, comboMultiplier } = useGameState();
+  const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning, comboCount, comboMultiplier, currency } = useGameState();
   const { isMuted, toggleMute } = useAudio();
 
   if (phase === "ready") {
@@ -65,6 +65,11 @@ export default function GameUI() {
             <div className="flex items-center space-x-2">
               <span className="text-yellow-400 font-bold">Score</span>
               <span className="text-xl font-bold">{score.toLocaleString()}</span>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-green-400 font-bold">💰</span>
+              <span className="text-lg font-bold text-green-300">{currency.toLocaleString()}</span>
             </div>
 
             <div className="flex items-center space-x-2">

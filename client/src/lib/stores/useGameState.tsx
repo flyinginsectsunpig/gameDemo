@@ -65,8 +65,11 @@ interface GameState {
   hideBossWarning: () => void;
   onBossDefeated: () => void;
   addCurrency: (amount: number) => void;
+  spendCurrency: (amount: number) => void;
   addKill: () => void;
   addBossKill: () => void;
+  updateCombo: (combo: number, multiplier: number) => void;
+  resetCombo: () => void;
 }
 
 export const useGameState = create<GameState>()(
@@ -176,7 +179,7 @@ export const useGameState = create<GameState>()(
       });
     },
 
-    addScore: (points) => {
+    addScore: (points: number) => {
       const { score, experience } = get();
       const newScore = score + points;
       const newExp = experience + points;
@@ -315,6 +318,12 @@ export const useGameState = create<GameState>()(
 
     addCurrency: (amount: number) => {
       set((state) => ({ currency: state.currency + amount }));
+    },
+
+    spendCurrency: (amount: number) => {
+      set((state) => ({ 
+        currency: Math.max(0, state.currency - amount) 
+      }));
     },
 
     addKill: () => {

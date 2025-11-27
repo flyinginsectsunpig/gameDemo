@@ -25,6 +25,8 @@ import { useAudio } from "../stores/useAudio";
 import { WeaponEvolutionSystem } from './systems/WeaponEvolution';
 import { PassiveItemManager } from './entities/collectibles/PassiveItem';
 import { DamageNumberManager } from './rendering/DamageNumber';
+import { BossLoot, generateBossLoot } from './entities/collectibles/BossLoot';
+import { ComboSystem } from './systems/ComboSystem';
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -58,6 +60,8 @@ export class GameEngine {
   private weaponEvolution: WeaponEvolutionSystem;
   private passiveItems: PassiveItemManager;
   private damageNumbers: DamageNumberManager;
+  private bossLoot: BossLoot[] = [];
+  private comboSystem: ComboSystem;
 
   constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.canvas = canvas;
@@ -73,6 +77,7 @@ export class GameEngine {
     this.weaponEvolution = new WeaponEvolutionSystem();
     this.passiveItems = new PassiveItemManager();
     this.damageNumbers = new DamageNumberManager();
+    this.comboSystem = new ComboSystem();
 
     this.setupBossCallbacks();
     this.setupInput();
@@ -159,6 +164,7 @@ export class GameEngine {
     this.enemyProjectiles = [];
     this.particles = [];
     this.experienceOrbs = [];
+    this.bossLoot = [];
     this.currentBoss = null;
     this.isBossActive = false;
     this.bossDefeatedCelebrationTimer = 0;
@@ -316,12 +322,33 @@ export class GameEngine {
     });
 
     this.damageNumbers.update(deltaTime);
+    
+    this.comboSystem.update(deltaTime);
+    gameState.setCombo(this.comboSystem.getComboCount(), this.comboSystem.getComboMultiplier());
 
     this.passiveItems.applyEffects(this.player);
 
     this.experienceOrbs = this.experienceOrbs.filter(orb => {
       orb.update(deltaTime, this.player.getPosition());
       return !orb.isExpired();
+    });
+
+    this.bossLoot = this.bossLoot.filter(loot => {
+      loot.update(deltaTime, this.player.getPosition());
+      
+      if (loot.canBeCollected(this.player.getPosition())) {
+        loot.collect();
+        gameState.addCurrency(100);
+        
+        if (!audioState.isMuted) {
+          audioState.playSuccess();
+        }
+        
+        console.log(`Collected boss loot: ${loot.getName()}`);
+        return false;
+      }
+      
+      return !loot.isCollected();
     });
 
     this.handleCollisions();
@@ -380,6 +407,10 @@ export class GameEngine {
     gameState.addExperience(bonusXP);
     
     this.experienceOrbs.push(new ExperienceOrb(this.currentBoss!.x, this.currentBoss!.y, bonusXP));
+    
+    // Generate boss loot
+    const loot = generateBossLoot(this.currentBoss!.x, this.currentBoss!.y, this.currentBoss!.getBossType());
+    this.bossLoot.push(...loot);
     
     for (let i = 0; i < 30; i++) {
       this.particles.push(new Particle(
@@ -449,7 +480,9 @@ export class GameEngine {
 
           if (!enemy.isAlive()) {
             if (!(enemy instanceof BossEnemy)) {
-              gameState.addScore(enemy.getScoreValue());
+              this.comboSystem.addKill();
+              const scoreWithCombo = Math.floor(enemy.getScoreValue() * this.comboSystem.getComboMultiplier());
+              gameState.addScore(scoreWithCombo);
               this.createDeathParticles(enemy.x, enemy.y);
               const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
               this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
@@ -512,7 +545,9 @@ export class GameEngine {
             }
 
             if (!enemy.isAlive() && !(enemy instanceof BossEnemy)) {
-              gameState.addScore(enemy.getScoreValue());
+              this.comboSystem.addKill();
+              const scoreWithCombo = Math.floor(enemy.getScoreValue() * this.comboSystem.getComboMultiplier());
+              gameState.addScore(scoreWithCombo);
               this.createDeathParticles(enemy.x, enemy.y);
               const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
               this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
@@ -535,7 +570,9 @@ export class GameEngine {
           }
 
           if (!collision.enemy.isAlive() && !(collision.enemy instanceof BossEnemy)) {
-            gameState.addScore(collision.enemy.getScoreValue());
+            this.comboSystem.addKill();
+            const scoreWithCombo = Math.floor(collision.enemy.getScoreValue() * this.comboSystem.getComboMultiplier());
+            gameState.addScore(scoreWithCombo);
             this.createDeathParticles(collision.enemy.x, collision.enemy.y);
             const expValue = Math.max(1, Math.floor(collision.enemy.getScoreValue() / 2));
             this.experienceOrbs.push(new ExperienceOrb(collision.enemy.x, collision.enemy.y, expValue));
@@ -597,7 +634,9 @@ export class GameEngine {
       });
 
       if (isSpiderKill && !(enemy instanceof BossEnemy)) {
-        gameState.addScore(enemy.getScoreValue());
+        this.comboSystem.addKill();
+        const scoreWithCombo = Math.floor(enemy.getScoreValue() * this.comboSystem.getComboMultiplier());
+        gameState.addScore(scoreWithCombo);
         this.createDeathParticles(enemy.x, enemy.y);
 
         if (!audioState.isMuted) {
@@ -634,6 +673,10 @@ export class GameEngine {
 
     this.experienceOrbs.forEach(orb => {
       orb.render(this.ctx);
+    });
+
+    this.bossLoot.forEach(loot => {
+      loot.render(this.ctx);
     });
 
     this.projectiles.forEach(projectile => {
