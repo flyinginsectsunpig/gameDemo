@@ -1,4 +1,3 @@
-
 export interface AnimationFrame {
   x: number;
   y: number;
@@ -42,7 +41,7 @@ export class AnimationManager {
   public update(deltaTime: number, instanceId: string, animationName: string): AnimationFrame | null {
     const animation = this.animations.get(animationName);
     let state = this.currentAnimations.get(instanceId);
-    
+
     if (!animation) {
       console.warn(`Animation ${animationName} not found`);
       return null;
@@ -50,7 +49,7 @@ export class AnimationManager {
 
     // Ensure deltaTime is a valid number
     const validDeltaTime = typeof deltaTime === 'number' && !isNaN(deltaTime) ? deltaTime : 0.016; // fallback to ~60fps
-    
+
     if (typeof deltaTime !== 'number' || isNaN(deltaTime)) {
       console.warn(`Invalid deltaTime received: ${typeof deltaTime} (${deltaTime}), using fallback`);
     }
@@ -98,7 +97,7 @@ export class AnimationManager {
   public getCurrentFrame(instanceId: string, animationName: string): AnimationFrame | null {
     const animation = this.animations.get(animationName);
     const state = this.currentAnimations.get(instanceId);
-    
+
     if (!animation || !state) {
       return animation ? animation.frames[0] : null;
     }

@@ -224,26 +224,10 @@ export class GameEngine {
     }
 
     // Update projectiles
-    const beforeCount = this.projectiles.length;
     this.projectiles = this.projectiles.filter(projectile => {
       projectile.update(deltaTime);
-
-      const isAlive = projectile.isAlive();
-
-      // Debug: Log when projectiles are removed
-      if (!isAlive && beforeCount > 0) {
-        console.log(`Projectile removed at position (${projectile.x.toFixed(1)}, ${projectile.y.toFixed(1)})`);
-      }
-
-      // Only filter by lifetime - projectiles will naturally expire after 3 seconds
-      // This prevents premature removal when player moves far distances
-      return isAlive;
+      return projectile.isAlive();
     });
-
-    // Debug: Log projectile count changes
-    if (this.projectiles.length !== beforeCount) {
-      console.log(`Projectile count changed: ${beforeCount} -> ${this.projectiles.length}`);
-    }
 
     // Update particles
     this.particles = this.particles.filter(particle => {
@@ -403,7 +387,8 @@ export class GameEngine {
   }
 
   private createHitParticles(x: number, y: number, color = "#ffff44") {
-    for (let i = 0; i < 5; i++) {
+    // Reduced from 5 to 3 particles for better performance
+    for (let i = 0; i < 3; i++) {
       this.particles.push(new Particle(
         x + (Math.random() - 0.5) * 20,
         y + (Math.random() - 0.5) * 20,
@@ -416,7 +401,8 @@ export class GameEngine {
   }
 
   private createDeathParticles(x: number, y: number) {
-    for (let i = 0; i < 12; i++) {
+    // Reduced from 12 to 6 particles for better performance
+    for (let i = 0; i < 6; i++) {
       this.particles.push(new Particle(
         x + (Math.random() - 0.5) * 30,
         y + (Math.random() - 0.5) * 30,

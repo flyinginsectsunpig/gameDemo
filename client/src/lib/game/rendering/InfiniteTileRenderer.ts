@@ -501,8 +501,8 @@ export class InfiniteTileRenderer {
       ctx.arc(0, 0, orb.size * 0.2 * pulse, 0, Math.PI * 2);
       ctx.fill();
 
-      // Mystical sparkle trail (performance optimized)
-      if (Math.random() < 0.15 && orbLifeRatio < 0.8) {
+      // Reduced sparkle frequency from 0.15 to 0.05 for better performance
+      if (Math.random() < 0.05 && orbLifeRatio < 0.8) {
         const sparkleAlpha = (1 - orbLifeRatio) * Math.random() * 0.7;
         ctx.fillStyle = `rgba(255, 255, 255, ${sparkleAlpha})`;
         const sparkleDistance = orb.size * 0.8;
@@ -598,51 +598,25 @@ export class InfiniteTileRenderer {
         ctx.shadowBlur = 0;
         ctx.globalAlpha = 1.0;
 
-        // Calculate animation frame efficiently with even slower updates
+        // Optimize frame calculation - use simpler modulo approach
         const frameCount = spriteName === 'spider_jumping' ? 4 : 30;
         const frameWidth = sprite.naturalWidth / frameCount;
         const frameHeight = sprite.naturalHeight;
 
-        // Much slower frame updates to reduce rendering calls
-        let frameIndex = 0;
-        if (!spider.cachedFrameIndex) spider.cachedFrameIndex = 0;
-        if (!spider.lastFrameTime) spider.lastFrameTime = 0;
-        
-        const currentTime = Date.now();
-        if (currentTime - spider.lastFrameTime > 200) { // Even slower frame updates
-          spider.cachedFrameIndex = (spider.cachedFrameIndex + 1) % frameCount;
-          spider.lastFrameTime = currentTime;
-        }
-        frameIndex = spider.cachedFrameIndex;
+        // Use frame counter instead of time-based updates for better performance
+        if (!spider.frameCounter) spider.frameCounter = 0;
+        spider.frameCounter++;
+        const frameIndex = Math.floor(spider.frameCounter / 12) % frameCount; // Update every 12 game frames
 
         const drawX = Math.floor(screenX - (spiderWidth - this.tileSize) / 2);
         const drawY = Math.floor(screenY - (spiderHeight - this.tileSize) / 2);
         
-        // Handle special case for jumping sprite
-        if (spriteName === 'spider_jumping') {
-          const jumpingFrameWidth = sprite.naturalWidth / 4;
-          const jumpingFrameHeight = sprite.naturalHeight;
-          
-          if (!spider.jumpingFrameIndex) spider.jumpingFrameIndex = 0;
-          if (!spider.jumpingFrameTime) spider.jumpingFrameTime = 0;
-          
-          if (currentTime - spider.jumpingFrameTime > 250) { // Slower jumping animation
-            spider.jumpingFrameIndex = (spider.jumpingFrameIndex + 1) % 4;
-            spider.jumpingFrameTime = currentTime;
-          }
-          
-          ctx.drawImage(
-            sprite,
-            spider.jumpingFrameIndex * jumpingFrameWidth, 0, jumpingFrameWidth, jumpingFrameHeight,
-            drawX, drawY, spiderWidth, spiderHeight
-          );
-        } else {
-          ctx.drawImage(
-            sprite,
-            frameIndex * frameWidth, 0, frameWidth, frameHeight,
-            drawX, drawY, spiderWidth, spiderHeight
-          );
-        }
+        // Simplified sprite drawing
+        ctx.drawImage(
+          sprite,
+          frameIndex * frameWidth, 0, frameWidth, frameHeight,
+          drawX, drawY, spiderWidth, spiderHeight
+        );
 
         // Remove sparkle effects entirely to prevent trails
         // No sparkle effects

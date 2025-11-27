@@ -1,4 +1,3 @@
-
 import { IProjectile } from "../../core/interfaces/IProjectile";
 import { IGameObject } from "../../core/interfaces/IGameObject";
 
@@ -28,9 +27,10 @@ export class Projectile implements IProjectile, IGameObject {
   public update(deltaTime: number): void {
     if (!this.alive) return;
 
-    const validDeltaTime = typeof deltaTime === 'number' && !isNaN(deltaTime) && deltaTime > 0 ? 
+    const validDeltaTime = typeof deltaTime === 'number' && !isNaN(deltaTime) && deltaTime > 0 ?
       Math.min(deltaTime, 1/30) : 0.016;
 
+    // Update position
     this.x += this.vx * validDeltaTime;
     this.y += this.vy * validDeltaTime;
 
