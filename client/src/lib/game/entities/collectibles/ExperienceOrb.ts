@@ -1,7 +1,7 @@
 
-import { IGameObject } from "../../core/interfaces/IGameObject";
+import { ICollectible } from "../../core/interfaces/ICollectible";
 
-export class ExperienceOrb implements IGameObject {
+export class ExperienceOrb implements ICollectible {
   public x: number;
   public y: number;
   public width = 8;

@@ -2,12 +2,13 @@
 import { Player } from "./Player";
 import { IEnemy } from "../../core/interfaces/IEnemy";
 import { IProjectile } from "../../core/interfaces/IProjectile";
-import { MechanicalSpider } from "../MechanicalSpider";
+import { ISpider } from "../../core/interfaces/ISpider";
+import { MechanicalSpider } from "../spiders/MechanicalSpider";
 import { SpriteManager } from "../../rendering/SpriteManager";
 import { AnimationManager } from "../../rendering/AnimationManager";
 
 export class AssassinPlayer extends Player {
-  private followerSpider: MechanicalSpider | null = null;
+  private followerSpider: ISpider | null = null;
   private spiderSpawned = false;
   private tileRenderer: any = null;
   private spiderMode: "normal" | "big" | "small" = "normal";
@@ -148,7 +149,7 @@ export class AssassinPlayer extends Player {
     }
   }
 
-  public getSpiders(): MechanicalSpider[] {
+  public getSpiders(): ISpider[] {
     return this.followerSpider ? [this.followerSpider] : [];
   }
 
