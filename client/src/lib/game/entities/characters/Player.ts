@@ -3,8 +3,8 @@ import { BaseEntity } from '../../core/base/BaseEntity';
 import { IPlayer } from '../../core/interfaces/IPlayer';
 import { IWeapon } from '../../core/interfaces/IWeapon';
 import { IProjectile } from '../../core/interfaces/IProjectile';
-import { SylphBloomsWeapon } from '../../weapons/implementations/SylphBloomsWeapon';
-import { OrbitalWeapon } from '../../weapons/implementations/OrbitalWeapon';
+import { SylphBloomsWeapon } from '../../weapons/SylphBloomsWeapon';
+import { OrbitalWeapon } from '../../weapons/OrbitalWeapon';
 import { SpriteManager } from '../../rendering/SpriteManager';
 import { AnimationManager } from '../../rendering/AnimationManager';
 

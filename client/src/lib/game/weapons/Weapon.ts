@@ -1,5 +1,5 @@
 import { BaseWeapon } from "./WeaponTypes";
-import { Projectile } from "./Projectile";
+import { Projectile } from "./projectiles/Projectile";
 
 export class Weapon extends BaseWeapon {
   constructor(fireRate: number = 2, damage: number = 10, projectileSpeed: number = 300) {

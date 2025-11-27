@@ -1,8 +1,5 @@
-import { Weapon } from "./Weapon";
-import { Player } from "./Player";
-import { Enemy } from "../entities/Enemy";
-import { Particle } from "./Particle";
-import { InfiniteTileRenderer } from "./InfiniteTileRenderer";
+import { Enemy } from "../entities/enemies/Enemy";
+import { InfiniteTileRenderer } from "../rendering/InfiniteTileRenderer";
 
 
 

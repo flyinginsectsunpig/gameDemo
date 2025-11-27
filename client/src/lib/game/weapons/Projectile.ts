@@ -1,6 +1,4 @@
-import { GameObject } from "./Player";
-
-export class Projectile implements GameObject {
+export class Projectile {
   public x: number;
   public y: number;
   public width = 8;
