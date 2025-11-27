@@ -14,48 +14,61 @@ export default function MainMenu({ onStartNew, onContinue, onQuit }: MainMenuPro
   const hasSave = saveData.stats.totalRuns > 0;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-purple-900 via-black to-black flex items-center justify-center z-50">
-      <div className="text-center">
-        <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-8 animate-pulse">
-          VAMPIRE SURVIVORS
+    <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'linear-gradient(180deg, #0a0608 0%, #120912 50%, #1b1a24 100%)' }}>
+      <div className="gothic-vignette" />
+      <div className="text-center relative z-10">
+        <div className="gothic-divider mb-8 w-64 mx-auto" />
+        
+        <h1 className="gothic-title text-6xl md:text-7xl font-bold mb-2" style={{ color: '#c9a23f' }}>
+          VAMPIRE
+        </h1>
+        <h1 className="gothic-title text-5xl md:text-6xl font-bold mb-8" style={{ color: '#8b2635' }}>
+          SURVIVORS
         </h1>
         
-        <div className="space-y-4">
+        <div className="gothic-divider mb-8 w-64 mx-auto" />
+        
+        <div className="space-y-3">
           <button
             onClick={onStartNew}
-            className="w-64 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xl font-bold rounded-lg transition-all transform hover:scale-105"
+            className="gothic-button gothic-button-primary w-64 px-8 py-4 rounded-lg text-base"
           >
-            NEW GAME
+            New Game
           </button>
           
           {hasSave && (
             <button
               onClick={onContinue}
-              className="w-64 px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white text-xl font-bold rounded-lg transition-all transform hover:scale-105"
+              className="gothic-button w-64 px-8 py-4 rounded-lg text-base"
             >
-              CONTINUE
+              Continue
             </button>
           )}
           
           <button
             onClick={() => setShowSettings(true)}
-            className="w-64 px-8 py-4 bg-gray-700 hover:bg-gray-600 text-white text-xl font-bold rounded-lg transition-all"
+            className="gothic-button w-64 px-8 py-4 rounded-lg text-base"
           >
-            SETTINGS
+            Settings
           </button>
           
           <button
             onClick={onQuit}
-            className="w-64 px-8 py-4 bg-red-700 hover:bg-red-600 text-white text-xl font-bold rounded-lg transition-all"
+            className="gothic-button w-64 px-8 py-4 rounded-lg text-base"
+            style={{ borderColor: '#5c1f2a' }}
           >
-            QUIT
+            Quit
           </button>
         </div>
 
-        <div className="mt-12 text-gray-400">
-          <p>Total Runs: {saveData.stats.totalRuns}</p>
-          <p>Highest Wave: {saveData.stats.highestWave}</p>
-          <p>Total Kills: {saveData.stats.totalKills}</p>
+        <div className="gothic-divider mt-8 mb-4 w-64 mx-auto" />
+
+        <div className="gothic-panel rounded-lg p-4 mt-6 inline-block" style={{ borderColor: '#2b193d' }}>
+          <div className="text-sm space-y-1" style={{ color: '#8b8b8b' }}>
+            <p>Total Runs: <span style={{ color: '#d9d1c5' }}>{saveData.stats.totalRuns}</span></p>
+            <p>Highest Wave: <span style={{ color: '#c9a23f' }}>{saveData.stats.highestWave}</span></p>
+            <p>Total Kills: <span style={{ color: '#d9d1c5' }}>{saveData.stats.totalKills}</span></p>
+          </div>
         </div>
       </div>
     </div>

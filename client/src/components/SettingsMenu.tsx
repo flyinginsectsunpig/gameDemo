@@ -24,28 +24,30 @@ export default function SettingsMenu({ onClose }: SettingsMenuProps) {
   };
 
   return (
-    <div className="absolute inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border-2 border-purple-500 rounded-lg p-8 max-w-md w-full mx-4">
-        <h2 className="text-3xl font-bold text-purple-400 text-center mb-6">Settings</h2>
+    <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'linear-gradient(180deg, rgba(10, 6, 8, 0.95) 0%, rgba(18, 9, 18, 0.98) 100%)' }}>
+      <div className="gothic-vignette" />
+      <div className="gothic-panel p-8 rounded-lg max-w-md w-full mx-4 relative z-10">
+        <div className="gothic-divider mb-6" />
+        
+        <h2 className="gothic-title text-3xl font-bold text-center mb-8" style={{ color: '#c9a23f' }}>
+          SETTINGS
+        </h2>
         
         <div className="space-y-6">
-          <div>
-            <label className="flex items-center justify-between mb-2">
-              <span className="text-white font-bold">Master Audio</span>
-              <button
-                onClick={toggleMute}
-                className={`px-4 py-2 rounded ${
-                  isMuted ? 'bg-red-600' : 'bg-green-600'
-                } text-white font-bold`}
-              >
-                {isMuted ? 'Muted' : 'Unmuted'}
-              </button>
-            </label>
+          <div className="flex items-center justify-between">
+            <span className="font-bold" style={{ color: '#d9d1c5', fontFamily: 'Cinzel, serif' }}>Master Audio</span>
+            <button
+              onClick={toggleMute}
+              className="gothic-button px-4 py-2 rounded text-sm"
+              style={{ borderColor: isMuted ? '#5c1f2a' : '#4a9060' }}
+            >
+              {isMuted ? 'Muted' : 'Enabled'}
+            </button>
           </div>
 
           <div>
-            <label className="block text-white font-bold mb-2">
-              Music Volume: {Math.round(musicVolume * 100)}%
+            <label className="block font-bold mb-3" style={{ color: '#d9d1c5', fontFamily: 'Cinzel, serif' }}>
+              Music Volume: <span style={{ color: '#c9a23f' }}>{Math.round(musicVolume * 100)}%</span>
             </label>
             <input
               type="range"
@@ -54,13 +56,17 @@ export default function SettingsMenu({ onClose }: SettingsMenuProps) {
               step="0.1"
               value={musicVolume}
               onChange={handleMusicVolumeChange}
-              className="w-full"
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+              style={{ 
+                background: `linear-gradient(to right, #8b2635 0%, #8b2635 ${musicVolume * 100}%, #1b1a24 ${musicVolume * 100}%, #1b1a24 100%)`,
+                accentColor: '#c9a23f'
+              }}
             />
           </div>
 
           <div>
-            <label className="block text-white font-bold mb-2">
-              SFX Volume: {Math.round(sfxVolume * 100)}%
+            <label className="block font-bold mb-3" style={{ color: '#d9d1c5', fontFamily: 'Cinzel, serif' }}>
+              SFX Volume: <span style={{ color: '#c9a23f' }}>{Math.round(sfxVolume * 100)}%</span>
             </label>
             <input
               type="range"
@@ -69,18 +75,22 @@ export default function SettingsMenu({ onClose }: SettingsMenuProps) {
               step="0.1"
               value={sfxVolume}
               onChange={handleSfxVolumeChange}
-              className="w-full"
+              className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+              style={{ 
+                background: `linear-gradient(to right, #8b2635 0%, #8b2635 ${sfxVolume * 100}%, #1b1a24 ${sfxVolume * 100}%, #1b1a24 100%)`,
+                accentColor: '#c9a23f'
+              }}
             />
           </div>
 
-          <div className="pt-4">
-            <button
-              onClick={onClose}
-              className="w-full px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all duration-200"
-            >
-              Back
-            </button>
-          </div>
+          <div className="gothic-divider my-6" />
+
+          <button
+            onClick={onClose}
+            className="gothic-button gothic-button-primary w-full px-6 py-3 rounded-lg text-sm"
+          >
+            Back
+          </button>
         </div>
       </div>
     </div>

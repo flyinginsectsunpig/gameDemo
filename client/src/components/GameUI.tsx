@@ -17,53 +17,84 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
 
   if (phase === "ready") {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80 text-white">
-        <div className="text-center max-w-2xl">
-          <h1 className="text-6xl font-bold mb-4 text-red-500">VAMPIRE SURVIVORS</h1>
-          <p className="text-xl mb-8">Survive the endless waves of enemies!</p>
-          <div className="space-y-2 text-lg">
-            <p><strong>WASD</strong> or <strong>Arrow Keys</strong> - Move</p>
-            <p><strong>Weapons fire automatically</strong></p>
-            <p><strong>M</strong> - Toggle sound | <strong>ESC</strong> - Pause</p>
-            <p><strong>R</strong> - Restart game</p>
-            <div className="mt-6">
-              <p className="text-yellow-400 mb-2">Sylph Guardian - Nature magic with flower turrets</p>
-              <p className="text-yellow-400 mb-2">Shadow Assassin - Fast & deadly with spider companions</p>
+      <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'linear-gradient(180deg, #0a0608 0%, #120912 50%, #1b1a24 100%)' }}>
+        <div className="gothic-vignette" />
+        <div className="text-center max-w-3xl px-8 relative z-10">
+          <div className="gothic-divider mb-8 w-full" />
+          
+          <h1 className="gothic-title text-6xl md:text-7xl font-bold mb-2" style={{ color: '#c9a23f' }}>
+            VAMPIRE
+          </h1>
+          <h1 className="gothic-title text-5xl md:text-6xl font-bold mb-6" style={{ color: '#8b2635' }}>
+            SURVIVORS
+          </h1>
+          
+          <p className="text-xl mb-8 italic" style={{ color: '#d9d1c5', fontFamily: 'Crimson Text, serif' }}>
+            Survive the endless waves of darkness...
+          </p>
+          
+          <div className="gothic-divider mb-8 w-full" />
+          
+          <div className="gothic-panel rounded-lg p-6 mb-8">
+            <div className="space-y-3 text-base" style={{ color: '#d9d1c5' }}>
+              <p><span style={{ color: '#c9a23f' }}>WASD</span> or <span style={{ color: '#c9a23f' }}>Arrow Keys</span> to move</p>
+              <p style={{ color: '#8b8b8b' }}>Weapons fire automatically</p>
+              <p><span style={{ color: '#c9a23f' }}>M</span> Toggle sound | <span style={{ color: '#c9a23f' }}>ESC</span> Pause | <span style={{ color: '#c9a23f' }}>R</span> Restart</p>
             </div>
-            <div className="mt-4 p-4 bg-red-900/50 rounded-lg border border-red-500">
-              <p className="text-red-300 font-bold">Boss fights every 5 waves!</p>
-              <p className="text-sm text-gray-300 mt-1">Defeat powerful bosses to earn bonus rewards</p>
+            
+            <div className="gothic-divider my-6" />
+            
+            <div className="space-y-2">
+              <p style={{ color: '#7cb87c' }}>
+                <span className="font-bold">Sylph Guardian</span> — Nature magic with flower turrets
+              </p>
+              <p style={{ color: '#9b7cb8' }}>
+                <span className="font-bold">Shadow Assassin</span> — Fast & deadly with spider companions
+              </p>
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <div className="gothic-panel rounded-lg p-4 mb-8" style={{ borderColor: '#5c1f2a' }}>
+            <p className="font-bold text-lg" style={{ color: '#c9a23f', fontFamily: 'Cinzel, serif' }}>
+              Boss Encounters Every 5 Waves
+            </p>
+            <p className="text-sm mt-1" style={{ color: '#8b8b8b' }}>
+              Defeat powerful bosses to earn bonus rewards
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
             {onShowUpgradeShop && (
               <button
                 onClick={onShowUpgradeShop}
-                className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white text-lg font-bold rounded-lg transition-all transform hover:scale-105"
+                className="gothic-button gothic-button-primary px-6 py-3 rounded-lg text-sm"
               >
-                💰 Upgrade Shop
+                Upgrade Shop
               </button>
             )}
             {onShowStatistics && (
               <button
                 onClick={onShowStatistics}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-lg font-bold rounded-lg transition-all transform hover:scale-105"
+                className="gothic-button px-6 py-3 rounded-lg text-sm"
               >
-                📊 Statistics
+                Statistics
               </button>
             )}
             {onShowSettings && (
               <button
                 onClick={onShowSettings}
-                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-lg font-bold rounded-lg transition-all transform hover:scale-105"
+                className="gothic-button px-6 py-3 rounded-lg text-sm"
               >
-                ⚙️ Settings
+                Settings
               </button>
             )}
           </div>
 
-          <p className="text-sm mt-8 text-gray-400">Press any key or click to start</p>
+          <p className="text-sm animate-pulse" style={{ color: '#5c1f2a' }}>
+            Press any key or click to begin your journey...
+          </p>
+          
+          <div className="gothic-divider mt-8 w-full" />
         </div>
       </div>
     );
@@ -77,6 +108,7 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
 
   return (
     <div className="absolute inset-0 pointer-events-none">
+      <div className="gothic-vignette" />
       <BossWarning />
 
       {isBossActive && <BossHealthBar />}
@@ -84,75 +116,75 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
       <ComboDisplay combo={comboCount} multiplier={comboMultiplier} timeRemaining={3} />
 
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-auto">
-        <div className="bg-black bg-opacity-70 p-4 rounded-lg text-white">
+        <div className="gothic-bar p-4 rounded-lg" style={{ fontFamily: 'Crimson Text, serif' }}>
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
-              <span className="text-red-400 font-bold">HP</span>
-              <div className="w-32 h-4 bg-red-900 rounded-full overflow-hidden">
+              <span className="font-bold text-sm" style={{ color: '#8b2635' }}>HP</span>
+              <div className="w-32 h-3 rounded-full overflow-hidden" style={{ background: '#1b1a24', border: '1px solid #2b193d' }}>
                 <div
-                  className="h-full bg-red-500 transition-all duration-200"
+                  className="h-full gothic-health-bar transition-all duration-200"
                   style={{ width: `${healthPercentage}%` }}
                 />
               </div>
-              <span className="text-sm">{health}/{maxHealth}</span>
+              <span className="text-xs" style={{ color: '#d9d1c5' }}>{health}/{maxHealth}</span>
             </div>
 
             <div className="flex items-center space-x-2">
-              <span className="text-yellow-400 font-bold">Score</span>
-              <span className="text-xl font-bold">{score.toLocaleString()}</span>
+              <span className="font-bold text-sm" style={{ color: '#c9a23f' }}>Score</span>
+              <span className="text-lg font-bold" style={{ color: '#d9d1c5' }}>{score.toLocaleString()}</span>
             </div>
 
             <div className="flex items-center space-x-2">
-              <span className="text-green-400 font-bold">💰</span>
-              <span className="text-lg font-bold text-green-300">{currency.toLocaleString()}</span>
+              <span className="font-bold text-sm" style={{ color: '#c9a23f' }}>Gold</span>
+              <span className="text-sm font-bold" style={{ color: '#c9a23f' }}>{currency.toLocaleString()}</span>
             </div>
 
             <div className="flex items-center space-x-2">
-              <span className="text-purple-400 font-bold">LVL</span>
-              <span className="text-xl font-bold">{level}</span>
+              <span className="font-bold text-sm" style={{ color: '#9b7cb8' }}>LVL</span>
+              <span className="text-lg font-bold" style={{ color: '#d9d1c5' }}>{level}</span>
             </div>
 
             <div className="flex items-center space-x-2">
-              <span className="text-orange-400 font-bold">💀</span>
-              <span className="text-sm">{totalKills}</span>
+              <span className="font-bold text-sm" style={{ color: '#5c1f2a' }}>Kills</span>
+              <span className="text-sm" style={{ color: '#d9d1c5' }}>{totalKills}</span>
             </div>
           </div>
 
           <div className="mt-3 flex items-center space-x-2">
-            <span className="text-green-400 font-bold text-sm">EXP</span>
-            <div className="w-48 h-3 bg-green-900 rounded-full overflow-hidden">
+            <span className="font-bold text-xs" style={{ color: '#4a9060' }}>EXP</span>
+            <div className="w-48 h-2 rounded-full overflow-hidden" style={{ background: '#1b1a24', border: '1px solid #2b193d' }}>
               <div
-                className="h-full bg-green-500 transition-all duration-200"
+                className="h-full gothic-xp-bar transition-all duration-200"
                 style={{ width: `${experiencePercentage}%` }}
               />
             </div>
-            <span className="text-xs text-green-300">{experience}/{experienceToNext}</span>
+            <span className="text-xs" style={{ color: '#7cb87c' }}>{experience}/{experienceToNext}</span>
           </div>
 
           {isBossWave && !isBossActive && (
-            <div className="mt-2 text-xs text-red-400 animate-pulse">
-              Boss wave! Prepare for battle...
+            <div className="mt-2 text-xs animate-pulse" style={{ color: '#c9a23f', fontFamily: 'Cinzel, serif' }}>
+              Boss approaches... Prepare yourself!
             </div>
           )}
         </div>
 
         <button
           onClick={toggleMute}
-          className="bg-black bg-opacity-70 p-3 rounded-lg text-white hover:bg-opacity-90 transition-colors text-xl"
+          className="gothic-button p-3 rounded-lg text-sm"
         >
           {isMuted ? "Muted" : "Sound"}
         </button>
       </div>
 
-      <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 p-2 rounded text-white text-sm">
+      <div className="absolute bottom-4 left-4 gothic-bar p-2 rounded text-xs" style={{ color: '#8b8b8b' }}>
         <div>WASD/Arrows: Move | ESC: Pause | M: Sound | R: Restart</div>
       </div>
 
       <div className="absolute bottom-4 right-4 space-y-2">
         {isBossActive && (
-          <div className="bg-red-900/80 p-3 rounded-lg text-white border border-red-500">
-            <div className="text-sm font-bold text-red-300">BOSS FIGHT ACTIVE</div>
-            <div className="text-xs text-gray-300 mt-1">Defeat the boss to proceed!</div>
+          <div className="gothic-panel p-3 rounded-lg" style={{ borderColor: '#8b2635' }}>
+            <div className="text-sm font-bold" style={{ color: '#c9a23f', fontFamily: 'Cinzel, serif' }}>BOSS FIGHT</div>
+            <div className="text-xs mt-1" style={{ color: '#8b8b8b' }}>Defeat the boss to proceed!</div>
           </div>
         )}
         <Minimap playerX={0} playerY={0} enemies={[]} />

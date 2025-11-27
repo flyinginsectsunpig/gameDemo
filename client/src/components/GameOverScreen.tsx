@@ -15,58 +15,65 @@ export default function GameOverScreen() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 animate-fadeIn">
-      <div className="bg-gradient-to-b from-red-900 to-black p-8 rounded-lg border-4 border-red-600 text-white max-w-2xl w-full">
-        <h1 className="text-6xl font-bold text-center mb-6 text-red-500 animate-pulse">
+    <div className="fixed inset-0 flex items-center justify-center z-50 animate-fadeIn" style={{ background: 'linear-gradient(180deg, rgba(10, 6, 8, 0.95) 0%, rgba(18, 9, 18, 0.98) 100%)' }}>
+      <div className="gothic-vignette" />
+      <div className="gothic-panel p-8 rounded-lg max-w-2xl w-full mx-4 relative z-10">
+        <div className="gothic-divider mb-6" />
+        
+        <h1 className="gothic-title text-5xl font-bold text-center mb-8" style={{ color: '#8b2635' }}>
           GAME OVER
         </h1>
         
         <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-400 uppercase mb-1">Final Score</div>
-            <div className="text-3xl font-bold text-yellow-400">{score.toLocaleString()}</div>
+          <div className="gothic-panel p-4 rounded-lg" style={{ borderColor: '#2b193d' }}>
+            <div className="text-xs uppercase mb-1" style={{ color: '#5c5c5c', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Final Score</div>
+            <div className="text-2xl font-bold" style={{ color: '#c9a23f', fontFamily: 'Cinzel, serif' }}>{score.toLocaleString()}</div>
           </div>
           
-          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-400 uppercase mb-1">Level Reached</div>
-            <div className="text-3xl font-bold text-purple-400">{level}</div>
+          <div className="gothic-panel p-4 rounded-lg" style={{ borderColor: '#2b193d' }}>
+            <div className="text-xs uppercase mb-1" style={{ color: '#5c5c5c', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Level Reached</div>
+            <div className="text-2xl font-bold" style={{ color: '#9b7cb8', fontFamily: 'Cinzel, serif' }}>{level}</div>
           </div>
           
-          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-400 uppercase mb-1">Wave Survived</div>
-            <div className="text-3xl font-bold text-blue-400">{wave}</div>
+          <div className="gothic-panel p-4 rounded-lg" style={{ borderColor: '#2b193d' }}>
+            <div className="text-xs uppercase mb-1" style={{ color: '#5c5c5c', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Wave Survived</div>
+            <div className="text-2xl font-bold" style={{ color: '#7cb87c', fontFamily: 'Cinzel, serif' }}>{wave}</div>
           </div>
           
-          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-400 uppercase mb-1">Max Combo</div>
-            <div className="text-3xl font-bold text-orange-400">{maxCombo}x</div>
+          <div className="gothic-panel p-4 rounded-lg" style={{ borderColor: '#2b193d' }}>
+            <div className="text-xs uppercase mb-1" style={{ color: '#5c5c5c', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Max Combo</div>
+            <div className="text-2xl font-bold" style={{ color: '#c9a23f', fontFamily: 'Cinzel, serif' }}>{maxCombo}x</div>
           </div>
           
-          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-400 uppercase mb-1">Total Kills</div>
-            <div className="text-3xl font-bold text-red-400">{totalKills}</div>
+          <div className="gothic-panel p-4 rounded-lg" style={{ borderColor: '#2b193d' }}>
+            <div className="text-xs uppercase mb-1" style={{ color: '#5c5c5c', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Total Kills</div>
+            <div className="text-2xl font-bold" style={{ color: '#8b2635', fontFamily: 'Cinzel, serif' }}>{totalKills}</div>
           </div>
           
-          <div className="bg-black bg-opacity-50 p-4 rounded-lg">
-            <div className="text-sm text-gray-400 uppercase mb-1">Bosses Defeated</div>
-            <div className="text-3xl font-bold text-yellow-400">{bossesDefeated}</div>
+          <div className="gothic-panel p-4 rounded-lg" style={{ borderColor: '#2b193d' }}>
+            <div className="text-xs uppercase mb-1" style={{ color: '#5c5c5c', fontFamily: 'Cinzel, serif', letterSpacing: '0.05em' }}>Bosses Defeated</div>
+            <div className="text-2xl font-bold" style={{ color: '#c9a23f', fontFamily: 'Cinzel, serif' }}>{bossesDefeated}</div>
           </div>
         </div>
+
+        <div className="gothic-divider mb-6" />
 
         <div className="space-y-3">
           <button
             onClick={handleRestart}
-            className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-xl font-bold rounded-lg transition-all transform hover:scale-105"
+            className="gothic-button gothic-button-primary w-full px-6 py-3 rounded-lg text-sm"
           >
-            Try Again (R)
+            Try Again
           </button>
           <button
             onClick={handleMainMenu}
-            className="w-full px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white text-lg font-bold rounded-lg transition-all"
+            className="gothic-button w-full px-6 py-3 rounded-lg text-sm"
           >
             Main Menu
           </button>
         </div>
+        
+        <div className="gothic-divider mt-6" />
       </div>
     </div>
   );

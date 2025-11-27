@@ -15,14 +15,20 @@ export default function StatisticsScreen({ onClose }: StatisticsScreenProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-gradient-to-b from-purple-900 to-black p-8 rounded-lg border-4 border-purple-500 text-white max-w-4xl w-full my-8">
-        <h1 className="text-5xl font-bold text-center mb-8 text-purple-400">Statistics</h1>
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4 overflow-y-auto" style={{ background: 'linear-gradient(180deg, rgba(10, 6, 8, 0.95) 0%, rgba(18, 9, 18, 0.98) 100%)' }}>
+      <div className="gothic-vignette" />
+      <div className="gothic-panel p-8 rounded-lg max-w-4xl w-full my-8 relative z-10">
+        <div className="gothic-divider mb-6" />
+        
+        <h1 className="gothic-title text-4xl font-bold text-center mb-8" style={{ color: '#c9a23f' }}>
+          STATISTICS
+        </h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Overall Stats */}
-          <div className="bg-black bg-opacity-50 p-6 rounded-lg border-2 border-purple-400">
-            <h2 className="text-2xl font-bold mb-4 text-purple-300">Overall</h2>
+          <div className="gothic-panel p-5 rounded-lg" style={{ borderColor: '#2b193d' }}>
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#9b7cb8', fontFamily: 'Cinzel, serif' }}>
+              Overall
+            </h2>
             <div className="space-y-2">
               <StatRow label="Total Runs" value={stats.totalRuns.toLocaleString()} />
               <StatRow label="Total Kills" value={stats.totalKills.toLocaleString()} />
@@ -32,21 +38,23 @@ export default function StatisticsScreen({ onClose }: StatisticsScreenProps) {
             </div>
           </div>
 
-          {/* Records */}
-          <div className="bg-black bg-opacity-50 p-6 rounded-lg border-2 border-yellow-400">
-            <h2 className="text-2xl font-bold mb-4 text-yellow-300">Records</h2>
+          <div className="gothic-panel p-5 rounded-lg" style={{ borderColor: '#5c1f2a' }}>
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#c9a23f', fontFamily: 'Cinzel, serif' }}>
+              Records
+            </h2>
             <div className="space-y-2">
-              <StatRow label="Highest Score" value={stats.highestScore.toLocaleString()} color="text-yellow-400" />
-              <StatRow label="Highest Wave" value={stats.highestWave.toString()} color="text-blue-400" />
-              <StatRow label="Highest Level" value={stats.highestLevel.toString()} color="text-purple-400" />
-              <StatRow label="Longest Combo" value={`${stats.longestCombo}x`} color="text-orange-400" />
-              <StatRow label="Weapons Unlocked" value={stats.weaponsUnlocked.length.toString()} color="text-green-400" />
+              <StatRow label="Highest Score" value={stats.highestScore.toLocaleString()} color="#c9a23f" />
+              <StatRow label="Highest Wave" value={stats.highestWave.toString()} color="#9b7cb8" />
+              <StatRow label="Highest Level" value={stats.highestLevel.toString()} color="#7cb87c" />
+              <StatRow label="Longest Combo" value={`${stats.longestCombo}x`} color="#c9a23f" />
+              <StatRow label="Weapons Unlocked" value={stats.weaponsUnlocked.length.toString()} color="#7cb87c" />
             </div>
           </div>
 
-          {/* Combat Stats */}
-          <div className="bg-black bg-opacity-50 p-6 rounded-lg border-2 border-red-400">
-            <h2 className="text-2xl font-bold mb-4 text-red-300">Combat</h2>
+          <div className="gothic-panel p-5 rounded-lg" style={{ borderColor: '#5c1f2a' }}>
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#8b2635', fontFamily: 'Cinzel, serif' }}>
+              Combat
+            </h2>
             <div className="space-y-2">
               <StatRow label="Damage Dealt" value={Math.floor(stats.totalDamageDealt).toLocaleString()} />
               <StatRow label="Damage Taken" value={Math.floor(stats.totalDamageTaken).toLocaleString()} />
@@ -55,12 +63,13 @@ export default function StatisticsScreen({ onClose }: StatisticsScreenProps) {
             </div>
           </div>
 
-          {/* Achievements */}
-          <div className="bg-black bg-opacity-50 p-6 rounded-lg border-2 border-green-400">
-            <h2 className="text-2xl font-bold mb-4 text-green-300">Progress</h2>
+          <div className="gothic-panel p-5 rounded-lg" style={{ borderColor: '#2b193d' }}>
+            <h2 className="text-xl font-bold mb-4" style={{ color: '#7cb87c', fontFamily: 'Cinzel, serif' }}>
+              Progress
+            </h2>
             <div className="space-y-2">
-              <StatRow label="Achievements" value={`${stats.achievementsEarned.length}/50`} color="text-green-400" />
-              <StatRow label="Weapons" value={`${stats.weaponsUnlocked.length}/15`} color="text-blue-400" />
+              <StatRow label="Achievements" value={`${stats.achievementsEarned.length}/50`} color="#c9a23f" />
+              <StatRow label="Weapons" value={`${stats.weaponsUnlocked.length}/15`} color="#9b7cb8" />
               <StatRow label="Characters Used" value={Object.keys(stats.characterStats).length.toString()} />
             </div>
           </div>
@@ -68,20 +77,22 @@ export default function StatisticsScreen({ onClose }: StatisticsScreenProps) {
 
         <button
           onClick={onClose}
-          className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xl font-bold rounded-lg transition-all transform hover:scale-105"
+          className="gothic-button gothic-button-primary w-full px-6 py-3 rounded-lg text-sm"
         >
           Close
         </button>
+        
+        <div className="gothic-divider mt-6" />
       </div>
     </div>
   );
 }
 
-function StatRow({ label, value, color = "text-white" }: { label: string; value: string; color?: string }) {
+function StatRow({ label, value, color = "#d9d1c5" }: { label: string; value: string; color?: string }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-gray-300">{label}:</span>
-      <span className={`font-bold ${color}`}>{value}</span>
+      <span style={{ color: '#8b8b8b' }}>{label}:</span>
+      <span className="font-bold" style={{ color }}>{value}</span>
     </div>
   );
 }
