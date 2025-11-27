@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 
-export type GamePhase = "ready" | "playing" | "ended" | "levelUp" | "characterSelect";
+export type GamePhase = "ready" | "playing" | "ended" | "levelUp" | "characterSelect" | "paused" | "gameOver";
 
 export type CharacterType = {
   id?: string;
@@ -22,13 +22,14 @@ interface GameState {
   level: number;
   selectedCharacter: CharacterType | null;
   spiderMode: "normal" | "big" | "small";
-  
+
   isBossActive: boolean;
   currentBossHealth: number;
   currentBossMaxHealth: number;
   bossName: string;
   bossDescription: string;
   showBossWarning: boolean;
+  isPaused: boolean;
 
   start: () => void;
   restart: () => void;
@@ -48,7 +49,9 @@ interface GameState {
   setHealth: (health: number) => void;
   setWave: (wave: number) => void;
   setSpiderMode: (mode: "normal" | "big" | "small") => void;
-  
+  pause: () => void;
+  resume: () => void;
+
   setBossActive: (active: boolean) => void;
   updateBossHealth: (health: number, maxHealth: number) => void;
   setBossInfo: (name: string, description: string) => void;
@@ -69,13 +72,14 @@ export const useGameState = create<GameState>()(
     level: 1,
     selectedCharacter: null,
     spiderMode: "normal",
-    
+
     isBossActive: false,
     currentBossHealth: 0,
     currentBossMaxHealth: 0,
     bossName: "",
     bossDescription: "",
     showBossWarning: false,
+    isPaused: false,
 
     start: () => {
       set((state) => {
@@ -103,7 +107,8 @@ export const useGameState = create<GameState>()(
         currentBossMaxHealth: 0,
         bossName: "",
         bossDescription: "",
-        showBossWarning: false
+        showBossWarning: false,
+        isPaused: false
       }));
     },
 
@@ -136,14 +141,21 @@ export const useGameState = create<GameState>()(
     setHealth: (health) => set({ health }),
     setWave: (wave) => set({ wave }),
 
-    takeDamage: (damage) => {
-      const { health } = get();
-      const newHealth = Math.max(0, health - damage);
-      set({ health: newHealth });
+    takeDamage: (amount) => {
+      set((state) => {
+        const newHealth = Math.max(0, state.health - amount);
 
-      if (newHealth <= 0) {
-        get().end();
-      }
+        // Play player hurt sound
+        const audioState = useAudio.getState();
+        if (!audioState.isMuted && newHealth > 0) {
+          audioState.playPlayerHurt();
+        }
+
+        if (newHealth <= 0) {
+          return { health: 0, phase: "gameOver" as const };
+        }
+        return { health: newHealth };
+      });
     },
 
     addScore: (points) => {
@@ -158,15 +170,29 @@ export const useGameState = create<GameState>()(
       }
     },
 
-    addExperience: (exp) => {
-      const { experience } = get();
-      const newExp = experience + exp;
-      set({ experience: newExp });
+    addExperience: (amount) => {
+      set((state) => {
+        const newExperience = state.experience + amount;
+        if (newExperience >= state.experienceToNext) {
+          const overflow = newExperience - state.experienceToNext;
+          const newLevel = state.level + 1;
+          const newExpToNext = Math.floor(state.experienceToNext * 1.5);
 
-      const { experienceToNext } = get();
-      if (newExp >= experienceToNext) {
-        get().levelUp();
-      }
+          // Play level up sound
+          const audioState = useAudio.getState();
+          if (!audioState.isMuted) {
+            audioState.playLevelUp();
+          }
+
+          return {
+            experience: overflow,
+            level: newLevel,
+            experienceToNext: newExpToNext,
+            phase: "levelUp" as const
+          };
+        }
+        return { experience: newExperience };
+      });
     },
 
     levelUp: () => {
@@ -200,6 +226,24 @@ export const useGameState = create<GameState>()(
     nextWave: () => {
       const { wave } = get();
       set({ wave: wave + 1 });
+    },
+
+    pause: () => {
+      set((state) => {
+        if (state.phase === "playing") {
+          return { isPaused: true, phase: "paused" as const };
+        }
+        return state;
+      });
+    },
+
+    resume: () => {
+      set((state) => {
+        if (state.phase === "paused") {
+          return { isPaused: false, phase: "playing" as const };
+        }
+        return state;
+      });
     },
 
     setBossActive: (active: boolean) => {

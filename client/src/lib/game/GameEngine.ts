@@ -39,6 +39,7 @@ export class GameEngine {
   private lastTime = 0;
   private lastMuteState = false;
   private lastRestartState = false;
+  private lastPauseState = false;
   private lastWeapon1State = false;
   private lastWeapon2State = false;
   private lastWeapon3State = false;
@@ -202,8 +203,24 @@ export class GameEngine {
 
   private update(deltaTime: number) {
     const gameState = useGameState.getState();
+    const input = this.inputManager.getInput();
 
-    this.player.update(deltaTime, this.inputManager.getInput(), this.canvas.width, this.canvas.height, this.infiniteTileRenderer);
+    // Handle pause
+    if (input.pause && !this.lastPauseState) {
+      if (gameState.phase === "playing") {
+        gameState.pause();
+      } else if (gameState.phase === "paused") {
+        gameState.resume();
+      }
+    }
+    this.lastPauseState = input.pause;
+
+    // Don't update game if paused
+    if (gameState.phase === "paused") {
+      return;
+    }
+
+    this.player.update(deltaTime, input, this.canvas.width, this.canvas.height, this.infiniteTileRenderer);
 
     if (this.player instanceof AssassinPlayer) {
       this.player.setTileRenderer(this.infiniteTileRenderer);

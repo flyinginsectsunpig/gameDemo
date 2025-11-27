@@ -7,13 +7,16 @@ import { useGameState } from "../lib/stores/useGameState";
 import { useAudio } from "../lib/stores/useAudio";
 import { PowerUpDefinition } from "../lib/game/PowerUp";
 import { CharacterType } from "./CharacterSelection";
+import PauseMenu from "./PauseMenu";
+import SettingsMenu from "./SettingsMenu";
 
 export default function Game() {
-  const { phase, restart, resumeFromLevelUp, selectCharacter } = useGameState();
+  const { phase, restart, resumeFromLevelUp, selectCharacter, resume, pause } = useGameState();
   const { setBackgroundMusic, setHitSound, setSuccessSound, toggleMute } = useAudio();
   const audioInitialized = useRef(false);
   const [engine, setEngine] = useState<GameEngine | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Initialize audio on first user interaction
   useEffect(() => {
@@ -114,6 +117,35 @@ export default function Game() {
     <div className="relative w-full h-full flex flex-col bg-gray-900 text-white overflow-hidden">
       <GameCanvas onEngineReady={setEngine} />
       <GameUI />
+
+      {phase === "levelUp" && (
+        <PowerUpSelection 
+          onSelect={handlePowerUpSelect}
+          onClose={() => {}}
+        />
+      )}
+
+      {phase === "characterSelect" && (
+        <CharacterSelection
+          onSelect={handleCharacterSelect}
+          onClose={() => {}}
+        />
+      )}
+
+      {phase === "paused" && !showSettings && (
+        <PauseMenu
+          onResume={resume}
+          onRestart={() => {
+            restart();
+            resume();
+          }}
+          onSettings={() => setShowSettings(true)}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsMenu onClose={() => setShowSettings(false)} />
+      )}
     </div>
   );
 }
