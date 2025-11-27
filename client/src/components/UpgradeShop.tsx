@@ -1,142 +1,94 @@
 
 import { useState } from "react";
-import { SaveSystem } from "../lib/game/systems/SaveSystem";
+import { PersistentProgressionSystem } from "../lib/game/systems/PersistentProgressionSystem";
 
-interface Upgrade {
-  id: string;
-  name: string;
-  description: string;
-  cost: number;
-  maxLevel: number;
-  effect: string;
+interface UpgradeShopProps {
+  onClose: () => void;
 }
 
-const PERMANENT_UPGRADES: Upgrade[] = [
-  {
-    id: 'max_health',
-    name: 'Vitality',
-    description: 'Increases starting health',
-    cost: 500,
-    maxLevel: 10,
-    effect: '+10 HP per level'
-  },
-  {
-    id: 'damage_boost',
-    name: 'Power',
-    description: 'Increases all damage',
-    cost: 750,
-    maxLevel: 10,
-    effect: '+5% damage per level'
-  },
-  {
-    id: 'move_speed',
-    name: 'Agility',
-    description: 'Increases movement speed',
-    cost: 600,
-    maxLevel: 5,
-    effect: '+10% speed per level'
-  },
-  {
-    id: 'xp_gain',
-    name: 'Wisdom',
-    description: 'Increases XP gained',
-    cost: 1000,
-    maxLevel: 5,
-    effect: '+10% XP per level'
-  },
-  {
-    id: 'luck',
-    name: 'Fortune',
-    description: 'Better item drops',
-    cost: 1500,
-    maxLevel: 5,
-    effect: '+5% drop rate per level'
-  }
-];
+export default function UpgradeShop({ onClose }: UpgradeShopProps) {
+  const [data, setData] = useState(PersistentProgressionSystem.load());
 
-export default function UpgradeShop({ onClose }: { onClose: () => void }) {
-  const saveData = SaveSystem.load();
-  const [currency, setCurrency] = useState(saveData.stats.currency);
-  const [upgrades, setUpgrades] = useState(saveData.stats.permanentUpgrades);
-
-  const handleUpgrade = (upgradeId: string, cost: number) => {
-    if (currency >= cost) {
-      const currentLevel = upgrades[upgradeId] || 0;
-      const newUpgrades = { ...upgrades, [upgradeId]: currentLevel + 1 };
-      
-      SaveSystem.spendCurrency(cost);
-      SaveSystem.updateStats({ permanentUpgrades: newUpgrades });
-      
-      setCurrency(currency - cost);
-      setUpgrades(newUpgrades);
+  const handleUpgrade = (upgrade: keyof typeof data.permanentUpgrades) => {
+    const success = PersistentProgressionSystem.upgradePermanent(upgrade);
+    if (success) {
+      setData(PersistentProgressionSystem.load());
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border-2 border-yellow-500 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-yellow-400">Permanent Upgrades</h2>
-          <button
-            onClick={onClose}
-            className="text-white text-2xl hover:text-red-400"
-          >
-            ×
-          </button>
-        </div>
+  const upgrades = [
+    { key: "maxHealth" as const, name: "Max Health", icon: "❤️", description: "+10 max HP per level" },
+    { key: "damage" as const, name: "Damage", icon: "⚔️", description: "+5% damage per level" },
+    { key: "speed" as const, name: "Speed", icon: "🏃", description: "+5% movement speed per level" },
+    { key: "pickupRange" as const, name: "Pickup Range", icon: "🧲", description: "+10% XP pickup range per level" },
+    { key: "luck" as const, name: "Luck", icon: "🍀", description: "+5% better drops per level" },
+  ];
 
-        <div className="mb-6 text-center">
-          <div className="text-xl text-yellow-300">
-            💰 Currency: <span className="font-bold">{currency}</span>
+  return (
+    <div className="absolute inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50">
+      <div className="bg-gray-900 border-2 border-purple-500 rounded-lg p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-4xl font-bold text-purple-400">Permanent Upgrades</h2>
+          <div className="text-2xl text-yellow-400 font-bold">
+            💰 {data.currency}
           </div>
         </div>
 
-        <div className="space-y-4">
-          {PERMANENT_UPGRADES.map(upgrade => {
-            const currentLevel = upgrades[upgrade.id] || 0;
-            const canUpgrade = currentLevel < upgrade.maxLevel && currency >= upgrade.cost;
-            const isMaxed = currentLevel >= upgrade.maxLevel;
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          {upgrades.map((upgrade) => {
+            const level = data.permanentUpgrades[upgrade.key];
+            const cost = PersistentProgressionSystem.getUpgradeCost(upgrade.key);
+            const canAfford = data.currency >= cost;
 
             return (
               <div
-                key={upgrade.id}
-                className="bg-gray-800 border border-gray-700 rounded-lg p-4"
+                key={upgrade.key}
+                className="bg-gray-800 border border-purple-400 rounded-lg p-4 hover:border-purple-300 transition-colors"
               >
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="text-lg font-bold text-white">{upgrade.name}</h3>
-                    <p className="text-sm text-gray-400">{upgrade.description}</p>
-                    <p className="text-xs text-blue-400 mt-1">{upgrade.effect}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-400">
-                      Level {currentLevel}/{upgrade.maxLevel}
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl">{upgrade.icon}</span>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">{upgrade.name}</h3>
+                      <p className="text-sm text-gray-400">Level {level}</p>
                     </div>
                   </div>
                 </div>
-
-                <div className="flex justify-between items-center mt-3">
-                  <div className="text-yellow-400 font-bold">
-                    💰 {upgrade.cost * (currentLevel + 1)}
-                  </div>
-                  <button
-                    onClick={() => handleUpgrade(upgrade.id, upgrade.cost * (currentLevel + 1))}
-                    disabled={!canUpgrade || isMaxed}
-                    className={`px-4 py-2 rounded ${
-                      isMaxed
-                        ? 'bg-green-600 text-white cursor-not-allowed'
-                        : canUpgrade
-                        ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                        : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    {isMaxed ? 'MAXED' : 'UPGRADE'}
-                  </button>
-                </div>
+                
+                <p className="text-sm text-gray-300 mb-3">{upgrade.description}</p>
+                
+                <button
+                  onClick={() => handleUpgrade(upgrade.key)}
+                  disabled={!canAfford}
+                  className={`w-full px-4 py-2 rounded font-bold transition-all ${
+                    canAfford
+                      ? "bg-purple-600 hover:bg-purple-700 text-white"
+                      : "bg-gray-700 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  Upgrade - 💰 {cost}
+                </button>
               </div>
             );
           })}
         </div>
+
+        <div className="bg-gray-800 border border-blue-400 rounded-lg p-4 mb-4">
+          <h3 className="text-xl font-bold text-blue-400 mb-2">Statistics</h3>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div>Total Runs: <span className="text-white">{data.totalRuns}</span></div>
+            <div>Total Kills: <span className="text-white">{data.totalKills}</span></div>
+            <div>High Score: <span className="text-white">{data.highScore}</span></div>
+            <div>Max Wave: <span className="text-white">{data.statistics.maxWave}</span></div>
+          </div>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all"
+        >
+          Close
+        </button>
       </div>
     </div>
   );

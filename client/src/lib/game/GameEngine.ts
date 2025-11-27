@@ -506,6 +506,21 @@ export class GameEngine {
       bossesDefeated: gameState.bossesDefeated
     });
     
+    // Save persistent progression
+    const { PersistentProgressionSystem } = require('./systems/PersistentProgressionSystem');
+    PersistentProgressionSystem.recordRunEnd(
+      gameState.score,
+      gameState.wave,
+      gameState.totalKills,
+      gameState.maxCombo,
+      gameState.bossesDefeated,
+      playTime
+    );
+    
+    // Add currency based on performance
+    const currencyEarned = Math.floor(gameState.score / 100) + (gameState.wave * 10);
+    PersistentProgressionSystem.addCurrency(currencyEarned);
+    
     // Play death sound
     if (!audioState.isMuted) {
       audioState.playPlayerHurt();

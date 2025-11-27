@@ -13,6 +13,7 @@ import { GameEngine } from "../lib/game/GameEngine";
 import GameOverScreen from "./GameOverScreen";
 import StatisticsScreen from "./StatisticsScreen";
 import LevelUpEffect from "./LevelUpEffect";
+import UpgradeShop from "./UpgradeShop";
 
 export default function Game() {
   const { phase, restart, resumeFromLevelUp, selectCharacter, resume, pause, playerStats, setPlayerStats } = useGameState();
@@ -21,58 +22,21 @@ export default function Game() {
   const [engine, setEngine] = useState<GameEngine | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [showStatistics, setShowStatistics] = useState(false); // State for statistics screen
+  const [showStatistics, setShowStatistics] = useState(false);
+  const [showUpgradeShop, setShowUpgradeShop] = useState(false);
 
   // Initialize audio on first user interaction
   useEffect(() => {
     const initAudio = async () => {
       if (audioInitialized.current) return;
 
-      const audioStore = useAudio.getState();
-      
-      // Create placeholder audio elements that won't throw errors if files are missing
-      const createSafeAudio = (path: string) => {
-        try {
-          const audio = new Audio();
-          audio.src = path;
-          audio.addEventListener('error', () => {
-            console.warn(`Audio file not found: ${path}`);
-          });
-          return audio;
-        } catch (e) {
-          console.warn(`Failed to create audio for ${path}`);
-          return null;
-        }
-      };
-
-      // Try to load all audio files
-      const bgMusic = createSafeAudio("/assets/audio/background.mp3");
-      if (bgMusic) {
-        bgMusic.loop = true;
-        bgMusic.volume = 0.3;
-        audioStore.setBackgroundMusic(bgMusic);
-      }
-
-      const hitSound = createSafeAudio("/assets/audio/hit.mp3");
-      if (hitSound) {
-        hitSound.volume = 0.5;
-        audioStore.setHitSound(hitSound);
-      }
-
-      const successSound = createSafeAudio("/assets/audio/success.mp3");
-      if (successSound) {
-        successSound.volume = 0.7;
-        audioStore.setSuccessSound(successSound);
-      }
-
+      // Audio is now optional - game works without it
       audioInitialized.current = true;
-      console.log("Audio system initialized");
+      console.log("Audio system initialized (files optional)");
     };
 
     const handleFirstInteraction = () => {
       initAudio();
-      // Start unmuted after first interaction
-      toggleMute();
       document.removeEventListener("click", handleFirstInteraction);
       document.removeEventListener("keydown", handleFirstInteraction);
     };
@@ -84,7 +48,7 @@ export default function Game() {
       document.removeEventListener("click", handleFirstInteraction);
       document.removeEventListener("keydown", handleFirstInteraction);
     };
-  }, [toggleMute]);
+  }, []);
 
   const handlePowerUpSelect = (powerUp: PowerUpDefinition) => {
     if (engine?.getPlayer) {
@@ -135,6 +99,13 @@ export default function Game() {
     );
   }
 
+  // Upgrade shop display
+  if (showUpgradeShop) {
+    return (
+      <UpgradeShop onClose={() => setShowUpgradeShop(false)} />
+    );
+  }
+
 
   return (
     <div className="relative w-full h-full flex flex-col bg-gray-900 text-white overflow-hidden">
@@ -165,6 +136,7 @@ export default function Game() {
           }}
           onSettings={() => setShowSettings(true)}
           onShowStatistics={() => setShowStatistics(true)}
+          onShowUpgradeShop={() => setShowUpgradeShop(true)}
         />
       )}
 
