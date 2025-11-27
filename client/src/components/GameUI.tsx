@@ -3,6 +3,7 @@ import { useAudio } from "../lib/stores/useAudio";
 import BossHealthBar from "./BossHealthBar";
 import BossWarning from "./BossWarning";
 import ComboDisplay from "./ComboDisplay";
+import Minimap from "./Minimap";
 
 export default function GameUI() {
   const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning, comboCount, comboMultiplier, currency } = useGameState();
@@ -117,12 +118,15 @@ export default function GameUI() {
         <div>WASD/Arrows: Move | M: Sound | R: Restart</div>
       </div>
       
-      {isBossActive && (
-        <div className="absolute bottom-4 right-4 bg-red-900/80 p-3 rounded-lg text-white border border-red-500">
-          <div className="text-sm font-bold text-red-300">BOSS FIGHT ACTIVE</div>
-          <div className="text-xs text-gray-300 mt-1">Defeat the boss to proceed!</div>
-        </div>
-      )}
+      <div className="absolute bottom-4 right-4 space-y-2">
+        {isBossActive && (
+          <div className="bg-red-900/80 p-3 rounded-lg text-white border border-red-500">
+            <div className="text-sm font-bold text-red-300">BOSS FIGHT ACTIVE</div>
+            <div className="text-xs text-gray-300 mt-1">Defeat the boss to proceed!</div>
+          </div>
+        )}
+        <Minimap playerX={0} playerY={0} enemies={[]} />
+      </div>
     </div>
   );
 }

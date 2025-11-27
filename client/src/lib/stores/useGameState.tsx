@@ -199,10 +199,16 @@ export const useGameState = create<GameState>()(
           const newLevel = state.level + 1;
           const newExpToNext = Math.floor(state.experienceToNext * 1.5);
 
-          // Play level up sound
+          // Play level up sound and trigger celebration
           const audioState = useAudio.getState();
           if (!audioState.isMuted) {
             audioState.playLevelUp();
+          }
+
+          // Trigger level-up celebration effect
+          if (typeof window !== 'undefined') {
+            const event = new CustomEvent('levelUp', { detail: { level: newLevel } });
+            window.dispatchEvent(event);
           }
 
           return {

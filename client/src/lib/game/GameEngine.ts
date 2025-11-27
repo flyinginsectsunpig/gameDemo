@@ -62,8 +62,12 @@ export class GameEngine {
   private damageNumbers: DamageNumberManager;
   private bossLoot: BossLoot[] = [];
   private comboSystem: ComboSystem;
+  private gameStartTime: number = 0;
+  private totalDamageDealt: number = 0;
+  private totalDamageTaken: number = 0;
 
   constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+    this.gameStartTime = Date.now();
     this.canvas = canvas;
     this.ctx = ctx;
 
@@ -470,6 +474,7 @@ export class GameEngine {
           
           const damage = projectile.getDamage();
           enemy.takeDamage(damage);
+          this.totalDamageDealt += damage;
           projectile.addHit();
           this.createHitParticles(enemy.x, enemy.y);
           this.damageNumbers.addDamageNumber(enemy.x, enemy.y - 20, damage, false);
@@ -510,7 +515,9 @@ export class GameEngine {
       if (!enemy.isAlive()) return;
 
       if (this.collisionDetection.checkCollision(this.player, enemy)) {
-        gameState.takeDamage(enemy.getDamage());
+        const damage = enemy.getDamage();
+        this.totalDamageTaken += damage;
+        gameState.takeDamage(damage);
 
         const dx = enemy.x - this.player.x;
         const dy = enemy.y - this.player.y;

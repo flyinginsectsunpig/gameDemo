@@ -10,14 +10,17 @@ import { CharacterType } from "./CharacterSelection";
 import PauseMenu from "./PauseMenu";
 import SettingsMenu from "./SettingsMenu";
 import { GameEngine } from "../lib/game/GameEngine";
+import GameOverScreen from "./GameOverScreen";
+import StatisticsScreen from "./StatisticsScreen"; // Assuming this component will be created
 
 export default function Game() {
-  const { phase, restart, resumeFromLevelUp, selectCharacter, resume, pause } = useGameState();
+  const { phase, restart, resumeFromLevelUp, selectCharacter, resume, pause, playerStats, setPlayerStats } = useGameState();
   const { setBackgroundMusic, setHitSound, setSuccessSound, toggleMute } = useAudio();
   const audioInitialized = useRef(false);
   const [engine, setEngine] = useState<GameEngine | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(false); // State for statistics screen
 
   // Initialize audio on first user interaction
   useEffect(() => {
@@ -75,32 +78,25 @@ export default function Game() {
     selectCharacter(character);
   };
 
-  if (phase === "levelUp") {
+  // Game Over logic - This is where the Game Over screen would be rendered.
+  // The original code already had a conditional render for "ended" phase.
+  // We'll keep that and ensure it displays the GameOverScreen component.
+  if (phase === "ended") {
     return (
       <div className="relative w-full h-full">
-        <GameCanvas onEngineReady={setEngine} />
-        <PowerUpSelection 
-          onSelect={handlePowerUpSelect}
-          onClose={resumeFromLevelUp}
-        />
+        <GameOverScreen onRestart={restart} />
       </div>
     );
   }
 
-  if (phase === "ended") {
+  if (phase === "levelUp") {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-black text-white">
-        <div className="text-center">
-          <h1 className="text-6xl font-bold mb-4 text-red-500">GAME OVER</h1>
-          <p className="text-xl mb-8">You survived as long as you could!</p>
-          <button
-            onClick={restart}
-            className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white text-xl font-bold rounded-lg transition-colors"
-          >
-            Play Again
-          </button>
-          <p className="text-sm mt-4 text-gray-400">Press R to restart anytime</p>
-        </div>
+      <div className="relative w-full h-full">
+        <GameCanvas onEngineReady={setEngine} />
+        <PowerUpSelection
+          onSelect={handlePowerUpSelect}
+          onClose={resumeFromLevelUp}
+        />
       </div>
     );
   }
@@ -113,6 +109,13 @@ export default function Game() {
     );
   }
 
+  // Statistics screen display
+  if (showStatistics) {
+    return (
+      <StatisticsScreen stats={playerStats} onClose={() => setShowStatistics(false)} />
+    );
+  }
+
 
   return (
     <div className="relative w-full h-full flex flex-col bg-gray-900 text-white overflow-hidden">
@@ -120,7 +123,7 @@ export default function Game() {
       <GameUI />
 
       {phase === "levelUp" && (
-        <PowerUpSelection 
+        <PowerUpSelection
           onSelect={handlePowerUpSelect}
           onClose={() => {}}
         />
@@ -141,6 +144,7 @@ export default function Game() {
             resume();
           }}
           onSettings={() => setShowSettings(true)}
+          onShowStatistics={() => setShowStatistics(true)} // Add handler to show statistics
         />
       )}
 
