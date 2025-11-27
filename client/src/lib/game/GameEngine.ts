@@ -1,31 +1,35 @@
 import { Player } from './entities/characters/Player';
 import { AssassinPlayer } from './entities/characters/AssassinPlayer';
 import { Enemy } from './entities/enemies/Enemy';
+import { BossEnemy } from './entities/enemies/BossEnemy';
+import { FlyingEnemy } from './entities/enemies/FlyingEnemy';
+import { RangedEnemy } from './entities/enemies/RangedEnemy';
+import { TeleportingEnemy } from './entities/enemies/TeleportingEnemy';
+import { SplittingEnemy } from './entities/enemies/SplittingEnemy';
+import { ShieldedEnemy } from './entities/enemies/ShieldedEnemy';
+import { EnemyProjectile } from './entities/enemies/EnemyProjectile';
 import { Projectile } from './weapons/projectiles/Projectile';
+import { IProjectile } from './core/interfaces/IProjectile';
 import { ExperienceOrb } from './entities/collectibles/ExperienceOrb';
 import { SylphBloomsWeapon } from './weapons/SylphBloomsWeapon';
-import { AssassinSpiderWeapon } from './weapons/AssassinSpiderWeapon';
 import { OrbitalWeapon } from './weapons/OrbitalWeapon';
-import { PowerUpDefinition } from './config/PowerUpDefinitions';
 import { CollisionDetection } from './systems/CollisionDetection';
 import { WaveManager } from './managers/WaveManager';
 import { SpriteManager } from './rendering/SpriteManager';
-import { AnimationManager } from './rendering/AnimationManager';
 import { CameraSystem } from './rendering/CameraSystem';
 import { InfiniteTileRenderer } from './rendering/InfiniteTileRenderer';
-import { EndlessCaveRenderer } from './rendering/EndlessCaveRenderer';
 import { Particle } from './rendering/Particle';
 import { InputManager } from './systems/InputManager';
 import { useGameState } from "../stores/useGameState";
 import { useAudio } from "../stores/useAudio";
-import { SingleShotWeapon, SpreadShotWeapon, RapidFireWeapon, MultiDirectionalWeapon, PiercingWeapon } from "./weapons/WeaponTypes";
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private player: Player;
+  private player: Player | AssassinPlayer;
   private enemies: Enemy[] = [];
-  private projectiles: Projectile[] = [];
+  private projectiles: IProjectile[] = [];
+  private enemyProjectiles: EnemyProjectile[] = [];
   private particles: Particle[] = [];
   private experienceOrbs: ExperienceOrb[] = [];
   private waveManager: WaveManager;
@@ -44,11 +48,14 @@ export class GameEngine {
   private infiniteTileRenderer: InfiniteTileRenderer;
   private camera: CameraSystem;
 
+  private currentBoss: BossEnemy | null = null;
+  private isBossActive: boolean = false;
+  private bossDefeatedCelebrationTimer: number = 0;
+
   constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.canvas = canvas;
     this.ctx = ctx;
 
-    // Initialize game systems
     this.player = new Player(canvas.width / 2, canvas.height / 2);
     this.waveManager = new WaveManager();
     this.collisionDetection = new CollisionDetection();
@@ -57,20 +64,46 @@ export class GameEngine {
     this.infiniteTileRenderer = new InfiniteTileRenderer();
     this.camera = new CameraSystem(canvas.width, canvas.height);
 
-    // Set up input handling
+    this.setupBossCallbacks();
     this.setupInput();
-
-    // Initialize sprites
     this.initializeSprites();
   }
 
+  private setupBossCallbacks() {
+    this.waveManager.setOnBossWarning(() => {
+      const wave = this.waveManager.getCurrentWave();
+      const bossTypes = ["necromancer", "vampire_lord", "ancient_golem"];
+      const bossIndex = Math.floor((wave / 5) - 1) % bossTypes.length;
+      
+      const bossInfo = {
+        necromancer: { name: "The Necromancer", description: "Master of death, commands the undead" },
+        vampire_lord: { name: "Vampire Lord", description: "Ancient bloodsucker with supernatural speed" },
+        ancient_golem: { name: "Ancient Golem", description: "Stone guardian with impenetrable defense" }
+      };
+      
+      const info = bossInfo[bossTypes[bossIndex] as keyof typeof bossInfo];
+      const gameState = useGameState.getState();
+      gameState.triggerBossWarning(info.name, info.description);
+    });
+
+    this.waveManager.setOnBossSpawn((boss: BossEnemy) => {
+      this.currentBoss = boss;
+      this.isBossActive = true;
+      
+      const gameState = useGameState.getState();
+      gameState.setBossActive(true);
+      gameState.setBossInfo(boss.getBossName(), boss.getBossDescription());
+      gameState.updateBossHealth(boss.getHealth(), boss.getMaxHealth());
+      
+      console.log(`Boss spawned: ${boss.getBossName()}`);
+    });
+  }
+
   private setupInput() {
-    // Handle game start
     const handleStart = () => {
       const gameState = useGameState.getState();
       if (gameState.phase === "ready") {
         gameState.start();
-        // Start background music
         const audioState = useAudio.getState();
         if (audioState.backgroundMusic && !audioState.isMuted) {
           audioState.backgroundMusic.play().catch(console.warn);
@@ -78,7 +111,6 @@ export class GameEngine {
       }
     };
 
-    // Handle restart
     const handleRestart = (e: KeyboardEvent) => {
       if (e.key === "r" || e.key === "R") {
         const gameState = useGameState.getState();
@@ -87,13 +119,11 @@ export class GameEngine {
       }
     };
 
-    // Handle sound toggle
     const handleSoundToggle = (e: KeyboardEvent) => {
       if (e.key === "m" || e.key === "M") {
         const audioState = useAudio.getState();
         audioState.toggleMute();
 
-        // Handle background music
         if (audioState.backgroundMusic) {
           if (audioState.isMuted) {
             audioState.backgroundMusic.pause();
@@ -104,17 +134,11 @@ export class GameEngine {
       }
     };
 
-    // Handle debug weapon switching
-    // Weapon switching removed - only Sylph Blooms weapon available
-
-    // Add event listeners
     document.addEventListener("keydown", handleStart);
     document.addEventListener("click", handleStart);
     document.addEventListener("keydown", handleRestart);
     document.addEventListener("keydown", handleSoundToggle);
-    //document.addEventListener("keydown", handleWeaponSwitch);
 
-    // Store references for cleanup
     this.inputManager.addEventListeners();
   }
 
@@ -122,9 +146,17 @@ export class GameEngine {
     this.setupPlayer();
     this.enemies = [];
     this.projectiles = [];
+    this.enemyProjectiles = [];
     this.particles = [];
     this.experienceOrbs = [];
+    this.currentBoss = null;
+    this.isBossActive = false;
+    this.bossDefeatedCelebrationTimer = 0;
     this.waveManager.reset();
+    
+    const gameState = useGameState.getState();
+    gameState.setBossActive(false);
+    gameState.hideBossWarning();
   }
 
   public start() {
@@ -140,14 +172,12 @@ export class GameEngine {
   }
 
   private gameLoop = (currentTime: number) => {
-    const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.02); // Cap at 50fps minimum
+    const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.02);
     this.lastTime = currentTime;
 
     const gameState = useGameState.getState();
 
-    // Check if we need to setup player for selected character
     if (gameState.selectedCharacter && gameState.phase === "playing") {
-      // Only setup if we don't have the right player type
       const isAssassin = gameState.selectedCharacter.id === "assassin";
       const hasAssassinPlayer = this.player instanceof AssassinPlayer;
 
@@ -158,7 +188,6 @@ export class GameEngine {
       }
     }
 
-    // Only update game logic when playing, but always render
     if (gameState.phase === "playing") {
       this.update(deltaTime);
     }
@@ -174,47 +203,69 @@ export class GameEngine {
   private update(deltaTime: number) {
     const gameState = useGameState.getState();
 
-    // Update player with tile collision
     this.player.update(deltaTime, this.inputManager.getInput(), this.canvas.width, this.canvas.height, this.infiniteTileRenderer);
 
-    // If assassin player, update spiders
     if (this.player instanceof AssassinPlayer) {
       this.player.setTileRenderer(this.infiniteTileRenderer);
       this.player.updateSpiders(deltaTime, this.enemies, this.player.getPosition());
-
-      // Handle spider kills and experience dropping immediately after spider updates
       this.handleSpiderKills();
     }
 
-    // Update camera to follow player
     this.camera.update(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, deltaTime);
 
-    // Update camera size if canvas resized
     if (this.camera.width !== this.canvas.width || this.camera.height !== this.canvas.height) {
       this.camera.setSize(this.canvas.width, this.canvas.height);
     }
 
-    // Update wave manager and spawn enemies
     this.waveManager.update(deltaTime);
-    const newEnemies = this.waveManager.spawnEnemies(this.canvas.width, this.canvas.height);
-    this.enemies.push(...newEnemies);
-
-    // Update wave number in state
-    gameState.setWave(this.waveManager.getCurrentWave());
-
-    // Update enemies
-    this.enemies.forEach(enemy => {
-      enemy.update(deltaTime, this.player.getPosition());
+    const playerPos = this.player.getPosition();
+    const newEnemies = this.waveManager.spawnEnemies(this.canvas.width, this.canvas.height, playerPos);
+    
+    newEnemies.forEach(enemy => {
+      if (enemy instanceof BossEnemy) {
+        this.currentBoss = enemy;
+        this.isBossActive = true;
+      }
+      this.enemies.push(enemy);
     });
 
-    // Update player weapon and get projectiles
+    gameState.setWave(this.waveManager.getCurrentWave());
+
+    this.enemies.forEach(enemy => {
+      enemy.update(deltaTime, this.player.getPosition());
+      
+      if (enemy instanceof RangedEnemy) {
+        const newProjectiles = enemy.getProjectiles();
+        this.enemyProjectiles.push(...newProjectiles);
+      }
+    });
+
+    if (this.currentBoss && this.currentBoss.isAlive()) {
+      gameState.updateBossHealth(this.currentBoss.getHealth(), this.currentBoss.getMaxHealth());
+      
+      const minionSpawns = this.currentBoss.getMinionSpawnQueue();
+      minionSpawns.forEach(spawn => {
+        const minion = new Enemy(spawn.x, spawn.y, "basic");
+        this.enemies.push(minion);
+      });
+
+      if (this.currentBoss.isGroundPounding()) {
+        const groundPoundRadius = this.currentBoss.getGroundPoundRadius();
+        const groundPoundDamage = this.currentBoss.getGroundPoundDamage();
+        
+        const dx = this.player.x - this.currentBoss.x;
+        const dy = this.player.y - this.currentBoss.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance <= groundPoundRadius) {
+          gameState.takeDamage(groundPoundDamage * deltaTime);
+        }
+      }
+    }
+
     const newProjectiles = this.player.fireWeapon(deltaTime);
     this.projectiles.push(...newProjectiles);
 
-    // Update spider weapon if player is AssassinPlayer (already handled above)
-    // Removed duplicate call
-
-    // Update weapon (for SylphBloomsWeapon) - only for non-assassin players
     if (!(this.player instanceof AssassinPlayer)) {
       const weapon = this.player.getWeapon();
       if (weapon instanceof SylphBloomsWeapon) {
@@ -223,36 +274,127 @@ export class GameEngine {
       }
     }
 
-    // Update projectiles
     this.projectiles = this.projectiles.filter(projectile => {
       projectile.update(deltaTime);
       return projectile.isAlive();
     });
 
-    // Update particles
+    this.enemyProjectiles = this.enemyProjectiles.filter(projectile => {
+      projectile.update(deltaTime);
+      return projectile.isAlive();
+    });
+
     this.particles = this.particles.filter(particle => {
       particle.update(deltaTime);
       return particle.isAlive();
     });
 
-    // Update experience orbs
     this.experienceOrbs = this.experienceOrbs.filter(orb => {
       orb.update(deltaTime, this.player.getPosition());
       return !orb.isExpired();
     });
 
-    // Collision detection
     this.handleCollisions();
 
-    // Remove dead enemies
+    if (this.bossDefeatedCelebrationTimer > 0) {
+      this.bossDefeatedCelebrationTimer -= deltaTime;
+      
+      if (Math.random() < 0.3) {
+        this.createCelebrationParticles();
+      }
+    }
+
+    this.handleSplittingEnemies();
+
     this.enemies = this.enemies.filter(enemy => enemy.isAlive());
+
+    if (this.currentBoss && !this.currentBoss.isAlive() && this.isBossActive) {
+      this.handleBossDefeated();
+    }
+  }
+
+  private handleSplittingEnemies() {
+    const newSplitEnemies: SplittingEnemy[] = [];
+    
+    this.enemies.forEach(enemy => {
+      if (enemy instanceof SplittingEnemy && !enemy.isAlive()) {
+        const spawns = enemy.getSpawnQueue();
+        newSplitEnemies.push(...spawns);
+      }
+    });
+    
+    newSplitEnemies.forEach(splitEnemy => {
+      this.enemies.push(splitEnemy as unknown as Enemy);
+      
+      for (let i = 0; i < 3; i++) {
+        this.particles.push(new Particle(
+          splitEnemy.x + (Math.random() - 0.5) * 20,
+          splitEnemy.y + (Math.random() - 0.5) * 20,
+          (Math.random() - 0.5) * 80,
+          (Math.random() - 0.5) * 80,
+          "#44ff44",
+          0.5
+        ));
+      }
+    });
+  }
+
+  private handleBossDefeated() {
+    const gameState = useGameState.getState();
+    const audioState = useAudio.getState();
+    
+    const bossScore = this.currentBoss?.getScoreValue() || 500;
+    const bonusXP = bossScore * 2;
+    
+    gameState.addScore(bossScore);
+    gameState.addExperience(bonusXP);
+    
+    this.experienceOrbs.push(new ExperienceOrb(this.currentBoss!.x, this.currentBoss!.y, bonusXP));
+    
+    for (let i = 0; i < 30; i++) {
+      this.particles.push(new Particle(
+        this.currentBoss!.x + (Math.random() - 0.5) * 100,
+        this.currentBoss!.y + (Math.random() - 0.5) * 100,
+        (Math.random() - 0.5) * 300,
+        (Math.random() - 0.5) * 300,
+        Math.random() > 0.5 ? "#ffd700" : "#ff6600",
+        2.0
+      ));
+    }
+    
+    this.bossDefeatedCelebrationTimer = 3;
+    
+    if (!audioState.isMuted) {
+      audioState.playSuccess();
+    }
+    
+    this.waveManager.onBossDefeated();
+    gameState.setBossActive(false);
+    
+    this.currentBoss = null;
+    this.isBossActive = false;
+    
+    console.log("Boss defeated! Bonus XP and score awarded!");
+  }
+
+  private createCelebrationParticles() {
+    const colors = ["#ffd700", "#ff6600", "#00ff00", "#00ffff", "#ff00ff"];
+    const x = this.player.x + (Math.random() - 0.5) * 400;
+    const y = this.player.y + (Math.random() - 0.5) * 400;
+    
+    this.particles.push(new Particle(
+      x, y,
+      (Math.random() - 0.5) * 100,
+      (Math.random() - 0.5) * 100 - 50,
+      colors[Math.floor(Math.random() * colors.length)],
+      1.5
+    ));
   }
 
   private handleCollisions() {
     const gameState = useGameState.getState();
     const audioState = useAudio.getState();
 
-    // Projectile vs Enemy collisions
     this.projectiles.forEach(projectile => {
       if (!projectile.isAlive()) return;
 
@@ -260,79 +402,23 @@ export class GameEngine {
         if (!enemy.isAlive()) return;
 
         if (this.collisionDetection.checkCollision(projectile, enemy)) {
-          // Damage enemy
+          if (!this.collisionDetection.canDamageEnemy(enemy)) {
+            this.createHitParticles(enemy.x, enemy.y, "#0088ff");
+            return;
+          }
+          
           enemy.takeDamage(projectile.getDamage());
-
-          // Handle piercing logic - addHit returns true if projectile should be destroyed
           projectile.addHit();
-
-          // Create hit particles
           this.createHitParticles(enemy.x, enemy.y);
 
-          // Play hit sound
           if (!audioState.isMuted) {
             audioState.playHit();
           }
 
-          // If enemy died, add score and drop experience
           if (!enemy.isAlive()) {
-            gameState.addScore(enemy.getScoreValue());
-            this.createDeathParticles(enemy.x, enemy.y);
-
-            // Drop experience orb
-            const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
-            this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
-          }
-        }
-      });
-    });
-
-    // Player vs Enemy collisions
-    this.enemies.forEach(enemy => {
-      if (!enemy.isAlive()) return;
-
-      if (this.collisionDetection.checkCollision(this.player, enemy)) {
-        // Player takes damage
-        gameState.takeDamage(enemy.getDamage());
-
-        // Push enemy away to prevent multiple hits
-        const dx = enemy.x - this.player.x;
-        const dy = enemy.y - this.player.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance > 0) {
-          enemy.x += (dx / distance) * 30;
-          enemy.y += (dy / distance) * 30;
-        }
-
-        // Create damage particles
-        this.createHitParticles(this.player.x, this.player.y, "#ff4444");
-      }
-    });
-
-    // Orbital Weapon vs Enemy collisions
-    const orbitalWeapons = this.player.getOrbitalWeapons();
-    orbitalWeapons.forEach(orbital => {
-      this.enemies.forEach(enemy => {
-        if (!enemy.isAlive()) return;
-
-        if (this.collisionDetection.checkCollision(orbital, enemy)) {
-          const damage = orbital.dealDamage();
-          if (damage > 0) {
-            enemy.takeDamage(damage);
-
-            // Create hit particles
-            this.createHitParticles(orbital.x, orbital.y, "#4444ff");
-
-            // Play hit sound
-            if (!audioState.isMuted) {
-              audioState.playHit();
-            }
-
-            // If enemy died, add score and drop experience
-            if (!enemy.isAlive()) {
+            if (!(enemy instanceof BossEnemy)) {
               gameState.addScore(enemy.getScoreValue());
               this.createDeathParticles(enemy.x, enemy.y);
-
               const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
               this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
             }
@@ -341,28 +427,84 @@ export class GameEngine {
       });
     });
 
-    // Weapon vs Enemy collisions (for SylphBloomsWeapon) - only for non-assassin players
+    this.enemyProjectiles.forEach(projectile => {
+      if (!projectile.isAlive()) return;
+
+      if (this.collisionDetection.checkEnemyProjectilePlayerCollision(projectile, this.player)) {
+        gameState.takeDamage(projectile.getDamage());
+        projectile.markForRemoval();
+        this.createHitParticles(this.player.x, this.player.y, "#cc00cc");
+
+        if (!audioState.isMuted) {
+          audioState.playHit();
+        }
+      }
+    });
+
+    this.enemies.forEach(enemy => {
+      if (!enemy.isAlive()) return;
+
+      if (this.collisionDetection.checkCollision(this.player, enemy)) {
+        gameState.takeDamage(enemy.getDamage());
+
+        const dx = enemy.x - this.player.x;
+        const dy = enemy.y - this.player.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > 0) {
+          enemy.x += (dx / distance) * 30;
+          enemy.y += (dy / distance) * 30;
+        }
+
+        this.createHitParticles(this.player.x, this.player.y, "#ff4444");
+      }
+    });
+
+    const orbitalWeapons = this.player.getOrbitalWeapons();
+    orbitalWeapons.forEach(orbital => {
+      this.enemies.forEach(enemy => {
+        if (!enemy.isAlive()) return;
+
+        if (this.collisionDetection.checkCollision(orbital, enemy)) {
+          if (!this.collisionDetection.canDamageEnemy(enemy)) {
+            this.createHitParticles(orbital.x, orbital.y, "#0088ff");
+            return;
+          }
+          
+          const damage = orbital.dealDamage();
+          if (damage > 0) {
+            enemy.takeDamage(damage);
+            this.createHitParticles(orbital.x, orbital.y, "#4444ff");
+
+            if (!audioState.isMuted) {
+              audioState.playHit();
+            }
+
+            if (!enemy.isAlive() && !(enemy instanceof BossEnemy)) {
+              gameState.addScore(enemy.getScoreValue());
+              this.createDeathParticles(enemy.x, enemy.y);
+              const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
+              this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
+            }
+          }
+        }
+      });
+    });
+
     if (!(this.player instanceof AssassinPlayer)) {
       const weapon = this.player.getWeapon();
       if (weapon instanceof SylphBloomsWeapon) {
         const orbCollisions = weapon.checkCollisions(this.enemies);
 
-        // Handle each orb collision
         orbCollisions.forEach(collision => {
-          // Create hit particles
           this.createHitParticles(collision.orbX, collision.orbY);
 
-          // Play hit sound
           if (!audioState.isMuted) {
             audioState.playHit();
           }
 
-          // If enemy died, add score and drop experience
-          if (!collision.enemy.isAlive()) {
+          if (!collision.enemy.isAlive() && !(collision.enemy instanceof BossEnemy)) {
             gameState.addScore(collision.enemy.getScoreValue());
             this.createDeathParticles(collision.enemy.x, collision.enemy.y);
-
-            // Drop experience orb
             const expValue = Math.max(1, Math.floor(collision.enemy.getScoreValue() / 2));
             this.experienceOrbs.push(new ExperienceOrb(collision.enemy.x, collision.enemy.y, expValue));
           }
@@ -370,24 +512,21 @@ export class GameEngine {
       }
     }
 
-    // Player vs Experience Orb collisions
     this.experienceOrbs = this.experienceOrbs.filter(orb => {
       if (orb.canBeCollected(this.player.getPosition())) {
         gameState.addExperience(orb.getValue());
 
-        // Play success sound
         if (!audioState.isMuted) {
           audioState.playSuccess();
         }
 
-        return false; // Remove the orb
+        return false;
       }
-      return true; // Keep the orb
+      return true;
     });
   }
 
   private createHitParticles(x: number, y: number, color = "#ffff44") {
-    // Reduced from 5 to 3 particles for better performance
     for (let i = 0; i < 3; i++) {
       this.particles.push(new Particle(
         x + (Math.random() - 0.5) * 20,
@@ -401,7 +540,6 @@ export class GameEngine {
   }
 
   private createDeathParticles(x: number, y: number) {
-    // Reduced from 12 to 6 particles for better performance
     for (let i = 0; i < 6; i++) {
       this.particles.push(new Particle(
         x + (Math.random() - 0.5) * 30,
@@ -418,27 +556,22 @@ export class GameEngine {
     const gameState = useGameState.getState();
     const audioState = useAudio.getState();
 
-    // Track enemies that just died this frame (not processed yet)
     const deadEnemies = this.enemies.filter(enemy => !enemy.isAlive());
 
     deadEnemies.forEach(enemy => {
-      // Check if any spider is attached to this dead enemy (indicating spider kill)
       const spiders = (this.player as AssassinPlayer).getSpiders();
       const isSpiderKill = spiders.some(spider => {
         return spider.isAttached && Math.abs(spider.x - enemy.x) < 5 && Math.abs(spider.y - enemy.y) < 5;
       });
 
-      if (isSpiderKill) {
-        // Award score and drop experience
+      if (isSpiderKill && !(enemy instanceof BossEnemy)) {
         gameState.addScore(enemy.getScoreValue());
         this.createDeathParticles(enemy.x, enemy.y);
 
-        // Play hit sound
         if (!audioState.isMuted) {
           audioState.playHit();
         }
 
-        // Drop experience orb
         const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
         this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
       }
@@ -446,11 +579,9 @@ export class GameEngine {
   }
 
   private render(deltaTime: number) {
-    // Clear canvas
     this.ctx.fillStyle = "#1a1a1a";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Draw infinite tilemap background
     this.infiniteTileRenderer.render(this.ctx, {
       x: this.camera.x,
       y: this.camera.y,
@@ -462,26 +593,25 @@ export class GameEngine {
 
     if (gameState.phase !== "playing") return;
 
-    // Save context for camera transformations
     this.ctx.save();
     this.ctx.translate(-this.camera.x, -this.camera.y);
 
-    // Render particles (background layer)
     this.particles.forEach(particle => {
       particle.render(this.ctx);
     });
 
-    // Render experience orbs
     this.experienceOrbs.forEach(orb => {
       orb.render(this.ctx);
     });
 
-    // Render projectiles
     this.projectiles.forEach(projectile => {
+      projectile.render(this.ctx, 0, 0);
+    });
+
+    this.enemyProjectiles.forEach(projectile => {
       projectile.render(this.ctx);
     });
 
-    // Render weapon effects if player has Sylph Blooms weapon - only for non-assassin players
     if (!(this.player instanceof AssassinPlayer)) {
       const weapon = this.player.getWeapon();
       if (weapon instanceof SylphBloomsWeapon) {
@@ -489,28 +619,24 @@ export class GameEngine {
       }
     }
 
-    // Render player
     this.player.render(this.ctx, deltaTime);
 
-    // Render enemies
     this.enemies.forEach(enemy => {
       if (enemy.isAlive()) {
-        enemy.render(this.ctx, this.camera.x, this.camera.y);
+        enemy.render(this.ctx, deltaTime);
       }
     });
 
-    // Restore context
     this.ctx.restore();
 
-    // Debug info
     if (process.env.NODE_ENV === "development") {
       this.ctx.fillStyle = "#ffffff";
       this.ctx.font = "12px monospace";
       this.ctx.fillText(`Enemies: ${this.enemies.length}`, 10, this.canvas.height - 100);
       this.ctx.fillText(`Projectiles: ${this.projectiles.length}`, 10, this.canvas.height - 80);
-      this.ctx.fillText(`Particles: ${this.particles.length}`, 10, this.canvas.height - 60);
-      this.ctx.fillText(`Experience Orbs: ${this.experienceOrbs.length}`, 10, this.canvas.height - 40);
-      this.ctx.fillText(`FPS: ${Math.round(1000 / (performance.now() - this.lastTime))}`, 10, this.canvas.height - 20);
+      this.ctx.fillText(`Enemy Projectiles: ${this.enemyProjectiles.length}`, 10, this.canvas.height - 60);
+      this.ctx.fillText(`Particles: ${this.particles.length}`, 10, this.canvas.height - 40);
+      this.ctx.fillText(`Boss Active: ${this.isBossActive}`, 10, this.canvas.height - 20);
     }
   }
 
@@ -525,7 +651,6 @@ export class GameEngine {
     if (character?.id === "assassin") {
       this.player = new AssassinPlayer(this.canvas.width / 2, this.canvas.height / 2);
     } else {
-      // Default to Sylph player (or regular player if no character selected)
       this.player = new Player(this.canvas.width / 2, this.canvas.height / 2);
     }
   }

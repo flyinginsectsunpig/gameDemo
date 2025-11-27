@@ -4,12 +4,11 @@ import { subscribeWithSelector } from "zustand/middleware";
 export type GamePhase = "ready" | "playing" | "ended" | "levelUp" | "characterSelect";
 
 export type CharacterType = {
+  id?: string;
   name: string;
   stats: {
     health: number;
-    // Add other stats as needed
   }
-  // Add other character properties as needed
 }
 
 interface GameState {
@@ -23,8 +22,14 @@ interface GameState {
   level: number;
   selectedCharacter: CharacterType | null;
   spiderMode: "normal" | "big" | "small";
+  
+  isBossActive: boolean;
+  currentBossHealth: number;
+  currentBossMaxHealth: number;
+  bossName: string;
+  bossDescription: string;
+  showBossWarning: boolean;
 
-  // Actions
   start: () => void;
   restart: () => void;
   end: () => void;
@@ -39,11 +44,17 @@ interface GameState {
   addExperience: (exp: number) => void;
   levelUp: () => void;
   resumeFromLevelUp: () => void;
-  upgradeHealth: () => void;
   setScore: (score: number) => void;
   setHealth: (health: number) => void;
   setWave: (wave: number) => void;
   setSpiderMode: (mode: "normal" | "big" | "small") => void;
+  
+  setBossActive: (active: boolean) => void;
+  updateBossHealth: (health: number, maxHealth: number) => void;
+  setBossInfo: (name: string, description: string) => void;
+  triggerBossWarning: (name: string, description: string) => void;
+  hideBossWarning: () => void;
+  onBossDefeated: () => void;
 }
 
 export const useGameState = create<GameState>()(
@@ -58,6 +69,13 @@ export const useGameState = create<GameState>()(
     level: 1,
     selectedCharacter: null,
     spiderMode: "normal",
+    
+    isBossActive: false,
+    currentBossHealth: 0,
+    currentBossMaxHealth: 0,
+    bossName: "",
+    bossDescription: "",
+    showBossWarning: false,
 
     start: () => {
       set((state) => {
@@ -79,7 +97,13 @@ export const useGameState = create<GameState>()(
         experience: 0,
         experienceToNext: 100,
         selectedCharacter: null,
-        spiderMode: "normal"
+        spiderMode: "normal",
+        isBossActive: false,
+        currentBossHealth: 0,
+        currentBossMaxHealth: 0,
+        bossName: "",
+        bossDescription: "",
+        showBossWarning: false
       }));
     },
 
@@ -128,8 +152,7 @@ export const useGameState = create<GameState>()(
       const newExp = experience + points;
       set({ score: newScore, experience: newExp });
 
-      // Check for level up
-      const { experienceToNext, level } = get();
+      const { experienceToNext } = get();
       if (newExp >= experienceToNext) {
         get().levelUp();
       }
@@ -140,7 +163,6 @@ export const useGameState = create<GameState>()(
       const newExp = experience + exp;
       set({ experience: newExp });
 
-      // Check for level up
       const { experienceToNext } = get();
       if (newExp >= experienceToNext) {
         get().levelUp();
@@ -174,5 +196,59 @@ export const useGameState = create<GameState>()(
     setSpiderMode: (mode: "normal" | "big" | "small") => {
       set({ spiderMode: mode });
     },
+
+    nextWave: () => {
+      const { wave } = get();
+      set({ wave: wave + 1 });
+    },
+
+    setBossActive: (active: boolean) => {
+      set({ isBossActive: active });
+      if (!active) {
+        set({ 
+          currentBossHealth: 0, 
+          currentBossMaxHealth: 0,
+          bossName: "",
+          bossDescription: ""
+        });
+      }
+    },
+
+    updateBossHealth: (health: number, maxHealth: number) => {
+      set({ 
+        currentBossHealth: health, 
+        currentBossMaxHealth: maxHealth 
+      });
+    },
+
+    setBossInfo: (name: string, description: string) => {
+      set({ 
+        bossName: name,
+        bossDescription: description
+      });
+    },
+
+    triggerBossWarning: (name: string, description: string) => {
+      set({ 
+        showBossWarning: true,
+        bossName: name,
+        bossDescription: description
+      });
+    },
+
+    hideBossWarning: () => {
+      set({ showBossWarning: false });
+    },
+
+    onBossDefeated: () => {
+      const { score } = get();
+      const bonusScore = 1000;
+      set({ 
+        isBossActive: false,
+        currentBossHealth: 0,
+        currentBossMaxHealth: 0,
+        score: score + bonusScore
+      });
+    }
   }))
 );

@@ -1,6 +1,9 @@
 import { GameObject } from "../entities/Player";
 import { Projectile } from "../weapons/Projectile";
 import { Enemy } from "../entities/Enemy";
+import { ShieldedEnemy } from "../entities/enemies/ShieldedEnemy";
+import { FlyingEnemy } from "../entities/enemies/FlyingEnemy";
+import { EnemyProjectile } from "../entities/enemies/EnemyProjectile";
 
 export class CollisionDetection {
   public checkCollision(obj1: GameObject, obj2: GameObject): boolean {
@@ -23,6 +26,63 @@ export class CollisionDetection {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
+  public checkTerrainCollision(obj: GameObject, terrainBounds?: { x: number; y: number; width: number; height: number }): boolean {
+    if ((obj as any).ignoresTerrain) {
+      return false;
+    }
+    
+    if (!terrainBounds) {
+      return false;
+    }
+
+    const objWidth = (obj as any).collisionWidth || obj.width;
+    const objHeight = (obj as any).collisionHeight || obj.height;
+    
+    return (
+      obj.x - objWidth / 2 < terrainBounds.x ||
+      obj.x + objWidth / 2 > terrainBounds.x + terrainBounds.width ||
+      obj.y - objHeight / 2 < terrainBounds.y ||
+      obj.y + objHeight / 2 > terrainBounds.y + terrainBounds.height
+    );
+  }
+
+  public canDamageEnemy(enemy: Enemy): boolean {
+    if (enemy instanceof ShieldedEnemy) {
+      return !enemy.isShieldActive();
+    }
+    return true;
+  }
+
+  public isFlying(obj: GameObject): boolean {
+    return (obj as any).ignoresTerrain === true || obj instanceof FlyingEnemy;
+  }
+
+  public checkEnemyProjectilePlayerCollision(projectile: EnemyProjectile, player: GameObject): boolean {
+    if (!projectile.isAlive()) return false;
+    return this.checkCollision(projectile, player);
+  }
+
+  public static checkCollision(obj1: GameObject, obj2: GameObject): boolean {
+    const obj1Width = (obj1 as any).collisionWidth || obj1.width;
+    const obj1Height = (obj1 as any).collisionHeight || obj1.height;
+    const obj2Width = (obj2 as any).collisionWidth || obj2.width;
+    const obj2Height = (obj2 as any).collisionHeight || obj2.height;
+    
+    return (
+      obj1.x - obj1Width / 2 < obj2.x + obj2Width / 2 &&
+      obj1.x + obj1Width / 2 > obj2.x - obj2Width / 2 &&
+      obj1.y - obj1Height / 2 < obj2.y + obj2Height / 2 &&
+      obj1.y + obj1Height / 2 > obj2.y - obj2Height / 2
+    );
+  }
+
+  public static canDamageEnemy(enemy: Enemy): boolean {
+    if (enemy instanceof ShieldedEnemy) {
+      return !enemy.isShieldActive();
+    }
+    return true;
+  }
+
   public static checkProjectileEnemyCollisions(projectiles: Projectile[], enemies: Enemy[]): { projectilesToRemove: number[], enemiesToRemove: number[], damageDealt: number } {
     const projectilesToRemove: number[] = [];
     const enemiesToRemove: number[] = [];
@@ -38,30 +98,29 @@ export class CollisionDetection {
         const enemy = enemies[j];
 
         if (this.checkCollision(projectile, enemy)) {
-          // Deal damage to enemy
+          if (!this.canDamageEnemy(enemy)) {
+            continue;
+          }
+
           enemy.takeDamage(projectile.damage);
           damageDealt += projectile.damage;
 
-          // Remove enemy if dead
           if (enemy.health <= 0 && !enemiesToRemove.includes(j)) {
             enemiesToRemove.push(j);
           }
 
-          // Handle piercing logic
           if (isPiercing) {
             hitCount++;
             (projectile as any).hitCount = hitCount;
 
-            // Remove piercing projectile if max hits reached
             if (hitCount >= maxHits && !projectilesToRemove.includes(i)) {
               projectilesToRemove.push(i);
             }
           } else {
-            // Remove regular projectile
             if (!projectilesToRemove.includes(i)) {
               projectilesToRemove.push(i);
             }
-            break; // Regular projectile stops after first hit
+            break;
           }
         }
       }
