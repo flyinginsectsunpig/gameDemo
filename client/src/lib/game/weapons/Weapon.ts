@@ -1,5 +1,6 @@
 import { BaseWeapon } from "./WeaponTypes";
 import { Projectile } from "./projectiles/Projectile";
+import { Enemy } from "../entities/enemies/Enemy";
 
 export class Weapon extends BaseWeapon {
   constructor(fireRate: number = 2, damage: number = 10, projectileSpeed: number = 300) {

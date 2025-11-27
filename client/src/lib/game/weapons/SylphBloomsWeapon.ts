@@ -1,5 +1,6 @@
 import { Enemy } from "../entities/enemies/Enemy";
 import { InfiniteTileRenderer } from "../rendering/InfiniteTileRenderer";
+import { Particle } from "../rendering/Particle";
 
 
 

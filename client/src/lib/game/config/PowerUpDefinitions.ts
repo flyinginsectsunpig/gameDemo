@@ -2,6 +2,17 @@
 import { PowerUpDefinition } from "../entities/collectibles/PowerUp";
 import { IPlayer } from "../core/interfaces/IPlayer";
 
+import { IPlayer } from '../core/interfaces/IPlayer';
+
+export interface PowerUpDefinition {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  characterRestriction?: string;
+  apply: (player: IPlayer) => void;
+}
+
 export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
   {
     id: "speed_boost",
@@ -9,7 +20,8 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     description: "Increase movement speed by 15%",
     color: "#00BFFF",
     apply: (player: IPlayer) => {
-      player.speed *= 1.15;
+      const speed = player.getSpeed();
+      player.setSpeed(speed * 1.15);
     }
   },
   {
@@ -18,8 +30,9 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     description: "Increase maximum health by 20",
     color: "#FF1493",
     apply: (player: IPlayer) => {
-      player.maxHealth += 20;
-      player.health = Math.min(player.health + 20, player.maxHealth);
+      const maxHealth = player.getMaxHealth();
+      const currentHealth = player.getHealth();
+      player.heal(20);
     }
   },
   {
@@ -28,9 +41,10 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     description: "Increase weapon damage by 25%",
     color: "#FF4500",
     apply: (player: IPlayer) => {
-      player.weapons.forEach(weapon => {
-        weapon.damage *= 1.25;
-      });
+      const weapon = player.getWeapon();
+      if (weapon && 'upgradeDamage' in weapon) {
+        (weapon as any).upgradeDamage();
+      }
     }
   },
   {
@@ -39,11 +53,10 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     description: "Increase projectile speed by 20%",
     color: "#FFD700",
     apply: (player: IPlayer) => {
-      player.weapons.forEach(weapon => {
-        if ('projectileSpeed' in weapon) {
-          (weapon as any).projectileSpeed *= 1.2;
-        }
-      });
+      const weapon = player.getWeapon();
+      if (weapon && 'projectileSpeed' in weapon) {
+        (weapon as any).projectileSpeed *= 1.2;
+      }
     }
   },
   {
@@ -52,9 +65,10 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     description: "Reduce cooldown between attacks by 15%",
     color: "#FFA500",
     apply: (player: IPlayer) => {
-      player.weapons.forEach(weapon => {
-        weapon.cooldown *= 0.85;
-      });
+      const weapon = player.getWeapon();
+      if (weapon && 'upgradeFireRate' in weapon) {
+        (weapon as any).upgradeFireRate();
+      }
     }
   },
   {
@@ -64,11 +78,10 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     color: "#98FB98",
     characterRestriction: "sylph",
     apply: (player: IPlayer) => {
-      player.weapons.forEach(weapon => {
-        if (weapon.constructor.name === "SylphBloomsWeapon") {
-          weapon.upgrade();
-        }
-      });
+      const weapon = player.getWeapon();
+      if (weapon && weapon.constructor.name === "SylphBloomsWeapon") {
+        (weapon as any).upgradeFlowerCapacity();
+      }
     }
   },
   {

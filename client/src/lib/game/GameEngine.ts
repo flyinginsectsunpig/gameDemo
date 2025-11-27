@@ -181,7 +181,7 @@ export class GameEngine {
     if (this.player instanceof AssassinPlayer) {
       this.player.setTileRenderer(this.infiniteTileRenderer);
       this.player.updateSpiders(deltaTime, this.enemies, this.player.getPosition());
-      
+
       // Handle spider kills and experience dropping immediately after spider updates
       this.handleSpiderKills();
     }
@@ -434,7 +434,7 @@ export class GameEngine {
 
     // Track enemies that just died this frame (not processed yet)
     const deadEnemies = this.enemies.filter(enemy => !enemy.isAlive());
-    
+
     deadEnemies.forEach(enemy => {
       // Check if any spider is attached to this dead enemy (indicating spider kill)
       const spiders = (this.player as AssassinPlayer).getSpiders();
