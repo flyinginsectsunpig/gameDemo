@@ -33,6 +33,9 @@ interface GameState {
   bossesDefeated: number;
   showBossWarning: boolean;
   isPaused: boolean;
+  comboCount: number;
+  comboMultiplier: number;
+  maxCombo: number;
 
   start: () => void;
   restart: () => void;
@@ -89,6 +92,9 @@ export const useGameState = create<GameState>()(
     bossesDefeated: 0,
     showBossWarning: false,
     isPaused: false,
+    comboCount: 0,
+    comboMultiplier: 1,
+    maxCombo: 0,
 
     start: () => {
       set((state) => {
@@ -317,6 +323,18 @@ export const useGameState = create<GameState>()(
 
     addBossKill: () => {
       set((state) => ({ bossesDefeated: state.bossesDefeated + 1 }));
+    },
+
+    updateCombo: (combo: number, multiplier: number) => {
+      set((state) => ({
+        comboCount: combo,
+        comboMultiplier: multiplier,
+        maxCombo: Math.max(state.maxCombo, combo)
+      }));
+    },
+
+    resetCombo: () => {
+      set({ comboCount: 0, comboMultiplier: 1 });
     },
   }))
 );

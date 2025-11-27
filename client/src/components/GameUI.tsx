@@ -2,9 +2,10 @@ import { useGameState } from "../lib/stores/useGameState";
 import { useAudio } from "../lib/stores/useAudio";
 import BossHealthBar from "./BossHealthBar";
 import BossWarning from "./BossWarning";
+import ComboDisplay from "./ComboDisplay";
 
 export default function GameUI() {
-  const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning } = useGameState();
+  const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning, comboCount, comboMultiplier } = useGameState();
   const { isMuted, toggleMute } = useAudio();
 
   if (phase === "ready") {
@@ -44,6 +45,8 @@ export default function GameUI() {
       <BossWarning />
       
       {isBossActive && <BossHealthBar />}
+      
+      <ComboDisplay combo={comboCount} multiplier={comboMultiplier} timeRemaining={3} />
       
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-auto">
         <div className="bg-black bg-opacity-70 p-4 rounded-lg text-white">
