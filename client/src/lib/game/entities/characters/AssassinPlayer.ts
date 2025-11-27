@@ -3,15 +3,13 @@ import { Player } from "./Player";
 import { IEnemy } from "../../core/interfaces/IEnemy";
 import { IProjectile } from "../../core/interfaces/IProjectile";
 import { ISpider } from "../../core/interfaces/ISpider";
-import { MechanicalSpider } from "../spiders/MechanicalSpider";
+import { SpiderManager } from "../../managers/SpiderManager";
 import { SpriteManager } from "../../rendering/SpriteManager";
 import { AnimationManager } from "../../rendering/AnimationManager";
 
 export class AssassinPlayer extends Player {
-  private followerSpider: ISpider | null = null;
-  private spiderSpawned = false;
+  private spiderManager: SpiderManager;
   private tileRenderer: any = null;
-  private spiderMode: "normal" | "big" | "small" = "normal";
 
   constructor(x: number, y: number) {
     super(x, y);
@@ -21,7 +19,8 @@ export class AssassinPlayer extends Player {
 
     this.weapon = null;
     this.instanceId = `assassin_${Date.now()}_${Math.random()}`;
-    this.spawnSpider();
+    this.spiderManager = new SpiderManager("normal");
+    this.spiderManager.spawnSpider(x - 60, y - 20);
   }
 
   public update(deltaTime: number, input: any, canvasWidth: number, canvasHeight: number, tileRenderer: any): void {
@@ -92,65 +91,42 @@ export class AssassinPlayer extends Player {
     }
   }
 
-  private spawnSpider(): void {
-    if (!this.spiderSpawned && !this.followerSpider) {
-      const offsetX = -60;
-      const offsetY = -20;
-
-      this.followerSpider = new MechanicalSpider(this.x + offsetX, this.y + offsetY, this.spiderMode);
-      this.spiderSpawned = true;
-      
-      if (this.tileRenderer) {
-        this.registerSpiderWithTileRenderer();
-      }
-    }
+  public setTileRenderer(tileRenderer: any): void {
+    this.tileRenderer = tileRenderer;
+    // Register existing spiders with tile renderer
+    this.spiderManager.getSpiders().forEach(spider => {
+      this.tileRenderer.addSpider({
+        x: spider.x,
+        y: spider.y,
+        instanceId: spider.instanceId,
+        currentAnimation: spider.currentAnimation,
+        lastDirection: spider.lastDirection
+      });
+    });
   }
 
-  private registerSpiderWithTileRenderer(): void {
-    if (this.followerSpider && this.tileRenderer) {
-      this.tileRenderer.addSpider({
-        x: this.followerSpider.x,
-        y: this.followerSpider.y,
-        instanceId: this.followerSpider.instanceId || `mechanical_spider_${Date.now()}`,
-        currentAnimation: this.followerSpider.currentAnimation || 'spider_idle',
-        lastDirection: this.followerSpider.lastDirection || { x: 0, y: 1 }
+  public updateSpiders(deltaTime: number, enemies: IEnemy[], playerPos: { x: number; y: number }): void {
+    this.spiderManager.update(deltaTime, enemies, { x: this.x, y: this.y });
+
+    if (this.tileRenderer) {
+      this.spiderManager.getSpiders().forEach(spider => {
+        this.tileRenderer.updateSpider(
+          spider.instanceId,
+          spider.x,
+          spider.y,
+          spider.currentAnimation,
+          spider.lastDirection
+        );
       });
     }
   }
 
-  public setTileRenderer(tileRenderer: any): void {
-    this.tileRenderer = tileRenderer;
-    if (this.followerSpider) {
-      this.registerSpiderWithTileRenderer();
-    }
-  }
-
-  public updateSpiders(deltaTime: number, enemies: IEnemy[], playerPos: { x: number; y: number }): void {
-    if (this.followerSpider) {
-      this.followerSpider.update(deltaTime, enemies, { x: this.x, y: this.y });
-
-      if (this.tileRenderer) {
-        this.tileRenderer.updateSpider(
-          this.followerSpider.instanceId || `mechanical_spider_${Date.now()}`,
-          this.followerSpider.x,
-          this.followerSpider.y,
-          this.followerSpider.currentAnimation || 'spider_idle',
-          this.followerSpider.lastDirection || { x: 0, y: 1 }
-        );
-      }
-    } else if (this.followerSpider && !this.followerSpider.isAlive()) {
-      this.followerSpider = null;
-    }
-  }
-
   public renderSpiders(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0): void {
-    if (this.followerSpider) {
-      this.followerSpider.render(ctx, deltaTime, cameraX, cameraY);
-    }
+    this.spiderManager.render(ctx, deltaTime, cameraX, cameraY);
   }
 
   public getSpiders(): ISpider[] {
-    return this.followerSpider ? [this.followerSpider] : [];
+    return this.spiderManager.getSpiders();
   }
 
   public render(ctx: CanvasRenderingContext2D, deltaTime: number): void {
@@ -296,26 +272,15 @@ export class AssassinPlayer extends Player {
   }
 
   public setBigSpiderMode(enable: boolean): void {
-    if (enable && this.spiderMode !== "big") {
-      this.spiderMode = "big";
-      this.respawnSpider();
+    if (enable) {
+      this.spiderManager.setMode("big");
     }
   }
 
   public setSmallSpidersMode(enable: boolean): void {
-    if (enable && this.spiderMode !== "small") {
-      this.spiderMode = "small";
-      this.respawnSpider();
+    if (enable) {
+      this.spiderManager.setMode("small");
+      this.spiderManager.upgradeMaxSpiders(); // Small mode can have multiple spiders
     }
-  }
-
-  private respawnSpider(): void {
-    if (this.followerSpider) {
-      this.followerSpider.destroy();
-      this.followerSpider = null;
-      this.spiderSpawned = false;
-    }
-
-    this.spawnSpider();
   }
 }
