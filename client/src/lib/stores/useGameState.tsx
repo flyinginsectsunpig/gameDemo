@@ -28,6 +28,9 @@ interface GameState {
   currentBossMaxHealth: number;
   bossName: string;
   bossDescription: string;
+  currency: number;
+  totalKills: number;
+  bossesDefeated: number;
   showBossWarning: boolean;
   isPaused: boolean;
 
@@ -58,6 +61,9 @@ interface GameState {
   triggerBossWarning: (name: string, description: string) => void;
   hideBossWarning: () => void;
   onBossDefeated: () => void;
+  addCurrency: (amount: number) => void;
+  addKill: () => void;
+  addBossKill: () => void;
 }
 
 export const useGameState = create<GameState>()(
@@ -78,6 +84,9 @@ export const useGameState = create<GameState>()(
     currentBossMaxHealth: 0,
     bossName: "",
     bossDescription: "",
+    currency: 0,
+    totalKills: 0,
+    bossesDefeated: 0,
     showBossWarning: false,
     isPaused: false,
 
@@ -107,6 +116,9 @@ export const useGameState = create<GameState>()(
         currentBossMaxHealth: 0,
         bossName: "",
         bossDescription: "",
+        currency: 0,
+        totalKills: 0,
+        bossesDefeated: 0,
         showBossWarning: false,
         isPaused: false
       }));
@@ -293,6 +305,18 @@ export const useGameState = create<GameState>()(
         currentBossMaxHealth: 0,
         score: score + bonusScore
       });
-    }
+    },
+
+    addCurrency: (amount: number) => {
+      set((state) => ({ currency: state.currency + amount }));
+    },
+
+    addKill: () => {
+      set((state) => ({ totalKills: state.totalKills + 1 }));
+    },
+
+    addBossKill: () => {
+      set((state) => ({ bossesDefeated: state.bossesDefeated + 1 }));
+    },
   }))
 );

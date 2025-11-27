@@ -22,6 +22,9 @@ import { Particle } from './rendering/Particle';
 import { InputManager } from './systems/InputManager';
 import { useGameState } from "../stores/useGameState";
 import { useAudio } from "../stores/useAudio";
+import { WeaponEvolutionSystem } from './systems/WeaponEvolution';
+import { PassiveItemManager } from './entities/collectibles/PassiveItem';
+import { DamageNumberManager } from './rendering/DamageNumber';
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -52,6 +55,9 @@ export class GameEngine {
   private currentBoss: BossEnemy | null = null;
   private isBossActive: boolean = false;
   private bossDefeatedCelebrationTimer: number = 0;
+  private weaponEvolution: WeaponEvolutionSystem;
+  private passiveItems: PassiveItemManager;
+  private damageNumbers: DamageNumberManager;
 
   constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.canvas = canvas;
@@ -64,6 +70,9 @@ export class GameEngine {
     this.spriteManager = SpriteManager.getInstance();
     this.infiniteTileRenderer = new InfiniteTileRenderer();
     this.camera = new CameraSystem(canvas.width, canvas.height);
+    this.weaponEvolution = new WeaponEvolutionSystem();
+    this.passiveItems = new PassiveItemManager();
+    this.damageNumbers = new DamageNumberManager();
 
     this.setupBossCallbacks();
     this.setupInput();
@@ -306,6 +315,10 @@ export class GameEngine {
       return particle.isAlive();
     });
 
+    this.damageNumbers.update(deltaTime);
+
+    this.passiveItems.applyEffects(this.player);
+
     this.experienceOrbs = this.experienceOrbs.filter(orb => {
       orb.update(deltaTime, this.player.getPosition());
       return !orb.isExpired();
@@ -424,9 +437,11 @@ export class GameEngine {
             return;
           }
           
-          enemy.takeDamage(projectile.getDamage());
+          const damage = projectile.getDamage();
+          enemy.takeDamage(damage);
           projectile.addHit();
           this.createHitParticles(enemy.x, enemy.y);
+          this.damageNumbers.addDamageNumber(enemy.x, enemy.y - 20, damage, false);
 
           if (!audioState.isMuted) {
             audioState.playHit();
@@ -643,6 +658,8 @@ export class GameEngine {
         enemy.render(this.ctx, deltaTime);
       }
     });
+
+    this.damageNumbers.render(this.ctx);
 
     this.ctx.restore();
 
