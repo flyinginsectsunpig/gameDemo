@@ -5,7 +5,6 @@ import PowerUpSelection from "./PowerUpSelection";
 import CharacterSelection from "./CharacterSelection";
 import { useGameState } from "../lib/stores/useGameState";
 import { useAudio } from "../lib/stores/useAudio";
-import { PowerUpDefinition } from "../lib/game/PowerUp";
 import { CharacterType } from "./CharacterSelection";
 import PauseMenu from "./PauseMenu";
 import SettingsMenu from "./SettingsMenu";
@@ -16,7 +15,7 @@ import LevelUpEffect from "./LevelUpEffect";
 import UpgradeShop from "./UpgradeShop";
 
 export default function Game() {
-  const { phase, restart, resumeFromLevelUp, selectCharacter, resume, pause, playerStats, setPlayerStats } = useGameState();
+  const { phase, restart, resumeFromLevelUp, selectCharacter, resume } = useGameState();
   const { setBackgroundMusic, setHitSound, setSuccessSound, toggleMute } = useAudio();
   const audioInitialized = useRef(false);
   const [engine, setEngine] = useState<GameEngine | null>(null);
@@ -25,12 +24,9 @@ export default function Game() {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showUpgradeShop, setShowUpgradeShop] = useState(false);
 
-  // Initialize audio on first user interaction
   useEffect(() => {
     const initAudio = async () => {
       if (audioInitialized.current) return;
-
-      // Audio is now optional - game works without it
       audioInitialized.current = true;
       console.log("Audio system initialized (files optional)");
     };
@@ -50,8 +46,8 @@ export default function Game() {
     };
   }, []);
 
-  const handlePowerUpSelect = (powerUp: PowerUpDefinition) => {
-    if (engine?.getPlayer) {
+  const handlePowerUpSelect = (powerUp: any) => {
+    if (engine?.getPlayer && powerUp.apply) {
       powerUp.apply(engine.getPlayer());
     }
     resumeFromLevelUp();
@@ -61,13 +57,10 @@ export default function Game() {
     selectCharacter(character);
   };
 
-  // Game Over logic - This is where the Game Over screen would be rendered.
-  // The original code already had a conditional render for "ended" phase.
-  // We'll keep that and ensure it displays the GameOverScreen component.
-  if (phase === "ended") {
+  if (phase === "gameOver" || phase === "ended") {
     return (
       <div className="relative w-full h-full">
-        <GameOverScreen onRestart={restart} />
+        <GameOverScreen />
       </div>
     );
   }
@@ -92,49 +85,31 @@ export default function Game() {
     );
   }
 
-  // Statistics screen display
   if (showStatistics) {
     return (
-      <StatisticsScreen stats={playerStats} onClose={() => setShowStatistics(false)} />
+      <StatisticsScreen onClose={() => setShowStatistics(false)} />
     );
   }
 
-  // Upgrade shop display
   if (showUpgradeShop) {
     return (
       <UpgradeShop onClose={() => setShowUpgradeShop(false)} />
     );
   }
 
-
   return (
     <div className="relative w-full h-full flex flex-col bg-gray-900 text-white overflow-hidden">
       <GameCanvas onEngineReady={setEngine} />
-      <GameUI />
+      <GameUI 
+        onShowUpgradeShop={() => setShowUpgradeShop(true)}
+        onShowStatistics={() => setShowStatistics(true)}
+        onShowSettings={() => setShowSettings(true)}
+      />
       <LevelUpEffect />
-
-      {phase === "levelUp" && (
-        <PowerUpSelection
-          onSelect={handlePowerUpSelect}
-          onClose={() => {}}
-        />
-      )}
-
-      {phase === "characterSelect" && (
-        <CharacterSelection
-          onSelect={handleCharacterSelect}
-          onClose={() => {}}
-        />
-      )}
 
       {phase === "paused" && !showSettings && (
         <PauseMenu
-          onResume={resume}
-          onRestart={() => {
-            restart();
-            resume();
-          }}
-          onSettings={() => setShowSettings(true)}
+          onShowSettings={() => setShowSettings(true)}
           onShowStatistics={() => setShowStatistics(true)}
           onShowUpgradeShop={() => setShowUpgradeShop(true)}
         />

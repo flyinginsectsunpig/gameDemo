@@ -1,7 +1,13 @@
 import { useGameState } from "../lib/stores/useGameState";
 import { useAudio } from "../lib/stores/useAudio";
 
-export default function PauseMenu() {
+interface PauseMenuProps {
+  onShowSettings?: () => void;
+  onShowStatistics?: () => void;
+  onShowUpgradeShop?: () => void;
+}
+
+export default function PauseMenu({ onShowSettings, onShowStatistics, onShowUpgradeShop }: PauseMenuProps) {
   const { phase, resume, restart } = useGameState();
   const { isMuted, toggleMute } = useAudio();
 
@@ -39,9 +45,36 @@ export default function PauseMenu() {
             Sound: {isMuted ? "OFF" : "ON"}
           </button>
 
+          {onShowUpgradeShop && (
+            <button
+              onClick={onShowUpgradeShop}
+              className="w-full px-6 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white text-lg font-bold rounded-lg transition-all"
+            >
+              💰 Upgrade Shop
+            </button>
+          )}
+
+          {onShowStatistics && (
+            <button
+              onClick={onShowStatistics}
+              className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-lg font-bold rounded-lg transition-all"
+            >
+              📊 Statistics
+            </button>
+          )}
+
+          {onShowSettings && (
+            <button
+              onClick={onShowSettings}
+              className="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-lg font-bold rounded-lg transition-all"
+            >
+              ⚙️ Settings
+            </button>
+          )}
+
           <button
             onClick={handleRestart}
-            className="w-full px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white text-lg font-bold rounded-lg transition-all"
+            className="w-full px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-lg font-bold rounded-lg transition-all"
           >
             Restart (R)
           </button>

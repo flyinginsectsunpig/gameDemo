@@ -73,21 +73,6 @@ export default function SettingsMenu({ onClose }: SettingsMenuProps) {
             />
           </div>
 
-          <div>
-            <label className="block text-white font-bold mb-2">
-              SFX Volume: {Math.round(sfxVolume * 100)}%
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={sfxVolume}
-              onChange={handleSfxVolumeChange}
-              className="w-full"
-            />
-          </div>
-
           <div className="pt-4">
             <button
               onClick={onClose}

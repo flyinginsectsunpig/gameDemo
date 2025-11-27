@@ -5,20 +5,26 @@ import BossWarning from "./BossWarning";
 import ComboDisplay from "./ComboDisplay";
 import Minimap from "./Minimap";
 
-export default function GameUI() {
+interface GameUIProps {
+  onShowUpgradeShop?: () => void;
+  onShowStatistics?: () => void;
+  onShowSettings?: () => void;
+}
+
+export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSettings }: GameUIProps = {}) {
   const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning, comboCount, comboMultiplier, currency, totalKills } = useGameState();
   const { isMuted, toggleMute } = useAudio();
 
   if (phase === "ready") {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80 text-white">
-        <div className="text-center">
+        <div className="text-center max-w-2xl">
           <h1 className="text-6xl font-bold mb-4 text-red-500">VAMPIRE SURVIVORS</h1>
           <p className="text-xl mb-8">Survive the endless waves of enemies!</p>
           <div className="space-y-2 text-lg">
             <p><strong>WASD</strong> or <strong>Arrow Keys</strong> - Move</p>
             <p><strong>Weapons fire automatically</strong></p>
-            <p><strong>M</strong> - Toggle sound</p>
+            <p><strong>M</strong> - Toggle sound | <strong>ESC</strong> - Pause</p>
             <p><strong>R</strong> - Restart game</p>
             <div className="mt-6">
               <p className="text-yellow-400 mb-2">Sylph Guardian - Nature magic with flower turrets</p>
@@ -29,6 +35,34 @@ export default function GameUI() {
               <p className="text-sm text-gray-300 mt-1">Defeat powerful bosses to earn bonus rewards</p>
             </div>
           </div>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            {onShowUpgradeShop && (
+              <button
+                onClick={onShowUpgradeShop}
+                className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white text-lg font-bold rounded-lg transition-all transform hover:scale-105"
+              >
+                💰 Upgrade Shop
+              </button>
+            )}
+            {onShowStatistics && (
+              <button
+                onClick={onShowStatistics}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-lg font-bold rounded-lg transition-all transform hover:scale-105"
+              >
+                📊 Statistics
+              </button>
+            )}
+            {onShowSettings && (
+              <button
+                onClick={onShowSettings}
+                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-lg font-bold rounded-lg transition-all transform hover:scale-105"
+              >
+                ⚙️ Settings
+              </button>
+            )}
+          </div>
+
           <p className="text-sm mt-8 text-gray-400">Press any key or click to start</p>
         </div>
       </div>
@@ -111,7 +145,7 @@ export default function GameUI() {
       </div>
 
       <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 p-2 rounded text-white text-sm">
-        <div>WASD/Arrows: Move | M: Sound | R: Restart</div>
+        <div>WASD/Arrows: Move | ESC: Pause | M: Sound | R: Restart</div>
       </div>
 
       <div className="absolute bottom-4 right-4 space-y-2">
