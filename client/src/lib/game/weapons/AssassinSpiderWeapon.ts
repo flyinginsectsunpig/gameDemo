@@ -1,6 +1,7 @@
 import { BaseWeapon } from "./WeaponTypes";
 import { Projectile } from "./Projectile";
 import { Enemy } from "../entities/Enemy";
+import { MechanicalSpider } from '../entities/spiders/MechanicalSpider';
 
 // Global tracking for weapons
 let globalWeaponCount = 0;

@@ -1,6 +1,4 @@
-import { GameObject } from "./Player";
-
-export class OrbitalWeapon implements GameObject {
+export class OrbitalWeapon {
   public x: number = 0;
   public y: number = 0;
   public width = 12;
