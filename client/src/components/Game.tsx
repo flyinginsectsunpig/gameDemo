@@ -9,6 +9,7 @@ import { PowerUpDefinition } from "../lib/game/PowerUp";
 import { CharacterType } from "./CharacterSelection";
 import PauseMenu from "./PauseMenu";
 import SettingsMenu from "./SettingsMenu";
+import { GameEngine } from "../lib/game/GameEngine";
 
 export default function Game() {
   const { phase, restart, resumeFromLevelUp, selectCharacter, resume, pause } = useGameState();
