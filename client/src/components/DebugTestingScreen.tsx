@@ -70,9 +70,22 @@ export default function DebugTestingScreen({ onClose }: DebugTestingScreenProps)
   };
 
   const addKills = (amount: number) => {
+    // Add to current game state
     for (let i = 0; i < amount; i++) {
       gameState.addKill();
     }
+    
+    // Also update persistent progression
+    const persistentData = PersistentProgressionSystem.load();
+    persistentData.totalKills += amount;
+    PersistentProgressionSystem.save(persistentData);
+    
+    // Update statistics system as well
+    const stats = StatisticsSystem.load();
+    stats.totalKills += amount;
+    StatisticsSystem.save(stats);
+    
+    refresh();
   };
 
   const resetAllProgress = () => {

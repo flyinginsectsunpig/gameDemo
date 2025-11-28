@@ -76,6 +76,19 @@ interface GameState {
   heal: (amount: number) => void; // Added method and modified implementation
 }
 
+const getInitialCurrency = () => {
+  try {
+    const saved = localStorage.getItem("vampire_survivors_save");
+    if (saved) {
+      const data = JSON.parse(saved);
+      return data.currency || 0;
+    }
+  } catch (error) {
+    console.error("Failed to load initial currency:", error);
+  }
+  return 0;
+};
+
 export const useGameState = create<GameState>()(
   subscribeWithSelector((set, get) => ({
     phase: "ready",
@@ -94,7 +107,7 @@ export const useGameState = create<GameState>()(
     currentBossMaxHealth: 0,
     bossName: "",
     bossDescription: "",
-    currency: 0,
+    currency: getInitialCurrency(),
     totalKills: 0,
     bossesDefeated: 0,
     showBossWarning: false,

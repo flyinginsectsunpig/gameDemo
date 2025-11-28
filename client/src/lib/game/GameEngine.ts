@@ -198,6 +198,11 @@ export class GameEngine {
     gameState.setBossActive(false);
     gameState.hideBossWarning();
     gameState.resetCombo();
+    
+    // Sync persistent currency with game state
+    const { PersistentProgressionSystem } = require('./systems/PersistentProgressionSystem');
+    const persistentData = PersistentProgressionSystem.load();
+    useGameState.setState({ currency: persistentData.currency });
   }
 
   public start() {
@@ -546,12 +551,15 @@ export class GameEngine {
       playTime
     );
     
-    // Add currency
+    // Add currency to persistent system
     PersistentProgressionSystem.addCurrency(currencyEarned);
+    
+    // Sync currency with game state BEFORE game over
+    const savedProgression = PersistentProgressionSystem.load();
+    useGameState.setState({ currency: savedProgression.currency });
     
     // Verify saves
     const savedStats = StatisticsSystem.load();
-    const savedProgression = PersistentProgressionSystem.load();
     console.log('Statistics saved:', savedStats);
     console.log('Progression saved - Currency:', savedProgression.currency, 'Total Kills:', savedProgression.totalKills);
     
