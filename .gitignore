@@ -35,7 +35,6 @@ build/
 .DS_Store
 Thumbs.db
 
-<<<<<<< HEAD
 # -----------------------------
 # Replit (not needed in repo)
 # -----------------------------
@@ -67,13 +66,11 @@ attached_assets
 # -----------------------------
 # Environment variables
 # -----------------------------
-=======
 # Replit
 .replit
 replit.nix
 .local/
 
 # Env files
->>>>>>> 27ccde0a3ee9a789eeede75730921122ed4c17b1
 .env
 .env.*
