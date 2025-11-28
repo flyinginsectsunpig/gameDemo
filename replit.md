@@ -119,6 +119,7 @@ Configured for Replit Autoscale deployment:
 
 - LSP warning in `server/vite.ts` about `allowedHosts` type (cosmetic only, code works correctly)
 - Some npm packages have deprecation warnings (non-critical)
+- CSS @import warning for Google Fonts (cosmetic only, fonts load correctly)
 
 ## User Preferences
 
@@ -126,6 +127,15 @@ Configured for Replit Autoscale deployment:
 
 ## Recent Changes (November 28, 2024)
 
+### Session 2 - Gameplay Fixes
+1. Fixed main menu button navigation - buttons now work without triggering character select
+2. Added ESC key pause functionality with proper overlay handling
+3. Relocated minimap from bottom-right to top-right corner
+4. Added gold drops for enemy kills - all kill types now reward currency
+5. Fixed duplicate ComboSystem import and type issues in GameEngine
+6. Added ESC key handlers to all overlays (Settings, Statistics, UpgradeShop, PauseMenu)
+
+### Session 1 - Initial Setup
 1. Installed npm dependencies
 2. Added missing `nanoid` package to package.json
 3. Configured workflow for development server (port 5000, webview)
