@@ -38,8 +38,7 @@ export default function PauseMenu({ onShowSettings, onShowStatistics, onShowUpgr
   };
 
   const handleMainMenu = () => {
-    // Reset to ready phase to show main menu
-    useGameState.setState({ phase: "ready" });
+    window.location.reload();
   };
 
   return (
