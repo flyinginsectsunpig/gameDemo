@@ -1,1 +1,60 @@
-node_modules
+# -----------------------------
+# Node / TypeScript / Vite
+# -----------------------------
+node_modules/
+dist/
+build/
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Vite cache
+vite.config.ts.timestamp*
+.vite/
+
+# Typescript build artifacts
+*.tsbuildinfo
+
+# -----------------------------
+# Editor / OS-specific junk
+# -----------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# Replit (not needed in repo)
+# -----------------------------
+.replit
+replit.nix
+.local/
+*.replit*
+
+# -----------------------------
+# Temporary / local files
+# -----------------------------
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# -----------------------------
+# Game assets (optional)
+# Only ignore if these files
+# are generated or temporary.
+# -----------------------------
+# attached_assets/
+# *.psd
+# *.blend
+# *.wav
+# *.mp3
+
+# -----------------------------
+# Environment variables
+# -----------------------------
+.env
+.env.*
