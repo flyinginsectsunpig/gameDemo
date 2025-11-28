@@ -22,6 +22,7 @@ import { Particle } from './rendering/Particle';
 import { InputManager } from './systems/InputManager';
 import { useGameState } from "../stores/useGameState";
 import { useAudio } from "../stores/useAudio";
+import { useGameStore } from "../stores/useGame";
 import { WeaponEvolutionSystem } from './systems/WeaponEvolution';
 import { ComboSystem } from './systems/ComboSystem';
 import { PassiveItemManager } from './entities/collectibles/PassiveItem';
@@ -255,8 +256,7 @@ export class GameEngine {
     const input = this.inputManager.getInput();
     
     // Update game store with current player and enemies data
-    const { useGame } = require('../stores/useGame');
-    useGame.getState().updateGameData();
+    useGameStore.getState().updateGameData();
 
     // Handle pause
     if (input.pause && !this.lastPauseState) {
