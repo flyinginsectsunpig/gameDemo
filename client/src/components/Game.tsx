@@ -14,6 +14,7 @@ import StatisticsScreen from "./StatisticsScreen";
 import LevelUpEffect from "./LevelUpEffect";
 import UpgradeShop from "./UpgradeShop";
 import DebugTestingScreen from "./DebugTestingScreen";
+import MainMenu from "./MainMenu";
 
 export default function Game() {
   const { phase, restart, resumeFromLevelUp, selectCharacter, resume } = useGameState();
@@ -67,6 +68,14 @@ export default function Game() {
   const handleCharacterSelect = (character: CharacterType) => {
     selectCharacter(character);
   };
+
+  if (phase === "ready") {
+    return (
+      <div className="relative w-full h-full">
+        <MainMenu />
+      </div>
+    );
+  }
 
   if (phase === "gameOver" || phase === "ended") {
     return (

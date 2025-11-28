@@ -11,7 +11,23 @@ export default function GameOverScreen() {
   };
 
   const handleMainMenu = () => {
-    window.location.reload();
+    // Reset to ready state to show main menu
+    useGameState.setState({ 
+      phase: "ready",
+      score: 0,
+      health: 100,
+      maxHealth: 100,
+      wave: 1,
+      level: 1,
+      experience: 0,
+      experienceToNext: 100,
+      selectedCharacter: null,
+      totalKills: 0,
+      bossesDefeated: 0,
+      comboCount: 0,
+      comboMultiplier: 1,
+      maxCombo: 0
+    });
   };
 
   return (
