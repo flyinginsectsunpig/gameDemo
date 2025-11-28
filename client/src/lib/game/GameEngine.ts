@@ -253,6 +253,10 @@ export class GameEngine {
     const gameState = useGameState.getState();
     const audioState = useAudio.getState();
     const input = this.inputManager.getInput();
+    
+    // Update game store with current player and enemies data
+    const { useGame } = require('../stores/useGame');
+    useGame.getState().updateGameData();
 
     // Handle pause
     if (input.pause && !this.lastPauseState) {

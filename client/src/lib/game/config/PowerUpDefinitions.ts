@@ -42,9 +42,17 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     description: "Increase maximum health by 20 and heal",
     color: "#FF1493",
     apply: (player: IPlayer) => {
-      (player as any).maxHealth += 20;
+      const oldMaxHealth = player.maxHealth;
+      player.maxHealth += 20;
       player.heal(20);
-      console.log(`Max health increased, healed 20 HP`);
+      
+      // Update game state to reflect the new max health
+      const { useGameState } = require('../../stores/useGameState');
+      const gameState = useGameState.getState();
+      gameState.setMaxHealth(player.maxHealth);
+      gameState.heal(20);
+      
+      console.log(`Max health increased from ${oldMaxHealth} to ${player.maxHealth}, healed 20 HP`);
     }
   },
   {

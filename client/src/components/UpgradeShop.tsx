@@ -9,8 +9,15 @@ export default function UpgradeShop({ onClose }: UpgradeShopProps) {
   const [data, setData] = useState(PersistentProgressionSystem.load());
 
   useEffect(() => {
-    // Reload data when component mounts to ensure we have latest values
-    setData(PersistentProgressionSystem.load());
+    // Reload data when component mounts and set up interval to refresh
+    const refreshData = () => {
+      setData(PersistentProgressionSystem.load());
+    };
+    
+    refreshData();
+    const interval = setInterval(refreshData, 100);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleUpgrade = (upgrade: keyof typeof data.permanentUpgrades) => {

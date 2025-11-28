@@ -59,6 +59,7 @@ interface GameState {
   setSpiderMode: (mode: "normal" | "big" | "small") => void;
   pause: () => void;
   resume: () => void;
+  setMaxHealth: (maxHealth: number) => void; // Added method
 
   setBossActive: (active: boolean) => void;
   updateBossHealth: (health: number, maxHealth: number) => void;
@@ -72,6 +73,7 @@ interface GameState {
   addBossKill: () => void;
   updateCombo: (combo: number, multiplier: number) => void;
   resetCombo: () => void;
+  heal: (amount: number) => void; // Added method and modified implementation
 }
 
 export const useGameState = create<GameState>()(
@@ -164,6 +166,7 @@ export const useGameState = create<GameState>()(
     setScore: (score) => set({ score }),
     setHealth: (health) => set({ health }),
     setWave: (wave) => set({ wave }),
+    setMaxHealth: (maxHealth: number) => set({ maxHealth }), // Added method
 
     takeDamage: (amount) => {
       set((state) => {
@@ -362,6 +365,14 @@ export const useGameState = create<GameState>()(
 
     resetCombo: () => {
       set({ comboCount: 0, comboMultiplier: 1 });
+    },
+
+    heal: (amount: number) => { // Modified implementation for heal
+      set((state) => {
+        const newHealth = Math.min(state.maxHealth, state.health + amount);
+        console.log(`Healing: ${state.health} + ${amount} = ${newHealth} (max: ${state.maxHealth})`);
+        return { health: newHealth };
+      });
     },
   }))
 );

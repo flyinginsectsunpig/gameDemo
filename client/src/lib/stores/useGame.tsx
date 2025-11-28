@@ -14,9 +14,9 @@ interface GameState {
 
 interface GameStore {
   engine: GameEngine | null;
-  setEngine: (engine: GameEngine | null) => void;
   player: { x: number; y: number } | null;
   enemies: Array<{ x: number; y: number; isBoss?: boolean }>;
+  setEngine: (engine: GameEngine | null) => void;
   updateGameData: () => void;
 }
 
@@ -52,9 +52,9 @@ export const useGame = create<GameState>()(
 
 export const useGameStore = create<GameStore>((set, get) => ({
   engine: null,
-  setEngine: (engine) => set({ engine }),
   player: null,
   enemies: [],
+  setEngine: (engine) => set({ engine }),
   updateGameData: () => {
     const { engine } = get();
     if (engine) {

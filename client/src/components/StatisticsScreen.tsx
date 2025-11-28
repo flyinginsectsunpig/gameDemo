@@ -10,8 +10,15 @@ export default function StatisticsScreen({ onClose }: StatisticsScreenProps) {
   const [stats, setStats] = useState(StatisticsSystem.load());
 
   useEffect(() => {
-    // Reload statistics when component mounts
-    setStats(StatisticsSystem.load());
+    // Reload statistics when component mounts and set up interval to refresh
+    const refreshStats = () => {
+      setStats(StatisticsSystem.load());
+    };
+    
+    refreshStats();
+    const interval = setInterval(refreshStats, 100);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const formatTime = (seconds: number): string => {
