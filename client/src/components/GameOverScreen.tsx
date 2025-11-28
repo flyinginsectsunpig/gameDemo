@@ -11,7 +11,10 @@ export default function GameOverScreen() {
   };
 
   const handleMainMenu = () => {
-    window.location.reload();
+    // Give localStorage time to complete any pending writes
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   return (

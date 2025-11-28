@@ -567,13 +567,19 @@ export class GameEngine {
     
     console.log('Progression saved - Currency:', savedProgression.currency, 'Total Kills:', savedProgression.totalKills);
     
+    // Force a final verification that stats were saved
+    const finalStats = StatisticsSystem.load();
+    console.log('Final stats verification - Total Kills:', finalStats.totalKills, 'Total Runs:', finalStats.totalRuns);
+    
     // Play death sound
     if (!audioState.isMuted) {
       audioState.playPlayerHurt();
     }
     
-    // Trigger game over
-    gameState.end();
+    // Small delay to ensure all localStorage writes complete
+    setTimeout(() => {
+      gameState.end();
+    }, 50);
   }
 
   private createCelebrationParticles() {
