@@ -183,25 +183,21 @@ export class InfiniteTileRenderer {
 
   private generateCleanTileAt(worldX: number, worldY: number): number {
     // Create multiple noise layers for varied terrain
-    const scale1 = 0.03; // Large regions
-    const scale2 = 0.08; // Medium features  
-    const scale3 = 0.15; // Fine details
+    const scale1 = 0.02; // Large regions
+    const scale2 = 0.06; // Medium features  
+    const scale3 = 0.12; // Fine details
 
-    // Base terrain noise
+    // Base terrain noise with better distribution
     const noise1 = Math.sin(worldX * scale1) * Math.cos(worldY * scale1);
     const noise2 = Math.sin(worldX * scale2 + 100) * Math.cos(worldY * scale2 + 100);
     const noise3 = Math.sin(worldX * scale3 + 200) * Math.cos(worldY * scale3 + 200);
 
     // Combine noises with different weights
-    const terrainNoise = (noise1 * 0.6 + noise2 * 0.3 + noise3 * 0.1);
+    const terrainNoise = (noise1 * 0.5 + noise2 * 0.3 + noise3 * 0.2);
 
-    // Path/feature noise
-    const pathNoise = Math.sin(worldX * 0.01 + worldY * 0.015);
-    const stoneNoise = Math.sin(worldX * 0.025 + 50) * Math.cos(worldY * 0.025 + 75);
-
-    // Add some deterministic variation based on position
-    const posVariation = ((worldX * 7 + worldY * 11) % 1000) / 1000.0 - 0.5;
-    const finalNoise = terrainNoise + posVariation * 0.2;
+    // Add deterministic variation based on position
+    const posVariation = ((worldX * 13 + worldY * 17) % 1000) / 1000.0;
+    const finalNoise = terrainNoise + (posVariation - 0.5) * 0.3;
 
     // Generate varied terrain with multiple tile types
     if (pathNoise > 0.75) {
@@ -279,14 +275,25 @@ export class InfiniteTileRenderer {
     ctx.imageSmoothingEnabled = false;
     ctx.imageSmoothingQuality = 'low';
 
-    // Render visible ground tiles
+    // Render visible ground tiles with variety
     for (let tileY = startTileY; tileY <= endTileY; tileY++) {
       for (let tileX = startTileX; tileX <= endTileX; tileX++) {
         const tileId = this.getTileAt(tileX, tileY);
         const screenX = Math.floor(tileX * this.tileSize - camera.x);
         const screenY = Math.floor(tileY * this.tileSize - camera.y);
 
+        // Draw base tile
         this.drawTile(ctx, sprite, tileId, screenX, screenY);
+        
+        // Add occasional detail tiles for variety (1 in 8 chance)
+        const detailSeed = (tileX * 37 + tileY * 73) % 100;
+        if (detailSeed < 12) {
+          // Semi-transparent overlay for subtle variation
+          ctx.globalAlpha = 0.3;
+          const detailTile = (tileX + tileY) % 4;
+          this.drawTile(ctx, sprite, detailTile, screenX, screenY);
+          ctx.globalAlpha = 1.0;
+        }
 
         // Render flower on this tile if it exists
         const flowerKey = `${tileX},${tileY}`;
@@ -310,16 +317,16 @@ export class InfiniteTileRenderer {
     const tileRow = Math.floor(tileId / this.tilesPerRow);
     const tileCol = tileId % this.tilesPerRow;
 
-    // Crop more aggressively to remove all borders and ensure seamless tiling
-    const cropMargin = 16; // Crop 16 pixels from each side
+    // Minimal cropping to preserve tile detail
+    const cropMargin = 4; // Small crop to remove borders
     const srcX = cropMargin + (tileCol * this.srcTileSize);
     const srcY = cropMargin + (tileRow * this.srcTileSize);
-    const actualTileSize = this.srcTileSize - (cropMargin * 2); // 224 pixels after cropping
+    const actualTileSize = this.srcTileSize - (cropMargin * 2);
 
-    // Render slightly larger to ensure no gaps between tiles
-    const renderSize = this.tileSize + 1;
-    const renderX = Math.floor(x);
-    const renderY = Math.floor(y);
+    // Render with slight overlap to prevent gaps
+    const renderSize = this.tileSize + 2;
+    const renderX = Math.floor(x) - 1;
+    const renderY = Math.floor(y) - 1;
 
     ctx.drawImage(
       sprite,

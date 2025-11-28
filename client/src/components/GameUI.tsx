@@ -1,5 +1,6 @@
 import { useGameState } from "../lib/stores/useGameState";
 import { useAudio } from "../lib/stores/useAudio";
+import { useGame } from "../lib/stores/useGame";
 import BossHealthBar from "./BossHealthBar";
 import BossWarning from "./BossWarning";
 import ComboDisplay from "./ComboDisplay";

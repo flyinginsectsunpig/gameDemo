@@ -6,6 +6,12 @@ interface MinimapProps {
   enemies: Array<{ x: number; y: number; isBoss?: boolean }>;
 }
 
+interface MinimapEnemy {
+  x: number;
+  y: number;
+  isBoss?: boolean;
+}
+
 export default function Minimap({ playerX, playerY, enemies }: MinimapProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const size = 150;

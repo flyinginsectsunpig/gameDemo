@@ -234,6 +234,14 @@ export class GameEngine {
     return this.player;
   }
 
+  public getEnemies() {
+    return this.enemies.map(enemy => ({
+      x: enemy.x,
+      y: enemy.y,
+      isBoss: enemy instanceof BossEnemy
+    }));
+  }
+
   private update(deltaTime: number) {
     const gameState = useGameState.getState();
     const input = this.inputManager.getInput();
