@@ -352,15 +352,6 @@ export const useGameState = create<GameState>()(
       }));
     },
 
-    setCombo: (combo: number, multiplier: number, timeRemaining: number = 0) => {
-      set((state) => ({
-        comboCount: combo,
-        comboMultiplier: multiplier,
-        maxCombo: Math.max(state.maxCombo, combo),
-        comboTimeRemaining: timeRemaining
-      }));
-    },
-
     updateCombo: (combo: number, multiplier: number) => {
       set((state) => ({
         comboCount: combo,

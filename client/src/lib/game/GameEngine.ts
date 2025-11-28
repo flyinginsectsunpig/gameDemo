@@ -188,9 +188,16 @@ export class GameEngine {
     this.bossDefeatedCelebrationTimer = 0;
     this.waveManager.reset();
     
+    // Reset statistics tracking
+    this.gameStartTime = Date.now();
+    this.totalDamageDealt = 0;
+    this.totalDamageTaken = 0;
+    this.comboSystem = new ComboSystem();
+    
     const gameState = useGameState.getState();
     gameState.setBossActive(false);
     gameState.hideBossWarning();
+    gameState.resetCombo();
   }
 
   public start() {
