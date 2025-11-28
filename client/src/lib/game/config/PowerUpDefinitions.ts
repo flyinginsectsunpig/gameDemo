@@ -1,5 +1,6 @@
 import { PowerUpDefinition } from "../entities/collectibles/PowerUp";
 import { IPlayer } from "../core/interfaces/IPlayer";
+import { useGameState } from '../../stores/useGameState';
 
 export interface PowerUpDefinition {
   id: string;
@@ -47,7 +48,6 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
       player.heal(20);
       
       // Update game state to reflect the new max health
-      const { useGameState } = require('../../stores/useGameState');
       const gameState = useGameState.getState();
       gameState.setMaxHealth(player.maxHealth);
       gameState.heal(20);
