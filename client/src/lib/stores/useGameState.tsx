@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { useAudio } from "./useAudio";
+import { PersistentProgressionSystem } from "../game/systems/PersistentProgressionSystem";
 
 export type GamePhase = "ready" | "playing" | "ended" | "levelUp" | "characterSelect" | "paused" | "gameOver";
 
@@ -127,7 +128,6 @@ export const useGameState = create<GameState>()(
     },
 
     restart: () => {
-      const { PersistentProgressionSystem } = require('../game/systems/PersistentProgressionSystem');
       const persistentData = PersistentProgressionSystem.load();
       
       set(() => ({
@@ -349,13 +349,11 @@ export const useGameState = create<GameState>()(
     },
 
     addCurrency: (amount: number) => {
-      const { PersistentProgressionSystem } = require('../game/systems/PersistentProgressionSystem');
       PersistentProgressionSystem.addCurrency(amount);
       set((state) => ({ currency: state.currency + amount }));
     },
 
     spendCurrency: (amount: number) => {
-      const { PersistentProgressionSystem } = require('../game/systems/PersistentProgressionSystem');
       const success = PersistentProgressionSystem.spendCurrency(amount);
       if (success) {
         set((state) => ({ 

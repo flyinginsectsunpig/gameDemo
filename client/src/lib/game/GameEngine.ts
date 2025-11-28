@@ -29,6 +29,8 @@ import { PassiveItemManager } from './entities/collectibles/PassiveItem';
 import { DamageNumberManager } from './rendering/DamageNumber';
 import { BossLoot, generateBossLoot } from './entities/collectibles/BossLoot';
 import { ScreenShakeSystem } from './rendering/ScreenShake';
+import { PersistentProgressionSystem } from './systems/PersistentProgressionSystem';
+import { StatisticsSystem } from './systems/StatisticsSystem';
 
 export class GameEngine {
   private canvas: HTMLCanvasElement;
@@ -200,7 +202,6 @@ export class GameEngine {
     gameState.resetCombo();
     
     // Sync persistent currency with game state
-    const { PersistentProgressionSystem } = require('./systems/PersistentProgressionSystem');
     const persistentData = PersistentProgressionSystem.load();
     useGameState.setState({ currency: persistentData.currency });
   }
@@ -524,8 +525,7 @@ export class GameEngine {
     
     console.log(`Recording run stats - Kills: ${gameState.totalKills}, Damage Dealt: ${this.totalDamageDealt}, Damage Taken: ${this.totalDamageTaken}, Currency Earned: ${currencyEarned}`);
     
-    // Import and save to StatisticsSystem
-    const { StatisticsSystem } = require('./systems/StatisticsSystem');
+    // Save to StatisticsSystem
     StatisticsSystem.recordRun({
       characterId,
       kills: gameState.totalKills,
@@ -540,8 +540,7 @@ export class GameEngine {
       bossesDefeated: gameState.bossesDefeated
     });
     
-    // Import and save to PersistentProgressionSystem
-    const { PersistentProgressionSystem } = require('./systems/PersistentProgressionSystem');
+    // Save to PersistentProgressionSystem
     PersistentProgressionSystem.recordRunEnd(
       gameState.score,
       gameState.wave,
