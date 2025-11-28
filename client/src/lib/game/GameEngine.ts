@@ -514,8 +514,12 @@ export class GameEngine {
     const playTime = Math.floor((Date.now() - this.gameStartTime) / 1000);
     const characterId = gameState.selectedCharacter?.id || "guardian";
     
-    console.log(`Recording run stats - Kills: ${gameState.totalKills}, Damage Dealt: ${this.totalDamageDealt}, Damage Taken: ${this.totalDamageTaken}`);
+    // Add currency based on performance (score and wave) - BEFORE ending game
+    const currencyEarned = Math.floor(gameState.score / 100) + (gameState.wave * 10);
     
+    console.log(`Recording run stats - Kills: ${gameState.totalKills}, Damage Dealt: ${this.totalDamageDealt}, Damage Taken: ${this.totalDamageTaken}, Currency Earned: ${currencyEarned}`);
+    
+    // Import and save to StatisticsSystem
     const { StatisticsSystem } = require('./systems/StatisticsSystem');
     StatisticsSystem.recordRun({
       characterId,
@@ -531,9 +535,7 @@ export class GameEngine {
       bossesDefeated: gameState.bossesDefeated
     });
     
-    console.log('Statistics recorded:', StatisticsSystem.load());
-    
-    // Save persistent progression
+    // Import and save to PersistentProgressionSystem
     const { PersistentProgressionSystem } = require('./systems/PersistentProgressionSystem');
     PersistentProgressionSystem.recordRunEnd(
       gameState.score,
@@ -544,11 +546,14 @@ export class GameEngine {
       playTime
     );
     
-    // Add currency based on performance (score and wave)
-    const currencyEarned = Math.floor(gameState.score / 100) + (gameState.wave * 10);
+    // Add currency
     PersistentProgressionSystem.addCurrency(currencyEarned);
     
-    console.log(`Game Over! Statistics saved. Earned ${currencyEarned} gold. Total: ${gameState.totalKills} kills, ${this.totalDamageDealt} damage dealt, ${this.totalDamageTaken} damage taken`);
+    // Verify saves
+    const savedStats = StatisticsSystem.load();
+    const savedProgression = PersistentProgressionSystem.load();
+    console.log('Statistics saved:', savedStats);
+    console.log('Progression saved - Currency:', savedProgression.currency, 'Total Kills:', savedProgression.totalKills);
     
     // Play death sound
     if (!audioState.isMuted) {

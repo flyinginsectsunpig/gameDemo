@@ -13,6 +13,7 @@ import GameOverScreen from "./GameOverScreen";
 import StatisticsScreen from "./StatisticsScreen";
 import LevelUpEffect from "./LevelUpEffect";
 import UpgradeShop from "./UpgradeShop";
+import DebugTestingScreen from "./DebugTestingScreen";
 
 export default function Game() {
   const { phase, restart, resumeFromLevelUp, selectCharacter, resume } = useGameState();
@@ -23,6 +24,7 @@ export default function Game() {
   const [showSettings, setShowSettings] = useState(false);
   const [showStatistics, setShowStatistics] = useState(false);
   const [showUpgradeShop, setShowUpgradeShop] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     const initAudio = async () => {
@@ -37,12 +39,21 @@ export default function Game() {
       document.removeEventListener("keydown", handleFirstInteraction);
     };
 
+    const handleDebugKey = (e: KeyboardEvent) => {
+      if (e.key === "`" || e.key === "~") {
+        e.preventDefault();
+        setShowDebug(prev => !prev);
+      }
+    };
+
     document.addEventListener("click", handleFirstInteraction);
     document.addEventListener("keydown", handleFirstInteraction);
+    document.addEventListener("keydown", handleDebugKey);
 
     return () => {
       document.removeEventListener("click", handleFirstInteraction);
       document.removeEventListener("keydown", handleFirstInteraction);
+      document.removeEventListener("keydown", handleDebugKey);
     };
   }, []);
 
@@ -97,6 +108,12 @@ export default function Game() {
     );
   }
 
+  if (showDebug) {
+    return (
+      <DebugTestingScreen onClose={() => setShowDebug(false)} />
+    );
+  }
+
   return (
     <div className="relative w-full h-full flex flex-col bg-gray-900 text-white overflow-hidden">
       <GameCanvas onEngineReady={setEngine} />
@@ -104,6 +121,7 @@ export default function Game() {
         onShowUpgradeShop={() => setShowUpgradeShop(true)}
         onShowStatistics={() => setShowStatistics(true)}
         onShowSettings={() => setShowSettings(true)}
+        onShowDebug={() => setShowDebug(true)}
       />
       <LevelUpEffect />
 

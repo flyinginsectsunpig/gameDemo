@@ -10,9 +10,10 @@ interface GameUIProps {
   onShowUpgradeShop?: () => void;
   onShowStatistics?: () => void;
   onShowSettings?: () => void;
+  onShowDebug?: () => void;
 }
 
-export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSettings }: GameUIProps = {}) {
+export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSettings, onShowDebug }: GameUIProps = {}) {
   const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning, comboCount, comboMultiplier, currency, totalKills } = useGameState();
   const { isMuted, toggleMute } = useAudio();
   const { player, enemies } = useGameStore();
@@ -116,6 +117,27 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
       {isBossActive && <BossHealthBar />}
 
       <ComboDisplay combo={comboCount} multiplier={comboMultiplier} timeRemaining={3} />
+
+      {/* Top-right corner buttons */}
+      <div className="absolute top-4 right-4 flex gap-2 z-10">
+        {onShowDebug && (
+          <button
+            onClick={onShowDebug}
+            className="gothic-button px-3 py-2 rounded text-xs hover:scale-105 transition-transform"
+            title="Debug Panel (~)"
+            style={{ background: '#5c1f2a', borderColor: '#8b2635' }}
+          >
+            🐛
+          </button>
+        )}
+        <button
+          onClick={onShowSettings}
+          className="gothic-button px-3 py-2 rounded text-xs hover:scale-105 transition-transform"
+          title="Settings"
+        >
+          ⚙️
+        </button>
+      </div>
 
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-auto">
         <div className="gothic-bar p-4 rounded-lg" style={{ fontFamily: 'Crimson Text, serif' }}>
