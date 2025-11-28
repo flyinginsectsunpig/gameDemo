@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PersistentProgressionSystem } from "../lib/game/systems/PersistentProgressionSystem";
 
 interface UpgradeShopProps {
@@ -8,6 +7,11 @@ interface UpgradeShopProps {
 
 export default function UpgradeShop({ onClose }: UpgradeShopProps) {
   const [data, setData] = useState(PersistentProgressionSystem.load());
+
+  useEffect(() => {
+    // Reload data when component mounts to ensure we have latest values
+    setData(PersistentProgressionSystem.load());
+  }, []);
 
   const handleUpgrade = (upgrade: keyof typeof data.permanentUpgrades) => {
     const success = PersistentProgressionSystem.upgradePermanent(upgrade);
@@ -29,7 +33,7 @@ export default function UpgradeShop({ onClose }: UpgradeShopProps) {
       <div className="gothic-vignette" />
       <div className="gothic-panel rounded-lg p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto relative z-10">
         <div className="gothic-divider mb-6" />
-        
+
         <div className="flex justify-between items-center mb-6">
           <h2 className="gothic-title text-3xl font-bold" style={{ color: '#c9a23f' }}>
             UPGRADES
@@ -62,9 +66,9 @@ export default function UpgradeShop({ onClose }: UpgradeShopProps) {
                     </div>
                   </div>
                 </div>
-                
+
                 <p className="text-sm mb-3" style={{ color: '#8b8b8b' }}>{upgrade.description}</p>
-                
+
                 <button
                   onClick={() => handleUpgrade(upgrade.key)}
                   disabled={!canAfford}
@@ -100,7 +104,7 @@ export default function UpgradeShop({ onClose }: UpgradeShopProps) {
         >
           Close
         </button>
-        
+
         <div className="gothic-divider mt-6" />
       </div>
     </div>

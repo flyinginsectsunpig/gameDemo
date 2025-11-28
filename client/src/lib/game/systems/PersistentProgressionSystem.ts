@@ -86,8 +86,10 @@ export class PersistentProgressionSystem {
 
   static addCurrency(amount: number): void {
     const data = this.load();
+    const oldCurrency = data.currency;
     data.currency += amount;
     this.save(data);
+    console.log(`Currency updated: ${oldCurrency} + ${amount} = ${data.currency}`);
   }
 
   static spendCurrency(amount: number): boolean {

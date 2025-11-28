@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { StatisticsSystem } from "../lib/game/systems/StatisticsSystem";
 
 interface StatisticsScreenProps {
@@ -6,7 +7,12 @@ interface StatisticsScreenProps {
 }
 
 export default function StatisticsScreen({ onClose }: StatisticsScreenProps) {
-  const stats = StatisticsSystem.load();
+  const [stats, setStats] = useState(StatisticsSystem.load());
+
+  useEffect(() => {
+    // Reload statistics when component mounts
+    setStats(StatisticsSystem.load());
+  }, []);
 
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);

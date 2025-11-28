@@ -528,6 +528,8 @@ export class GameEngine {
       bossesDefeated: gameState.bossesDefeated
     });
     
+    console.log('Statistics recorded:', StatisticsSystem.load());
+    
     // Save persistent progression
     const { PersistentProgressionSystem } = require('./systems/PersistentProgressionSystem');
     PersistentProgressionSystem.recordRunEnd(
@@ -539,8 +541,8 @@ export class GameEngine {
       playTime
     );
     
-    // Add currency based on performance
-    const currencyEarned = Math.floor(gameState.score / 100) + (gameState.wave * 10) + gameState.currency;
+    // Add currency based on performance (score and wave)
+    const currencyEarned = Math.floor(gameState.score / 100) + (gameState.wave * 10);
     PersistentProgressionSystem.addCurrency(currencyEarned);
     
     console.log(`Game Over! Statistics saved. Earned ${currencyEarned} gold. Total: ${gameState.totalKills} kills, ${this.totalDamageDealt} damage dealt, ${this.totalDamageTaken} damage taken`);
