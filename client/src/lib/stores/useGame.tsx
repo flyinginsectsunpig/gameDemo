@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import type { GameEngine } from "../game/GameEngine";
 
 export type GamePhase = "ready" | "playing" | "ended";
 

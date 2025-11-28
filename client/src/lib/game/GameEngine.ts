@@ -28,7 +28,6 @@ import { ComboSystem } from './systems/ComboSystem';
 import { PassiveItemManager } from './entities/collectibles/PassiveItem';
 import { DamageNumberManager } from './rendering/DamageNumber';
 import { BossLoot, generateBossLoot } from './entities/collectibles/BossLoot';
-import { ComboSystem } from './systems/ComboSystem';
 import { ScreenShakeSystem } from './rendering/ScreenShake';
 
 export class GameEngine {
@@ -610,6 +609,10 @@ export class GameEngine {
               this.createDeathParticles(enemy.x, enemy.y);
               const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
               this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
+              
+              // Add gold for each kill
+              const goldValue = Math.max(1, Math.floor(enemy.getScoreValue() / 10));
+              gameState.addCurrency(goldValue);
             }
           }
         }
@@ -682,6 +685,10 @@ export class GameEngine {
               this.createDeathParticles(enemy.x, enemy.y);
               const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
               this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
+              
+              // Add gold for each kill
+              const goldValue = Math.max(1, Math.floor(enemy.getScoreValue() / 10));
+              gameState.addCurrency(goldValue);
             }
           }
         }
@@ -708,6 +715,10 @@ export class GameEngine {
             this.createDeathParticles(collision.enemy.x, collision.enemy.y);
             const expValue = Math.max(1, Math.floor(collision.enemy.getScoreValue() / 2));
             this.experienceOrbs.push(new ExperienceOrb(collision.enemy.x, collision.enemy.y, expValue));
+            
+            // Add gold for each kill
+            const goldValue = Math.max(1, Math.floor(collision.enemy.getScoreValue() / 10));
+            gameState.addCurrency(goldValue);
           }
         });
       }
@@ -778,6 +789,10 @@ export class GameEngine {
 
         const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
         this.experienceOrbs.push(new ExperienceOrb(enemy.x, enemy.y, expValue));
+        
+        // Add gold for each kill
+        const goldValue = Math.max(1, Math.floor(enemy.getScoreValue() / 10));
+        gameState.addCurrency(goldValue);
       }
     });
   }

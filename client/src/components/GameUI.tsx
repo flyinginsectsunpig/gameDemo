@@ -1,6 +1,6 @@
 import { useGameState } from "../lib/stores/useGameState";
 import { useAudio } from "../lib/stores/useAudio";
-import { useGame } from "../lib/stores/useGame";
+import { useGameStore } from "../lib/stores/useGame";
 import BossHealthBar from "./BossHealthBar";
 import BossWarning from "./BossWarning";
 import ComboDisplay from "./ComboDisplay";
@@ -15,7 +15,7 @@ interface GameUIProps {
 export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSettings }: GameUIProps = {}) {
   const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning, comboCount, comboMultiplier, currency, totalKills } = useGameState();
   const { isMuted, toggleMute } = useAudio();
-  const { player, enemies } = useGame(); // Added to get player and enemies for minimap
+  const { player, enemies } = useGameStore();
 
   if (phase === "ready") {
     return (
@@ -68,7 +68,7 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             {onShowUpgradeShop && (
               <button
-                onClick={onShowUpgradeShop}
+                onClick={(e) => { e.stopPropagation(); onShowUpgradeShop(); }}
                 className="gothic-button gothic-button-primary px-6 py-3 rounded-lg text-sm"
               >
                 Upgrade Shop
@@ -76,7 +76,7 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
             )}
             {onShowStatistics && (
               <button
-                onClick={onShowStatistics}
+                onClick={(e) => { e.stopPropagation(); onShowStatistics(); }}
                 className="gothic-button px-6 py-3 rounded-lg text-sm"
               >
                 Statistics
@@ -84,7 +84,7 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
             )}
             {onShowSettings && (
               <button
-                onClick={onShowSettings}
+                onClick={(e) => { e.stopPropagation(); onShowSettings(); }}
                 className="gothic-button px-6 py-3 rounded-lg text-sm"
               >
                 Settings
@@ -128,7 +128,7 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
                   style={{ width: `${healthPercentage}%` }}
                 />
               </div>
-              <span className="text-xs" style={{ color: '#d9d1c5' }}>{health}/{maxHealth}</span>
+              <span className="text-xs" style={{ color: '#d9d1c5' }}>{Math.floor(health)}/{maxHealth}</span>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -170,35 +170,25 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
           )}
         </div>
 
-        <button
-          onClick={toggleMute}
-          className="gothic-button p-3 rounded-lg text-sm"
-        >
-          {isMuted ? "Muted" : "Sound"}
-        </button>
+        {player && (
+          <Minimap
+            playerX={player.x}
+            playerY={player.y}
+            enemies={enemies}
+          />
+        )}
       </div>
 
       <div className="absolute bottom-4 left-4 gothic-bar p-2 rounded text-xs" style={{ color: '#8b8b8b' }}>
         <div>WASD/Arrows: Move | ESC: Pause | M: Sound | R: Restart</div>
       </div>
 
-      <div className="absolute bottom-4 right-4 space-y-2">
-        {isBossActive && (
-          <div className="gothic-panel p-3 rounded-lg" style={{ borderColor: '#8b2635' }}>
-            <div className="text-sm font-bold" style={{ color: '#c9a23f', fontFamily: 'Cinzel, serif' }}>BOSS FIGHT</div>
-            <div className="text-xs mt-1" style={{ color: '#8b8b8b' }}>Defeat the boss to proceed!</div>
-          </div>
-        )}
-        {player && enemies.length >= 0 && (
-          <div className="absolute top-4 right-4 z-10">
-            <Minimap
-              playerX={player.x}
-              playerY={player.y}
-              enemies={enemies}
-            />
-          </div>
-        )}
-      </div>
+      {isBossActive && (
+        <div className="absolute bottom-4 right-4 gothic-panel p-3 rounded-lg" style={{ borderColor: '#8b2635' }}>
+          <div className="text-sm font-bold" style={{ color: '#c9a23f', fontFamily: 'Cinzel, serif' }}>BOSS FIGHT</div>
+          <div className="text-xs mt-1" style={{ color: '#8b8b8b' }}>Defeat the boss to proceed!</div>
+        </div>
+      )}
     </div>
   );
 }

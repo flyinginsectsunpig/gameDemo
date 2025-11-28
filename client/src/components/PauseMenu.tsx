@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useGameState } from "../lib/stores/useGameState";
 import { useAudio } from "../lib/stores/useAudio";
 
@@ -10,6 +11,21 @@ interface PauseMenuProps {
 export default function PauseMenu({ onShowSettings, onShowStatistics, onShowUpgradeShop }: PauseMenuProps) {
   const { phase, resume, restart } = useGameState();
   const { isMuted, toggleMute } = useAudio();
+
+  useEffect(() => {
+    if (phase !== "paused") return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        resume();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  }, [phase, resume]);
 
   if (phase !== "paused") return null;
 

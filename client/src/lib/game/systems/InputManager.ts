@@ -5,6 +5,7 @@ export interface InputState {
   down: boolean;
   mute: boolean;
   restart: boolean;
+  pause: boolean;
   weapon1: boolean;
   weapon2: boolean;
   weapon3: boolean;
@@ -23,6 +24,7 @@ export class InputManager {
       down: false,
       mute: false,
       restart: false,
+      pause: false,
       weapon1: false,
       weapon2: false,
       weapon3: false,
@@ -43,7 +45,7 @@ export class InputManager {
 
   private handleKeyDown = (e: KeyboardEvent) => {
     this.keys[e.code] = true;
-    // Prevent default behavior for game keys
+    // Prevent default behavior for game keys (except Escape which should bubble to modals)
     if (["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
       e.preventDefault();
     }
@@ -65,7 +67,8 @@ export class InputManager {
       weapon4: this.keys["4"],
       weapon5: this.keys["5"],
       mute: this.keys["m"] || this.keys["M"],
-      restart: this.keys["r"] || this.keys["R"]
+      restart: this.keys["r"] || this.keys["R"],
+      pause: this.keys["Escape"]
     };
   }
 
@@ -80,6 +83,7 @@ export class InputManager {
     this.keys.down = this.isKeyPressed('ArrowDown') || this.isKeyPressed('s') || this.isKeyPressed('S');
     this.keys.mute = this.isKeyPressed('m') || this.isKeyPressed('M');
     this.keys.restart = this.isKeyPressed('r') || this.isKeyPressed('R');
+    this.keys.pause = this.isKeyPressed('Escape');
 
     // Debug keys for weapon testing
     this.keys.weapon1 = this.isKeyPressed('1');

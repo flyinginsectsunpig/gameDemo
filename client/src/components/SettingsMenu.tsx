@@ -1,6 +1,6 @@
 
 import { useAudio } from "../lib/stores/useAudio";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface SettingsMenuProps {
   onClose: () => void;
@@ -10,6 +10,19 @@ export default function SettingsMenu({ onClose }: SettingsMenuProps) {
   const { isMuted, toggleMute, musicVolume: globalMusicVolume, sfxVolume: globalSfxVolume, setMusicVolume: setGlobalMusicVolume, setSfxVolume: setGlobalSfxVolume } = useAudio();
   const [musicVolume, setMusicVolume] = useState(globalMusicVolume);
   const [sfxVolume, setSfxVolume] = useState(globalSfxVolume);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  }, [onClose]);
 
   const handleMusicVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const volume = parseFloat(e.target.value);

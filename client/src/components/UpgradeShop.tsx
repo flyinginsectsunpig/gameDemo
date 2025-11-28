@@ -20,6 +20,19 @@ export default function UpgradeShop({ onClose }: UpgradeShopProps) {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  }, [onClose]);
+
   const handleUpgrade = (upgrade: keyof typeof data.permanentUpgrades) => {
     const success = PersistentProgressionSystem.upgradePermanent(upgrade);
     if (success) {
