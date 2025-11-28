@@ -73,6 +73,8 @@ export class StatisticsSystem {
     bossesDefeated: number;
   }): void {
     const stats = this.load();
+    
+    console.log(`[StatisticsSystem] Recording run - Adding ${data.kills} kills to existing ${stats.totalKills}`);
 
     stats.totalRuns++;
     stats.totalDeaths++;
@@ -105,6 +107,8 @@ export class StatisticsSystem {
     if (data.wave > charStats.highestWave) charStats.highestWave = data.wave;
 
     this.save(stats);
+    
+    console.log(`[StatisticsSystem] Run recorded - New total kills: ${stats.totalKills}, Total runs: ${stats.totalRuns}`);
   }
 
   static unlockWeapon(weaponId: string): void {

@@ -523,7 +523,11 @@ export class GameEngine {
     // Add currency based on performance (score and wave) - BEFORE ending game
     const currencyEarned = Math.floor(gameState.score / 100) + (gameState.wave * 10);
     
-    console.log(`Recording run stats - Kills: ${gameState.totalKills}, Damage Dealt: ${this.totalDamageDealt}, Damage Taken: ${this.totalDamageTaken}, Currency Earned: ${currencyEarned}`);
+    console.log(`Recording run stats - Session Kills: ${gameState.totalKills}, Damage Dealt: ${this.totalDamageDealt}, Damage Taken: ${this.totalDamageTaken}, Currency Earned: ${currencyEarned}`);
+    
+    // Load current stats BEFORE recording
+    const statsBefore = StatisticsSystem.load();
+    console.log('Statistics BEFORE recording - Total Kills:', statsBefore.totalKills, 'Total Runs:', statsBefore.totalRuns);
     
     // Save to StatisticsSystem
     StatisticsSystem.recordRun({
@@ -539,6 +543,10 @@ export class GameEngine {
       maxCombo: gameState.maxCombo,
       bossesDefeated: gameState.bossesDefeated
     });
+    
+    // Verify statistics were saved correctly
+    const statsAfter = StatisticsSystem.load();
+    console.log('Statistics AFTER recording - Total Kills:', statsAfter.totalKills, 'Total Runs:', statsAfter.totalRuns, 'Session Kills Added:', gameState.totalKills);
     
     // Save to PersistentProgressionSystem
     PersistentProgressionSystem.recordRunEnd(
@@ -557,9 +565,6 @@ export class GameEngine {
     const savedProgression = PersistentProgressionSystem.load();
     useGameState.setState({ currency: savedProgression.currency });
     
-    // Verify saves
-    const savedStats = StatisticsSystem.load();
-    console.log('Statistics saved:', savedStats);
     console.log('Progression saved - Currency:', savedProgression.currency, 'Total Kills:', savedProgression.totalKills);
     
     // Play death sound
