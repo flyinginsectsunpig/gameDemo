@@ -20,7 +20,7 @@ const damageUpgrade: PowerUpDefinition = { id: "damage_upgrade", name: "Damage U
 const fireRateUpgrade: PowerUpDefinition = { id: "fire_rate_upgrade", name: "Fire Rate Upgrade", description: "Increase fire rate", color: "#FFA500", apply: (player: IPlayer) => { const weapon = player.getWeapon(); if (weapon && 'upgradeFireRate' in weapon) { (weapon as any).upgradeFireRate(); } } };
 const projectileSpeedUpgrade: PowerUpDefinition = { id: "projectile_speed_upgrade", name: "Projectile Speed Upgrade", description: "Increase projectile speed", color: "#FFD700", apply: (player: IPlayer) => { const weapon = player.getWeapon(); if (weapon && 'projectileSpeed' in weapon) { (weapon as any).projectileSpeed *= 1.2; } } };
 const maxHealthUpgrade: PowerUpDefinition = { id: "max_health_upgrade", name: "Max Health Upgrade", description: "Increase maximum health", color: "#FF69B4", apply: (player: IPlayer) => { player.maxHealth += 20; } };
-const addOrbitalWeapon: PowerUpDefinition = { id: "add_orbital_weapon", name: "Orbital Weapon", description: "Summon a orbiting weapon", color: "#DA70D6", apply: (player: IPlayer) => { console.log("Orbital weapon summoned!"); } };
+const addOrbitalWeapon: PowerUpDefinition = { id: "add_orbital_weapon", name: "Orbital Weapon", description: "Summon a orbiting weapon", color: "#DA70D6", apply: (player: IPlayer) => { player.addOrbitalWeapon(); console.log("Orbital weapon summoned!"); } };
 const addProjectile: PowerUpDefinition = { id: "add_projectile", name: "Extra Projectile", description: "Fire an additional projectile", color: "#BA55D3", apply: (player: IPlayer) => { console.log("Extra projectile fired!"); } };
 
 
@@ -33,17 +33,18 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     apply: (player: IPlayer) => {
       const speed = player.getSpeed();
       player.setSpeed(speed * 1.15);
+      console.log(`Speed boosted to ${speed * 1.15}`);
     }
   },
   {
     id: "health_boost",
     name: "Health Boost",
-    description: "Increase maximum health by 20",
+    description: "Increase maximum health by 20 and heal",
     color: "#FF1493",
     apply: (player: IPlayer) => {
-      const maxHealth = player.getMaxHealth();
-      const currentHealth = player.getHealth();
+      (player as any).maxHealth += 20;
       player.heal(20);
+      console.log(`Max health increased, healed 20 HP`);
     }
   },
   {
@@ -55,6 +56,7 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
       const weapon = player.getWeapon();
       if (weapon && 'upgradeDamage' in weapon) {
         (weapon as any).upgradeDamage();
+        console.log(`Weapon damage upgraded`);
       }
     }
   },
@@ -67,6 +69,7 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
       const weapon = player.getWeapon();
       if (weapon && 'projectileSpeed' in weapon) {
         (weapon as any).projectileSpeed *= 1.2;
+        console.log(`Projectile speed increased`);
       }
     }
   },
@@ -79,6 +82,7 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
       const weapon = player.getWeapon();
       if (weapon && 'upgradeFireRate' in weapon) {
         (weapon as any).upgradeFireRate();
+        console.log(`Fire rate upgraded`);
       }
     }
   },

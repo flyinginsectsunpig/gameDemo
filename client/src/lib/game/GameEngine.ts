@@ -330,7 +330,9 @@ export class GameEngine {
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         if (distance <= groundPoundRadius) {
-          gameState.takeDamage(groundPoundDamage * deltaTime);
+          const damage = groundPoundDamage * deltaTime;
+          this.totalDamageTaken += damage;
+          gameState.takeDamage(damage);
           this.screenShake.trigger(15, 0.4);
         }
       }
@@ -509,6 +511,8 @@ export class GameEngine {
     const playTime = Math.floor((Date.now() - this.gameStartTime) / 1000);
     const characterId = gameState.selectedCharacter?.id || "guardian";
     
+    console.log(`Recording run stats - Kills: ${gameState.totalKills}, Damage Dealt: ${this.totalDamageDealt}, Damage Taken: ${this.totalDamageTaken}`);
+    
     const { StatisticsSystem } = require('./systems/StatisticsSystem');
     StatisticsSystem.recordRun({
       characterId,
@@ -539,7 +543,7 @@ export class GameEngine {
     const currencyEarned = Math.floor(gameState.score / 100) + (gameState.wave * 10) + gameState.currency;
     PersistentProgressionSystem.addCurrency(currencyEarned);
     
-    console.log(`Game Over! Earned ${currencyEarned} gold. Total kills: ${gameState.totalKills}, Wave: ${gameState.wave}`);
+    console.log(`Game Over! Statistics saved. Earned ${currencyEarned} gold. Total: ${gameState.totalKills} kills, ${this.totalDamageDealt} damage dealt, ${this.totalDamageTaken} damage taken`);
     
     // Play death sound
     if (!audioState.isMuted) {
@@ -610,7 +614,9 @@ export class GameEngine {
       if (!projectile.isAlive()) return;
 
       if (this.collisionDetection.checkEnemyProjectilePlayerCollision(projectile, this.player)) {
-        gameState.takeDamage(projectile.getDamage());
+        const damage = projectile.getDamage();
+        this.totalDamageTaken += damage;
+        gameState.takeDamage(damage);
         projectile.markForRemoval();
         this.createHitParticles(this.player.x, this.player.y, "#cc00cc");
 

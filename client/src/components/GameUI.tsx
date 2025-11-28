@@ -189,11 +189,15 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
             <div className="text-xs mt-1" style={{ color: '#8b8b8b' }}>Defeat the boss to proceed!</div>
           </div>
         )}
-        <Minimap
-          playerX={player?.x || 0}
-          playerY={player?.y || 0}
-          enemies={enemies || []}
-        />
+        {player && enemies.length >= 0 && (
+          <div className="absolute top-4 right-4 z-10">
+            <Minimap
+              playerX={player.x}
+              playerY={player.y}
+              enemies={enemies}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
