@@ -11,10 +11,8 @@ export default function GameOverScreen() {
   };
 
   const handleMainMenu = () => {
-    // Give localStorage time to complete any pending writes
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    // Just restart the game, which goes back to character select
+    restart();
   };
 
   return (
