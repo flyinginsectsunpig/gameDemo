@@ -33,6 +33,7 @@ Thumbs.db
 replit.nix
 .local/
 *.replit*
+attached_assets
 
 # -----------------------------
 # Temporary / local files
