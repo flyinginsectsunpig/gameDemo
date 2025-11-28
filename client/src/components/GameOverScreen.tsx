@@ -11,7 +11,8 @@ export default function GameOverScreen() {
   };
 
   const handleMainMenu = () => {
-    window.location.reload();
+    // Reset to ready phase to show main menu
+    useGameState.setState({ phase: "ready" });
   };
 
   return (

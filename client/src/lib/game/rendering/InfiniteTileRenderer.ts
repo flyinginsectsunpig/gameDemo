@@ -288,7 +288,7 @@ export class InfiniteTileRenderer {
 
         // Draw base tile
         this.drawTile(ctx, sprite, tileId, screenX, screenY);
-        
+
         // Add occasional detail tiles for variety (1 in 8 chance)
         const detailSeed = (tileX * 37 + tileY * 73) % 100;
         if (detailSeed < 12) {
@@ -532,7 +532,7 @@ export class InfiniteTileRenderer {
   // New method to render spiders
   private renderSpiders(ctx: CanvasRenderingContext2D, camera: Camera): void {
     // Render spiders every frame for smooth animation (no throttling)
-    
+
     this.spiders.forEach((spider) => {
       const screenX = Math.floor(spider.x - camera.x);
       const screenY = Math.floor(spider.y - camera.y);
@@ -554,45 +554,27 @@ export class InfiniteTileRenderer {
   }
 
   private drawSpider(ctx: CanvasRenderingContext2D, spider: any, screenX: number, screenY: number): void {
-    const spiderHeight = this.tileSize * 1.5; // Height based on tile size
-    const spiderWidth = spiderHeight * (800 / 450); // Maintain 800:450 aspect ratio
+    const spiderSize = spider.size || 32; // Default spider size
 
-    ctx.save();
-    
-    // Store previous position for clearing
-    if (!spider.previousScreenX) spider.previousScreenX = screenX;
-    if (!spider.previousScreenY) spider.previousScreenY = screenY;
-    
-    // Remove clearRect to prevent black squares - canvas is cleared each frame by GameEngine
-    
-    // Update stored position
-    spider.previousScreenX = screenX;
-    spider.previousScreenY = screenY;
-
-    // Get the appropriate sprite for current animation
+    // Get spider sprite based on movement direction
     let spriteName = 'spider_down';
-    if (spider.currentAnimation) {
-      switch (spider.currentAnimation) {
-        case 'spider_walk_up':
-          spriteName = 'spider_up';
-          break;
-        case 'spider_walk_down':
-          spriteName = 'spider_down';
-          break;
-        case 'spider_walk_side':
-          spriteName = 'spider_side';
-          break;
-        case 'spider_walk_diagonal_up':
-          spriteName = 'spider_diagonal_up';
-          break;
-        case 'spider_walk_diagonal_down':
-          spriteName = 'spider_diagonal_down';
-          break;
-        case 'spider_jumping':
-          spriteName = 'spider_jumping';
-          break;
-        default:
-          spriteName = 'spider_down';
+
+    if (spider.isJumping) {
+      spriteName = 'spider_jumping';
+    } else {
+      const dx = spider.velocityX || 0;
+      const dy = spider.velocityY || 0;
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        spriteName = 'spider_side';
+      } else if (dy < 0) {
+        spriteName = 'spider_up';
+      } else if (dy > 0) {
+        spriteName = 'spider_down';
+      }
+
+      if (Math.abs(dx) > 0 && Math.abs(dy) > 0) {
+        spriteName = dy < 0 ? 'spider_diagonal_up' : 'spider_diagonal_down';
       }
     }
 
@@ -603,7 +585,7 @@ export class InfiniteTileRenderer {
         // Disable smoothing for crisp sprites
         ctx.imageSmoothingEnabled = false;
         ctx.globalCompositeOperation = 'source-over'; // Ensure normal drawing mode
-        
+
         // No shadow effects to prevent trails
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
@@ -619,14 +601,14 @@ export class InfiniteTileRenderer {
         spider.frameCounter++;
         const frameIndex = Math.floor(spider.frameCounter / 12) % frameCount; // Update every 12 game frames
 
-        const drawX = Math.floor(screenX - (spiderWidth - this.tileSize) / 2);
-        const drawY = Math.floor(screenY - (spiderHeight - this.tileSize) / 2);
-        
+        const drawX = Math.floor(screenX - (spiderSize - this.tileSize) / 2);
+        const drawY = Math.floor(screenY - (spiderSize - this.tileSize) / 2);
+
         // Simplified sprite drawing
         ctx.drawImage(
           sprite,
           frameIndex * frameWidth, 0, frameWidth, frameHeight,
-          drawX, drawY, spiderWidth, spiderHeight
+          drawX, drawY, spiderSize, spiderSize
         );
 
         // Remove sparkle effects entirely to prevent trails
@@ -645,7 +627,7 @@ export class InfiniteTileRenderer {
 
   private renderFallbackSpider(ctx: CanvasRenderingContext2D, screenX: number, screenY: number, spiderSize: number): void {
     ctx.save();
-    
+
     // Enhanced fallback spider - much more visible like flowers
     const centerX = screenX + this.tileSize / 2;
     const centerY = screenY + this.tileSize / 2;
@@ -672,7 +654,7 @@ export class InfiniteTileRenderer {
       const startY = centerY + Math.sin(angle) * spiderSize * 0.1;
       const endX = centerX + Math.cos(angle) * legLength;
       const endY = centerY + Math.sin(angle) * legLength * 0.6;
-      
+
       ctx.beginPath();
       ctx.moveTo(startX, startY);
       ctx.lineTo(endX, endY);
