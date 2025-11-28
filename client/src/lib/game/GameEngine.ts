@@ -358,11 +358,12 @@ export class GameEngine {
     this.damageNumbers.update(deltaTime);
     
     this.comboSystem.update(deltaTime);
-    gameState.setCombo(
-      this.comboSystem.getComboCount(), 
-      this.comboSystem.getComboMultiplier(),
-      this.comboSystem.getTimeRemaining()
-    );
+    const comboCount = this.comboSystem.getComboCount();
+    const comboMultiplier = this.comboSystem.getComboMultiplier();
+    const comboTimeRemaining = this.comboSystem.getTimeRemaining();
+    
+    gameState.updateCombo(comboCount, comboMultiplier);
+    gameState.setCombo(comboCount, comboMultiplier, comboTimeRemaining);
     
     this.screenShake.update(deltaTime);
 
@@ -378,13 +379,14 @@ export class GameEngine {
       
       if (loot.canBeCollected(this.player.getPosition())) {
         loot.collect();
-        gameState.addCurrency(100);
+        const lootValue = 100;
+        gameState.addCurrency(lootValue);
         
         if (!audioState.isMuted) {
           audioState.playSuccess();
         }
         
-        console.log(`Collected boss loot: ${loot.getName()}`);
+        console.log(`Collected boss loot: ${loot.getName()} (+${lootValue} gold, total: ${gameState.currency + lootValue})`);
         return false;
       }
       
@@ -527,8 +529,10 @@ export class GameEngine {
     );
     
     // Add currency based on performance
-    const currencyEarned = Math.floor(gameState.score / 100) + (gameState.wave * 10);
+    const currencyEarned = Math.floor(gameState.score / 100) + (gameState.wave * 10) + gameState.currency;
     PersistentProgressionSystem.addCurrency(currencyEarned);
+    
+    console.log(`Game Over! Earned ${currencyEarned} gold. Total kills: ${gameState.totalKills}, Wave: ${gameState.wave}`);
     
     // Play death sound
     if (!audioState.isMuted) {
