@@ -127,6 +127,9 @@ export const useGameState = create<GameState>()(
     },
 
     restart: () => {
+      const { PersistentProgressionSystem } = require('../game/systems/PersistentProgressionSystem');
+      const persistentData = PersistentProgressionSystem.load();
+      
       set(() => ({
         phase: "characterSelect",
         score: 0,
@@ -143,11 +146,15 @@ export const useGameState = create<GameState>()(
         currentBossMaxHealth: 0,
         bossName: "",
         bossDescription: "",
-        currency: 0,
-        totalKills: 0,
-        bossesDefeated: 0,
+        currency: persistentData.currency, // Preserve currency from persistence
+        totalKills: 0, // Session-only, reset each run
+        bossesDefeated: 0, // Session-only, reset each run
         showBossWarning: false,
-        isPaused: false
+        isPaused: false,
+        comboCount: 0,
+        comboMultiplier: 1,
+        maxCombo: 0,
+        comboTimeRemaining: 0
       }));
     },
 
@@ -342,13 +349,19 @@ export const useGameState = create<GameState>()(
     },
 
     addCurrency: (amount: number) => {
+      const { PersistentProgressionSystem } = require('../game/systems/PersistentProgressionSystem');
+      PersistentProgressionSystem.addCurrency(amount);
       set((state) => ({ currency: state.currency + amount }));
     },
 
     spendCurrency: (amount: number) => {
-      set((state) => ({ 
-        currency: Math.max(0, state.currency - amount) 
-      }));
+      const { PersistentProgressionSystem } = require('../game/systems/PersistentProgressionSystem');
+      const success = PersistentProgressionSystem.spendCurrency(amount);
+      if (success) {
+        set((state) => ({ 
+          currency: Math.max(0, state.currency - amount) 
+        }));
+      }
     },
 
     addKill: () => {
