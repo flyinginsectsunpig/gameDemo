@@ -199,6 +199,10 @@ export class InfiniteTileRenderer {
     const posVariation = ((worldX * 13 + worldY * 17) % 1000) / 1000.0;
     const finalNoise = terrainNoise + (posVariation - 0.5) * 0.3;
 
+    // Additional noise layers for paths and stone
+    const pathNoise = Math.sin(worldX * 0.03 + 300) * Math.cos(worldY * 0.03 + 300);
+    const stoneNoise = Math.sin(worldX * 0.08 + 400) * Math.cos(worldY * 0.08 + 400);
+
     // Generate varied terrain with multiple tile types
     if (pathNoise > 0.75) {
       // Stone paths and rocky areas
