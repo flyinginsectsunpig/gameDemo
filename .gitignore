@@ -1,1 +1,22 @@
-node_modules
+# Node / Vite
+node_modules/
+dist/
+build/
+.vite/
+*.log
+*.tsbuildinfo
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Replit
+.replit
+replit.nix
+.local/
+
+# Env files
+.env
+.env.*
