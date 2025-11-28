@@ -12,6 +12,14 @@ interface GameState {
   end: () => void;
 }
 
+interface GameStore {
+  engine: GameEngine | null;
+  setEngine: (engine: GameEngine | null) => void;
+  player: { x: number; y: number } | null;
+  enemies: Array<{ x: number; y: number; isBoss?: boolean }>;
+  updateGameData: () => void;
+}
+
 export const useGame = create<GameState>()(
   subscribeWithSelector((set) => ({
     phase: "ready",
@@ -41,3 +49,23 @@ export const useGame = create<GameState>()(
     }
   }))
 );
+
+export const useGameStore = create<GameStore>((set, get) => ({
+  engine: null,
+  setEngine: (engine) => set({ engine }),
+  player: null,
+  enemies: [],
+  updateGameData: () => {
+    const { engine } = get();
+    if (engine) {
+      const player = engine.getPlayer();
+      const enemies = engine.getEnemies();
+      set({
+        player: player ? { x: player.x, y: player.y } : null,
+        enemies: enemies || []
+      });
+    } else {
+      set({ player: null, enemies: [] });
+    }
+  },
+}));

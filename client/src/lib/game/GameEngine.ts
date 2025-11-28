@@ -244,6 +244,7 @@ export class GameEngine {
 
   private update(deltaTime: number) {
     const gameState = useGameState.getState();
+    const audioState = useAudio.getState();
     const input = this.inputManager.getInput();
 
     // Handle pause

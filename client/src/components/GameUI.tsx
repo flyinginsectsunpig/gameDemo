@@ -15,6 +15,7 @@ interface GameUIProps {
 export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSettings }: GameUIProps = {}) {
   const { phase, score, health, wave, maxHealth, experience, experienceToNext, level, selectedCharacter, isBossActive, showBossWarning, comboCount, comboMultiplier, currency, totalKills } = useGameState();
   const { isMuted, toggleMute } = useAudio();
+  const { player, enemies } = useGame(); // Added to get player and enemies for minimap
 
   if (phase === "ready") {
     return (
@@ -22,29 +23,29 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
         <div className="gothic-vignette" />
         <div className="text-center max-w-3xl px-8 relative z-10">
           <div className="gothic-divider mb-8 w-full" />
-          
+
           <h1 className="gothic-title text-6xl md:text-7xl font-bold mb-2" style={{ color: '#c9a23f' }}>
             VAMPIRE
           </h1>
           <h1 className="gothic-title text-5xl md:text-6xl font-bold mb-6" style={{ color: '#8b2635' }}>
             SURVIVORS
           </h1>
-          
+
           <p className="text-xl mb-8 italic" style={{ color: '#d9d1c5', fontFamily: 'Crimson Text, serif' }}>
             Survive the endless waves of darkness...
           </p>
-          
+
           <div className="gothic-divider mb-8 w-full" />
-          
+
           <div className="gothic-panel rounded-lg p-6 mb-8">
             <div className="space-y-3 text-base" style={{ color: '#d9d1c5' }}>
               <p><span style={{ color: '#c9a23f' }}>WASD</span> or <span style={{ color: '#c9a23f' }}>Arrow Keys</span> to move</p>
               <p style={{ color: '#8b8b8b' }}>Weapons fire automatically</p>
               <p><span style={{ color: '#c9a23f' }}>M</span> Toggle sound | <span style={{ color: '#c9a23f' }}>ESC</span> Pause | <span style={{ color: '#c9a23f' }}>R</span> Restart</p>
             </div>
-            
+
             <div className="gothic-divider my-6" />
-            
+
             <div className="space-y-2">
               <p style={{ color: '#7cb87c' }}>
                 <span className="font-bold">Sylph Guardian</span> — Nature magic with flower turrets
@@ -94,7 +95,7 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
           <p className="text-sm animate-pulse" style={{ color: '#5c1f2a' }}>
             Press any key or click to begin your journey...
           </p>
-          
+
           <div className="gothic-divider mt-8 w-full" />
         </div>
       </div>
@@ -188,7 +189,11 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
             <div className="text-xs mt-1" style={{ color: '#8b8b8b' }}>Defeat the boss to proceed!</div>
           </div>
         )}
-        <Minimap playerX={0} playerY={0} enemies={[]} />
+        <Minimap
+          playerX={player?.x || 0}
+          playerY={player?.y || 0}
+          enemies={enemies || []}
+        />
       </div>
     </div>
   );
