@@ -4,7 +4,7 @@
 
 A TypeScript-based survivor-style game built with React, Canvas API, and Express. Fight against endless waves of enemies using the mystical Sylph Blooms weapon system that spawns magical flower turrets.
 
-**Last Updated**: November 28, 2024
+**Last Updated**: December 1, 2024
 
 ## Current State
 
@@ -125,9 +125,25 @@ Configured for Replit Autoscale deployment:
 
 - None documented yet
 
-## Recent Changes (November 28, 2024)
+## Recent Changes
 
-### Session 2 - Gameplay Fixes
+### December 1, 2024 - Navigation & Statistics Persistence Fixes
+
+#### Navigation Fix
+1. Implemented modal source tracking system ("mainMenu", "pauseMenu", "gameplay") to track where modals were opened from
+2. Fixed issue where closing shop/statistics from main menu incorrectly showed character select screen
+3. Modals now render before phase checks to ensure proper display and navigation
+4. Main menu buttons use event propagation prevention to avoid triggering game start
+
+#### Statistics Persistence System
+1. Added session snapshot system to persist gameplay stats mid-run
+2. Session data saved every 30 seconds and on pause to localStorage
+3. Implemented crash recovery: orphaned sessions are recovered on app reload
+4. `mergeOrphanedSession()` correctly adds cumulative stats without inflating run/death counts
+5. End-of-run recording uses `recordRun()` for proper run/death counting
+6. High-water marks (highest wave, level, score, combo) updated during autosave
+
+### November 28, 2024 - Gameplay Fixes
 1. Fixed main menu button navigation - buttons now work without triggering character select
 2. Added ESC key pause functionality with proper overlay handling
 3. Relocated minimap from bottom-right to top-right corner
@@ -135,7 +151,7 @@ Configured for Replit Autoscale deployment:
 5. Fixed duplicate ComboSystem import and type issues in GameEngine
 6. Added ESC key handlers to all overlays (Settings, Statistics, UpgradeShop, PauseMenu)
 
-### Session 1 - Initial Setup
+### November 28, 2024 - Initial Setup
 1. Installed npm dependencies
 2. Added missing `nanoid` package to package.json
 3. Configured workflow for development server (port 5000, webview)
