@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { StatisticsSystem } from "../lib/game/systems/StatisticsSystem";
+import { useGameState } from "../lib/stores/useGameState";
 
 interface StatisticsScreenProps {
   onClose: () => void;
@@ -8,18 +9,33 @@ interface StatisticsScreenProps {
 
 export default function StatisticsScreen({ onClose }: StatisticsScreenProps) {
   const [stats, setStats] = useState(StatisticsSystem.load());
+  const gameState = useGameState();
 
   useEffect(() => {
     // Reload statistics when component mounts and set up interval to refresh
     const refreshStats = () => {
-      setStats(StatisticsSystem.load());
+      const savedStats = StatisticsSystem.load();
+      
+      // If we're in an active game (phase is 'playing'), add current run stats
+      if (gameState.phase === 'playing') {
+        setStats({
+          ...savedStats,
+          totalKills: savedStats.totalKills + gameState.totalKills,
+          bossesDefeated: savedStats.bossesDefeated + gameState.bossesDefeated,
+          highestWave: Math.max(savedStats.highestWave, gameState.wave),
+          highestLevel: Math.max(savedStats.highestLevel, gameState.level),
+          highestScore: Math.max(savedStats.highestScore, gameState.score),
+        });
+      } else {
+        setStats(savedStats);
+      }
     };
     
     refreshStats();
     const interval = setInterval(refreshStats, 100);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [gameState.phase, gameState.totalKills, gameState.bossesDefeated, gameState.wave, gameState.level, gameState.score]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
