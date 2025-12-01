@@ -70,6 +70,8 @@ export class GameEngine {
   private totalDamageDealt: number = 0;
   private totalDamageTaken: number = 0;
   private screenShake: ScreenShakeSystem;
+  private lastStatsSaveTime: number = 0;
+  private readonly STATS_SAVE_INTERVAL: number = 30000;
 
   constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.gameStartTime = Date.now();
@@ -125,7 +127,14 @@ export class GameEngine {
   }
 
   private setupInput() {
-    const handleStart = () => {
+    const handleStart = (e: Event) => {
+      if (e instanceof MouseEvent) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "BUTTON" || target.closest("button")) {
+          return;
+        }
+      }
+      
       const gameState = useGameState.getState();
       if (gameState.phase === "ready") {
         gameState.start();
@@ -266,6 +275,7 @@ export class GameEngine {
     // Handle pause
     if (input.pause && !this.lastPauseState) {
       if (gameState.phase === "playing") {
+        this.saveCurrentSessionStats();
         gameState.pause();
       } else if (gameState.phase === "paused") {
         gameState.resume();
@@ -276,6 +286,12 @@ export class GameEngine {
     // Don't update game if paused or game over
     if (gameState.phase === "paused" || gameState.phase === "gameOver") {
       return;
+    }
+    
+    // Periodically save session stats during gameplay
+    const now = Date.now();
+    if (now - this.lastStatsSaveTime >= this.STATS_SAVE_INTERVAL) {
+      this.saveCurrentSessionStats();
     }
 
     // Check for player death
@@ -529,7 +545,7 @@ export class GameEngine {
     const statsBefore = StatisticsSystem.load();
     console.log('Statistics BEFORE recording - Total Kills:', statsBefore.totalKills, 'Total Runs:', statsBefore.totalRuns);
     
-    // Save to StatisticsSystem
+    // Save to StatisticsSystem with full session totals
     StatisticsSystem.recordRun({
       characterId,
       kills: gameState.totalKills,
@@ -567,6 +583,9 @@ export class GameEngine {
     
     console.log('Progression saved - Currency:', savedProgression.currency, 'Total Kills:', savedProgression.totalKills);
     
+    // Clear the session snapshot since the run has been properly recorded
+    StatisticsSystem.clearSessionSnapshot();
+    
     // Force a final verification that stats were saved
     const finalStats = StatisticsSystem.load();
     console.log('Final stats verification - Total Kills:', finalStats.totalKills, 'Total Runs:', finalStats.totalRuns);
@@ -580,6 +599,78 @@ export class GameEngine {
     setTimeout(() => {
       gameState.end();
     }, 50);
+  }
+
+  private saveCurrentSessionStats() {
+    const gameState = useGameState.getState();
+    
+    if (gameState.phase !== "playing" && gameState.phase !== "paused") {
+      return;
+    }
+    
+    const playTime = Math.floor((Date.now() - this.gameStartTime) / 1000);
+    const characterId = gameState.selectedCharacter?.id || "guardian";
+    
+    // Save complete session snapshot (this gets merged at end of run or recovered on crash)
+    StatisticsSystem.saveSessionSnapshot({
+      characterId,
+      kills: gameState.totalKills,
+      wave: gameState.wave,
+      level: gameState.level,
+      score: gameState.score,
+      playTime,
+      damageTaken: this.totalDamageTaken,
+      damageDealt: this.totalDamageDealt,
+      experienceGained: gameState.experience,
+      maxCombo: gameState.maxCombo,
+      bossesDefeated: gameState.bossesDefeated,
+      startTime: this.gameStartTime
+    });
+    
+    // Also update high-water marks in main stats (these don't accumulate)
+    const currentStats = StatisticsSystem.load();
+    let needsSave = false;
+    
+    if (gameState.wave > currentStats.highestWave) {
+      currentStats.highestWave = gameState.wave;
+      needsSave = true;
+    }
+    if (gameState.level > currentStats.highestLevel) {
+      currentStats.highestLevel = gameState.level;
+      needsSave = true;
+    }
+    if (gameState.score > currentStats.highestScore) {
+      currentStats.highestScore = gameState.score;
+      needsSave = true;
+    }
+    if (gameState.maxCombo > currentStats.longestCombo) {
+      currentStats.longestCombo = gameState.maxCombo;
+      needsSave = true;
+    }
+    
+    if (needsSave) {
+      StatisticsSystem.save(currentStats);
+    }
+    
+    // Also update persistent progression high-water marks
+    const persistentData = PersistentProgressionSystem.load();
+    let needsPersistentSave = false;
+    
+    if (gameState.wave > persistentData.statistics.maxWave) {
+      persistentData.statistics.maxWave = gameState.wave;
+      needsPersistentSave = true;
+    }
+    if (gameState.maxCombo > persistentData.statistics.maxCombo) {
+      persistentData.statistics.maxCombo = gameState.maxCombo;
+      needsPersistentSave = true;
+    }
+    
+    if (needsPersistentSave) {
+      PersistentProgressionSystem.save(persistentData);
+    }
+    
+    this.lastStatsSaveTime = Date.now();
+    console.log('[GameEngine] Session snapshot saved - Kills:', gameState.totalKills, 'Wave:', gameState.wave);
   }
 
   private createCelebrationParticles() {

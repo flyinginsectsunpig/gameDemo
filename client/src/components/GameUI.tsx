@@ -69,7 +69,7 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             {onShowUpgradeShop && (
               <button
-                onClick={(e) => { e.stopPropagation(); onShowUpgradeShop(); }}
+                onClick={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); e.preventDefault(); onShowUpgradeShop(); }}
                 className="gothic-button gothic-button-primary px-6 py-3 rounded-lg text-sm"
               >
                 Upgrade Shop
@@ -77,7 +77,7 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
             )}
             {onShowStatistics && (
               <button
-                onClick={(e) => { e.stopPropagation(); onShowStatistics(); }}
+                onClick={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); e.preventDefault(); onShowStatistics(); }}
                 className="gothic-button px-6 py-3 rounded-lg text-sm"
               >
                 Statistics
@@ -85,7 +85,7 @@ export default function GameUI({ onShowUpgradeShop, onShowStatistics, onShowSett
             )}
             {onShowSettings && (
               <button
-                onClick={(e) => { e.stopPropagation(); onShowSettings(); }}
+                onClick={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); e.preventDefault(); onShowSettings(); }}
                 className="gothic-button px-6 py-3 rounded-lg text-sm"
               >
                 Settings

@@ -24,8 +24,24 @@ export interface GameStatistics {
   };
 }
 
+export interface SessionSnapshot {
+  characterId: string;
+  kills: number;
+  wave: number;
+  level: number;
+  score: number;
+  playTime: number;
+  damageTaken: number;
+  damageDealt: number;
+  experienceGained: number;
+  maxCombo: number;
+  bossesDefeated: number;
+  startTime: number;
+}
+
 export class StatisticsSystem {
   private static STORAGE_KEY = "vampire_survivors_statistics";
+  private static SESSION_KEY = "vampire_survivors_session";
 
   static load(): GameStatistics {
     const saved = localStorage.getItem(this.STORAGE_KEY);
@@ -129,5 +145,73 @@ export class StatisticsSystem {
 
   static reset(): void {
     this.save(this.getDefaultStats());
+  }
+
+  // Session snapshot methods for mid-run persistence
+  static saveSessionSnapshot(snapshot: SessionSnapshot): void {
+    localStorage.setItem(this.SESSION_KEY, JSON.stringify(snapshot));
+    console.log('[StatisticsSystem] Session snapshot saved - Kills:', snapshot.kills, 'Wave:', snapshot.wave);
+  }
+
+  static loadSessionSnapshot(): SessionSnapshot | null {
+    const saved = localStorage.getItem(this.SESSION_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return null;
+  }
+
+  static clearSessionSnapshot(): void {
+    localStorage.removeItem(this.SESSION_KEY);
+    console.log('[StatisticsSystem] Session snapshot cleared');
+  }
+
+  static mergeOrphanedSession(): void {
+    const snapshot = this.loadSessionSnapshot();
+    if (snapshot) {
+      console.log('[StatisticsSystem] Merging orphaned session snapshot - Kills:', snapshot.kills);
+      const stats = this.load();
+      
+      stats.totalKills += snapshot.kills;
+      stats.bossesDefeated += snapshot.bossesDefeated;
+      stats.totalPlayTime += snapshot.playTime;
+      stats.totalDamageTaken += snapshot.damageTaken;
+      stats.totalDamageDealt += snapshot.damageDealt;
+      stats.totalExperienceGained += snapshot.experienceGained;
+
+      if (snapshot.wave > stats.highestWave) stats.highestWave = snapshot.wave;
+      if (snapshot.level > stats.highestLevel) stats.highestLevel = snapshot.level;
+      if (snapshot.score > stats.highestScore) stats.highestScore = snapshot.score;
+      if (snapshot.maxCombo > stats.longestCombo) stats.longestCombo = snapshot.maxCombo;
+
+      if (!stats.characterStats[snapshot.characterId]) {
+        stats.characterStats[snapshot.characterId] = {
+          runs: 0,
+          kills: 0,
+          highestWave: 0,
+          totalPlayTime: 0
+        };
+      }
+
+      const charStats = stats.characterStats[snapshot.characterId];
+      charStats.kills += snapshot.kills;
+      charStats.totalPlayTime += snapshot.playTime;
+      if (snapshot.wave > charStats.highestWave) charStats.highestWave = snapshot.wave;
+
+      this.save(stats);
+      this.clearSessionSnapshot();
+      
+      console.log('[StatisticsSystem] Orphaned session merged - New total kills:', stats.totalKills);
+    }
+  }
+
+  static recoverOrphanedSession(): boolean {
+    const snapshot = this.loadSessionSnapshot();
+    if (snapshot) {
+      console.log('[StatisticsSystem] Found orphaned session, recovering - Kills:', snapshot.kills);
+      this.mergeOrphanedSession();
+      return true;
+    }
+    return false;
   }
 }

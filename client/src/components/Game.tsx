@@ -14,6 +14,9 @@ import StatisticsScreen from "./StatisticsScreen";
 import LevelUpEffect from "./LevelUpEffect";
 import UpgradeShop from "./UpgradeShop";
 import DebugTestingScreen from "./DebugTestingScreen";
+import { StatisticsSystem } from "../lib/game/systems/StatisticsSystem";
+
+type ModalSource = "mainMenu" | "pauseMenu" | "gameplay" | null;
 
 export default function Game() {
   const { phase, restart, resumeFromLevelUp, selectCharacter, resume } = useGameState();
@@ -25,6 +28,15 @@ export default function Game() {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showUpgradeShop, setShowUpgradeShop] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
+  const [modalSource, setModalSource] = useState<ModalSource>(null);
+
+  // Recover any orphaned session from a previous crash/refresh
+  useEffect(() => {
+    const recovered = StatisticsSystem.recoverOrphanedSession();
+    if (recovered) {
+      console.log('[Game] Recovered orphaned session from previous run');
+    }
+  }, []);
 
   useEffect(() => {
     const initAudio = async () => {
@@ -42,7 +54,19 @@ export default function Game() {
     const handleDebugKey = (e: KeyboardEvent) => {
       if (e.key === "`" || e.key === "~") {
         e.preventDefault();
-        setShowDebug(prev => !prev);
+        const gameState = useGameState.getState();
+        setShowDebug(prev => {
+          if (!prev) {
+            if (gameState.phase === "ready") {
+              setModalSource("mainMenu");
+            } else if (gameState.phase === "paused") {
+              setModalSource("pauseMenu");
+            } else if (gameState.phase === "playing") {
+              setModalSource("gameplay");
+            }
+          }
+          return !prev;
+        });
       }
     };
 
@@ -67,6 +91,53 @@ export default function Game() {
   const handleCharacterSelect = (character: CharacterType) => {
     selectCharacter(character);
   };
+
+  const handleCloseModal = () => {
+    setShowStatistics(false);
+    setShowUpgradeShop(false);
+    setShowSettings(false);
+    setShowDebug(false);
+    setModalSource(null);
+  };
+
+  const openFromMainMenu = (modalType: "statistics" | "shop" | "settings" | "debug") => {
+    setModalSource("mainMenu");
+    if (modalType === "statistics") setShowStatistics(true);
+    if (modalType === "shop") setShowUpgradeShop(true);
+    if (modalType === "settings") setShowSettings(true);
+    if (modalType === "debug") setShowDebug(true);
+  };
+
+  const openFromPauseMenu = (modalType: "statistics" | "shop" | "settings") => {
+    setModalSource("pauseMenu");
+    if (modalType === "statistics") setShowStatistics(true);
+    if (modalType === "shop") setShowUpgradeShop(true);
+    if (modalType === "settings") setShowSettings(true);
+  };
+
+  if (showStatistics) {
+    return (
+      <StatisticsScreen onClose={handleCloseModal} />
+    );
+  }
+
+  if (showUpgradeShop) {
+    return (
+      <UpgradeShop onClose={handleCloseModal} />
+    );
+  }
+
+  if (showDebug) {
+    return (
+      <DebugTestingScreen onClose={handleCloseModal} />
+    );
+  }
+
+  if (showSettings) {
+    return (
+      <SettingsMenu onClose={handleCloseModal} />
+    );
+  }
 
   if (phase === "gameOver" || phase === "ended") {
     return (
@@ -96,45 +167,23 @@ export default function Game() {
     );
   }
 
-  if (showStatistics) {
-    return (
-      <StatisticsScreen onClose={() => setShowStatistics(false)} />
-    );
-  }
-
-  if (showUpgradeShop) {
-    return (
-      <UpgradeShop onClose={() => setShowUpgradeShop(false)} />
-    );
-  }
-
-  if (showDebug) {
-    return (
-      <DebugTestingScreen onClose={() => setShowDebug(false)} />
-    );
-  }
-
   return (
     <div className="relative w-full h-full flex flex-col bg-gray-900 text-white overflow-hidden">
       <GameCanvas onEngineReady={setEngine} />
       <GameUI 
-        onShowUpgradeShop={() => setShowUpgradeShop(true)}
-        onShowStatistics={() => setShowStatistics(true)}
-        onShowSettings={() => setShowSettings(true)}
-        onShowDebug={() => setShowDebug(true)}
+        onShowUpgradeShop={() => openFromMainMenu("shop")}
+        onShowStatistics={() => openFromMainMenu("statistics")}
+        onShowSettings={() => openFromMainMenu("settings")}
+        onShowDebug={() => openFromMainMenu("debug")}
       />
       <LevelUpEffect />
 
-      {phase === "paused" && !showSettings && (
+      {phase === "paused" && (
         <PauseMenu
-          onShowSettings={() => setShowSettings(true)}
-          onShowStatistics={() => setShowStatistics(true)}
-          onShowUpgradeShop={() => setShowUpgradeShop(true)}
+          onShowSettings={() => openFromPauseMenu("settings")}
+          onShowStatistics={() => openFromPauseMenu("statistics")}
+          onShowUpgradeShop={() => openFromPauseMenu("shop")}
         />
-      )}
-
-      {showSettings && (
-        <SettingsMenu onClose={() => setShowSettings(false)} />
       )}
     </div>
   );
