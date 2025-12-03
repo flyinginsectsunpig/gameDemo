@@ -93,32 +93,12 @@ export class AssassinPlayer extends Player {
 
   public setTileRenderer(tileRenderer: any): void {
     this.tileRenderer = tileRenderer;
-    // Register existing spiders with tile renderer
-    this.spiderManager.getSpiders().forEach(spider => {
-      this.tileRenderer.addSpider({
-        x: spider.x,
-        y: spider.y,
-        instanceId: spider.instanceId,
-        currentAnimation: spider.currentAnimation,
-        lastDirection: spider.lastDirection
-      });
-    });
+    // Don't register spiders with tile renderer - they will be rendered directly
   }
 
   public updateSpiders(deltaTime: number, enemies: IEnemy[], playerPos: { x: number; y: number }): void {
     this.spiderManager.update(deltaTime, enemies, { x: this.x, y: this.y });
-
-    if (this.tileRenderer) {
-      this.spiderManager.getSpiders().forEach(spider => {
-        this.tileRenderer.updateSpider(
-          spider.instanceId,
-          spider.x,
-          spider.y,
-          spider.currentAnimation,
-          spider.lastDirection
-        );
-      });
-    }
+    // Don't update tile renderer - spiders are rendered directly via renderSpiders()
   }
 
   public renderSpiders(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0): void {

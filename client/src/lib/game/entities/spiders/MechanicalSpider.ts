@@ -251,6 +251,73 @@ export class MechanicalSpider implements ISpider {
   }
 
   public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
-    return;
+    const spriteManager = require("../../rendering/SpriteManager").SpriteManager.getInstance();
+    
+    // Update animation
+    const validDeltaTime = typeof deltaTime === 'number' && !isNaN(deltaTime) ? deltaTime : 0.016;
+    const frame = this.animationManager.update(validDeltaTime, this.instanceId, this.currentAnimation);
+    
+    if (frame) {
+      this.lastAnimationFrame = frame;
+    }
+
+    // Get sprite based on current animation
+    let spriteName = "spider_down";
+    if (this.currentAnimation === "spider_jumping") {
+      spriteName = "spider_jumping";
+    } else if (Math.abs(this.lastDirection.y) > Math.abs(this.lastDirection.x)) {
+      spriteName = this.lastDirection.y < 0 ? "spider_up" : "spider_down";
+    } else if (Math.abs(this.lastDirection.y) > 0) {
+      spriteName = this.lastDirection.y < 0 ? "spider_diagonal_up" : "spider_diagonal_down";
+    } else {
+      spriteName = "spider_side";
+    }
+
+    const sprite = spriteManager.getSprite(spriteName);
+    if (!sprite) return;
+
+    const screenX = this.x - cameraX;
+    const screenY = this.y - cameraY;
+    
+    const aspectRatio = sprite.width / sprite.height;
+    const drawHeight = this.height;
+    const drawWidth = drawHeight * aspectRatio;
+    const drawX = screenX - drawWidth / 2;
+    const drawY = screenY - drawHeight / 2;
+
+    ctx.save();
+    
+    // Flip sprite if moving left
+    if (this.lastDirection.x < 0) {
+      ctx.translate(screenX, screenY);
+      ctx.scale(-1, 1);
+      ctx.translate(-screenX, -screenY);
+    }
+
+    try {
+      if (frame && sprite) {
+        ctx.drawImage(
+          sprite,
+          frame.x, frame.y,
+          frame.width, frame.height,
+          drawX, drawY,
+          drawWidth, drawHeight
+        );
+      } else if (sprite) {
+        ctx.drawImage(
+          sprite,
+          0, 0,
+          sprite.width, sprite.height,
+          drawX, drawY,
+          drawWidth, drawHeight
+        );
+      }
+    } catch (error) {
+      // Fallback rendering
+      ctx.fillStyle = this.attachedToEnemy ? "#ff4444" : "#4444ff";
+      ctx.fillRect(screenX - this.width / 2, screenY - this.height / 2, this.width, this.height);
+    }
+
+    ctx.restore();
   }
 }

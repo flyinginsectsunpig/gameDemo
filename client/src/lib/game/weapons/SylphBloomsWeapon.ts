@@ -14,6 +14,7 @@ export class SylphBloomsWeapon {
   private maxFlowers: number = 4; // Maximum flowers on field
   private flowerLifespan: number = 15000; // 15 seconds lifespan
   private tileRenderer: InfiniteTileRenderer | null = null;
+  private fireTimer: number = 0; // Timer for flower spawning
 
   constructor() {
     this.fireRate = 2;
@@ -43,16 +44,20 @@ export class SylphBloomsWeapon {
   ): void {
     if (!this.tileRenderer) return;
 
-    const now = Date.now();
+    // Don't spawn flowers when game is paused
+    const { useGameState } = require("../../stores/useGameState");
+    const gameState = useGameState.getState();
+    if (gameState.phase !== "playing") return;
+
 
     // Spawn new flowers periodically
     const currentFlowers = this.tileRenderer.getAllFlowers();
     if (
-      now - this.lastFlowerSpawn >= this.flowerSpawnInterval &&
+      Date.now() - this.lastFlowerSpawn >= this.flowerSpawnInterval &&
       currentFlowers.length < this.maxFlowers
     ) {
       this.spawnFlowerTurret(playerX, playerY);
-      this.lastFlowerSpawn = now;
+      this.lastFlowerSpawn = Date.now();
     }
 
     // Update flowers through tile renderer
