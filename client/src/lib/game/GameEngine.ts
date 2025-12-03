@@ -87,6 +87,9 @@ export class GameEngine {
     this.setupBossCallbacks();
     this.setupInput();
     this.initializeSprites();
+    
+    // Setup player with selected character
+    this.entityManager.setupPlayer();
   }
 
   private setupBossCallbacks() {
