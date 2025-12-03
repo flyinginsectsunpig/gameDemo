@@ -1,4 +1,3 @@
-
 import { Player } from '../entities/characters/Player';
 import { AssassinPlayer } from '../entities/characters/AssassinPlayer';
 import { IEnemy } from '../core/interfaces/IEnemy';
@@ -15,6 +14,8 @@ import { DamageNumberManager } from '../rendering/DamageNumber';
 import { PassiveItemManager } from '../entities/collectibles/PassiveItem';
 import { InfiniteTileRenderer } from '../rendering/InfiniteTileRenderer';
 import { useGameState } from '../../stores/useGameState';
+import { PlayerType } from '../../types/PlayerType';
+import { PlayerFactory } from '../factories/PlayerFactory';
 
 export class EntityManager {
   private player: Player | AssassinPlayer;
@@ -25,12 +26,14 @@ export class EntityManager {
   private experienceOrbs: ExperienceOrb[] = [];
   private bossLoot: BossLoot[] = [];
   private currentBoss: BossEnemy | null = null;
-  
+
   private damageNumbers: DamageNumberManager;
   private passiveItems: PassiveItemManager;
   private tileRenderer: InfiniteTileRenderer;
+  private canvas: HTMLCanvasElement; // Added canvas property
 
   constructor(canvas: HTMLCanvasElement, tileRenderer: InfiniteTileRenderer) {
+    this.canvas = canvas; // Initialize canvas property
     this.tileRenderer = tileRenderer;
     this.player = new Player(canvas.width / 2, canvas.height / 2);
     this.damageNumbers = new DamageNumberManager();
@@ -47,24 +50,32 @@ export class EntityManager {
     this.currentBoss = null;
   }
 
-  public setupPlayer() {
+  public setupPlayer(characterType?: PlayerType) {
     const gameState = useGameState.getState();
-    const character = gameState.selectedCharacter;
-    const centerX = this.player.x;
-    const centerY = this.player.y;
+    // Extract the ID if it's a character object, otherwise use the string directly
+    let selectedChar: PlayerType = 'sylph';
 
-    if (character?.id === "assassin") {
-      this.player = new AssassinPlayer(centerX, centerY);
-    } else {
-      this.player = new Player(centerX, centerY);
+    if (characterType) {
+      selectedChar = characterType as PlayerType;
+    } else if (gameState.selectedCharacter) {
+      // Handle both object with id property and direct string
+      selectedChar = (typeof gameState.selectedCharacter === 'object'
+        ? gameState.selectedCharacter.id
+        : gameState.selectedCharacter) as PlayerType;
     }
+
+    this.player = PlayerFactory.createPlayer(
+      selectedChar,
+      this.canvas.width / 2,
+      this.canvas.height / 2
+    );
   }
 
   public update(deltaTime: number, playerPos: { x: number; y: number }) {
     // Update enemies
     this.enemies.forEach(enemy => {
       enemy.update(deltaTime, playerPos);
-      
+
       if (enemy instanceof RangedEnemy) {
         const newProjectiles = enemy.getProjectiles();
         this.enemyProjectiles.push(...newProjectiles);
@@ -122,7 +133,7 @@ export class EntityManager {
     if (!this.currentBoss) return;
 
     gameState.updateBossHealth(this.currentBoss.getHealth(), this.currentBoss.getMaxHealth());
-    
+
     const minionSpawns = this.currentBoss.getMinionSpawnQueue();
     minionSpawns.forEach(spawn => {
       const minion = new Enemy(spawn.x, spawn.y, "basic");
@@ -132,14 +143,14 @@ export class EntityManager {
 
   private handleSplittingEnemies() {
     const newSplitEnemies: SplittingEnemy[] = [];
-    
+
     this.enemies.forEach(enemy => {
       if (enemy instanceof SplittingEnemy && !enemy.isAlive()) {
         const spawns = enemy.getSpawnQueue();
         newSplitEnemies.push(...spawns);
       }
     });
-    
+
     newSplitEnemies.forEach(splitEnemy => {
       this.enemies.push(splitEnemy as unknown as IEnemy);
       this.createSplitParticles(splitEnemy.x, splitEnemy.y);
