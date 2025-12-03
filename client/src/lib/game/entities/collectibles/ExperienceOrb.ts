@@ -12,6 +12,7 @@ export class ExperienceOrb implements ICollectible {
   private collectRadius = 20;
   private attracted = false;
   private pulseTime = 0;
+  private collected = false;
 
   constructor(x: number, y: number, value: number = 5) {
     this.x = x;
@@ -42,14 +43,19 @@ export class ExperienceOrb implements ICollectible {
   }
 
   public isExpired(): boolean {
-    return this.lifetime <= 0;
+    return this.lifetime <= 0 || this.collected;
   }
 
   public canBeCollected(playerPos: { x: number; y: number }): boolean {
+    if (this.collected) return false;
     const dx = playerPos.x - this.x;
     const dy = playerPos.y - this.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     return distance <= this.collectRadius;
+  }
+
+  public collect(): void {
+    this.collected = true;
   }
 
   public getValue(): number {

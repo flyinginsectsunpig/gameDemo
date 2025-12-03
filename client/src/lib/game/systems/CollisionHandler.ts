@@ -182,6 +182,7 @@ export class CollisionHandler {
     orbs.forEach((orb, index) => {
       if (orb.canBeCollected(player.getPosition())) {
         gameState.addExperience(orb.getValue());
+        orb.collect();
 
         if (!audioState.isMuted) {
           audioState.playSuccess();
