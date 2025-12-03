@@ -78,9 +78,10 @@ export class GameEngine {
 
     // Initialize delegated systems
     this.entityManager = new EntityManager(canvas, this.infiniteTileRenderer);
-    this.gameStateManager = new GameStateManager(this.entityManager, this.waveManager, this.inputManager, this.resetGame.bind(this));
+    this.gameStateManager = new GameStateManager();
     this.collisionHandler = new CollisionHandler(this.entityManager, this.gameStateManager);
-    this.renderSystem = new RenderSystem(ctx, this.camera, this.infiniteTileRenderer, this.entityManager, this.screenShake); // Assuming ScreenShakeSystem will be managed by RenderSystem or passed here
+    this.renderSystem = new RenderSystem(ctx, this.camera, this.infiniteTileRenderer, this.entityManager);
+    this.renderSystem.setGameStateManager(this.gameStateManager);
     this.gameLoop = new GameLoopController(this.update.bind(this), this.render.bind(this));
 
     this.setupBossCallbacks();
@@ -104,7 +105,7 @@ export class GameEngine {
   private setupInput() {
     this.inputManager.addEventListeners();
     // GameStateManager now handles its own input setup for pause, restart, etc.
-    this.gameStateManager.setupInputHandlers(this.inputManager, this.resetGame.bind(this));
+    this.gameStateManager.setupInputHandlers(this.inputManager, () => this.resetGame());
   }
 
   private resetGame() {

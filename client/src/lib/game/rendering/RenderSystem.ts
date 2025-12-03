@@ -2,6 +2,7 @@
 import { CameraSystem } from './CameraSystem';
 import { InfiniteTileRenderer } from './InfiniteTileRenderer';
 import { EntityManager } from '../managers/EntityManager';
+import { GameStateManager } from '../systems/GameStateManager';
 import { SylphBloomsWeapon } from '../weapons/SylphBloomsWeapon';
 import { AssassinPlayer } from '../entities/characters/AssassinPlayer';
 import { useGameState } from '../../stores/useGameState';
@@ -11,6 +12,7 @@ export class RenderSystem {
   private camera: CameraSystem;
   private tileRenderer: InfiniteTileRenderer;
   private entityManager: EntityManager;
+  private gameStateManager: GameStateManager | null = null;
 
   constructor(
     ctx: CanvasRenderingContext2D,
@@ -22,6 +24,10 @@ export class RenderSystem {
     this.camera = camera;
     this.tileRenderer = tileRenderer;
     this.entityManager = entityManager;
+  }
+
+  public setGameStateManager(gameStateManager: GameStateManager) {
+    this.gameStateManager = gameStateManager;
   }
 
   public render(deltaTime: number) {
@@ -42,7 +48,7 @@ export class RenderSystem {
     if (gameState.phase !== "playing") return;
 
     this.ctx.save();
-    const shakeOffset = this.entityManager.getGameStateManager?.()?.getScreenShake().getOffset() || { x: 0, y: 0 };
+    const shakeOffset = this.gameStateManager?.getScreenShake().getOffset() || { x: 0, y: 0 };
     this.ctx.translate(-this.camera.x + shakeOffset.x, -this.camera.y + shakeOffset.y);
 
     // Render particles
