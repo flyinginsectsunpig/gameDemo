@@ -135,7 +135,8 @@ export class GameEngine {
     const gameState = useGameState.getState(); // Still needed for some read operations
 
     // Handle pause/resume
-    if (this.gameStateManager.handlePauseInput()) {
+    const input = this.inputManager.getInput();
+    if (this.gameStateManager.handlePauseInput(input)) {
       // Player input for pause is handled internally by GameStateManager now.
       // If it returns true, it means pause state changed, so we might want to stop updates.
       if (gameState.phase === "paused" || gameState.phase === "gameOver") {
