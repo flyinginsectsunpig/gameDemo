@@ -1,4 +1,3 @@
-
 import { CameraSystem } from './CameraSystem';
 import { InfiniteTileRenderer } from './InfiniteTileRenderer';
 import { EntityManager } from '../managers/EntityManager';
@@ -32,7 +31,7 @@ export class RenderSystem {
 
   public render(deltaTime: number) {
     const gameState = useGameState.getState();
-    
+
     // Clear canvas
     this.ctx.fillStyle = "#1a1a1a";
     this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
@@ -85,6 +84,14 @@ export class RenderSystem {
 
     // Render player
     player.render(this.ctx, deltaTime);
+
+    // Render AssassinPlayer spiders if applicable
+    if (typeof (player as any).renderSpiders === 'function') {
+      (player as any).renderSpiders(this.ctx, deltaTime, this.camera.x, this.camera.y);
+    }
+
+    // Render orbital weapons if player has them
+    const orbitalWeapons = player.getOrbitalWeapons();
 
     // Render enemies
     this.entityManager.getEnemies().forEach(enemy => {

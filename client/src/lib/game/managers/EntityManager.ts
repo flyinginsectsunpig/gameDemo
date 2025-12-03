@@ -75,6 +75,11 @@ export class EntityManager {
     if (weapon && typeof (weapon as any).setTileRenderer === 'function') {
       (weapon as any).setTileRenderer(this.tileRenderer);
     }
+
+    // Set tile renderer for AssassinPlayer if applicable
+    if (typeof (this.player as any).setTileRenderer === 'function') {
+      (this.player as any).setTileRenderer(this.tileRenderer);
+    }
   }
 
   public update(deltaTime: number, playerPos: { x: number; y: number }) {
@@ -82,6 +87,11 @@ export class EntityManager {
     const weapon = this.player.getWeapon();
     if (weapon && typeof (weapon as any).update === 'function') {
       (weapon as any).update(deltaTime, this.enemies, playerPos.x, playerPos.y);
+    }
+
+    // Update AssassinPlayer spiders if applicable
+    if (typeof (this.player as any).updateSpiders === 'function') {
+      (this.player as any).updateSpiders(deltaTime, this.enemies, playerPos);
     }
 
     // Update enemies
