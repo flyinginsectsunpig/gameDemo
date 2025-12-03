@@ -69,9 +69,21 @@ export class EntityManager {
       this.canvas.width / 2,
       this.canvas.height / 2
     );
+
+    // Set tile renderer for weapons that need it (like SylphBloomsWeapon)
+    const weapon = this.player.getWeapon();
+    if (weapon && typeof (weapon as any).setTileRenderer === 'function') {
+      (weapon as any).setTileRenderer(this.tileRenderer);
+    }
   }
 
   public update(deltaTime: number, playerPos: { x: number; y: number }) {
+    // Update player weapon if it has special update logic (like SylphBloomsWeapon)
+    const weapon = this.player.getWeapon();
+    if (weapon && typeof (weapon as any).update === 'function') {
+      (weapon as any).update(deltaTime, this.enemies, playerPos.x, playerPos.y);
+    }
+
     // Update enemies
     this.enemies.forEach(enemy => {
       enemy.update(deltaTime, playerPos);

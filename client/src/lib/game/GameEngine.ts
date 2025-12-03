@@ -182,6 +182,10 @@ export class GameEngine {
 
     gameState.setWave(this.waveManager.getCurrentWave());
 
+    // Fire player weapon and add projectiles
+    const newProjectiles = player.fireWeapon(deltaTime);
+    this.entityManager.addProjectiles(newProjectiles);
+
     // Update all entities managed by EntityManager
     this.entityManager.update(deltaTime, player.getPosition());
 
