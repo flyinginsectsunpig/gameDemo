@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { GameEngine } from "../lib/game/GameEngine";
-import { useGameState } from "../state/gameState";
+import { useGameState } from "../lib/stores/useGameState";
 
 interface GameCanvasProps {
   onEngineReady?: (engine: GameEngine) => void;
