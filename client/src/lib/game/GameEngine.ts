@@ -62,6 +62,7 @@ export class GameEngine {
   private totalDamageTaken: number = 0;
   private lastStatsSaveTime: number = 0;
   private readonly STATS_SAVE_INTERVAL: number = 30000;
+  private isPaused: boolean = false;
 
   constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.gameStartTime = Date.now();
@@ -134,24 +135,44 @@ export class GameEngine {
   }
 
   private update = (deltaTime: number) => {
-    const gameState = useGameState.getState(); // Still needed for some read operations
-
-    // Handle pause/resume
+    // Handle pause input toggle (get input without pause check first for pause detection)
     const input = this.inputManager.getInput();
-    if (this.gameStateManager.handlePauseInput(input)) {
-      // Player input for pause is handled internally by GameStateManager now.
-      // If it returns true, it means pause state changed, so we might want to stop updates.
-      if (gameState.phase === "paused" || gameState.phase === "gameOver") {
-        // Update entity manager to keep enemies alive, and continue wave manager updates
-        const player = this.entityManager.getPlayer();
-        this.entityManager.update(deltaTime, { x: player.x, y: player.y });
-        this.waveManager.update(deltaTime);
-        return;
-      }
+    const pauseStateChanged = this.gameStateManager.handlePauseInput(input, this.inputManager);
+
+    // Update local pause state based on pause state change
+    if (pauseStateChanged) {
+      const gameState = useGameState.getState();
+      this.isPaused = (gameState.phase === "paused");
     }
 
-    // Don't update game if game over or leveling up
-    if (gameState.phase === "gameOver" || gameState.phase === "levelUp") {
+    // Get game state for checks
+    const gameState = useGameState.getState();
+
+    // Check if game is currently paused using local state
+    if (this.isPaused) {
+      // During pause, update player with empty input to prevent movement,
+      // and update entity manager to keep animations going
+      const player = this.entityManager.getPlayer();
+      const emptyInput = { left: false, right: false, up: false, down: false, weapon1: false, weapon2: false, weapon3: false, weapon4: false, weapon5: false, mute: false, restart: false, pause: false };
+      player.update(deltaTime, emptyInput, this.canvas.width, this.canvas.height, this.infiniteTileRenderer);
+      this.entityManager.update(deltaTime, { x: player.x, y: player.y });
+
+      // Fire player weapon during pause to keep weapon animations going
+      const newProjectiles = player.fireWeapon(deltaTime);
+      this.entityManager.addProjectiles(newProjectiles);
+
+      // Don't update waveManager during pause to avoid timer advancement
+      return;
+    } else if (gameState.phase === "gameOver") {
+      // Update entity manager to keep enemies alive, and continue wave manager updates
+      const player = this.entityManager.getPlayer();
+      this.entityManager.update(deltaTime, { x: player.x, y: player.y });
+      this.waveManager.update(deltaTime);
+      return;
+    }
+
+    // Don't update game if leveling up
+    if (gameState.phase === "levelUp") {
       // Update entity manager to keep enemies alive, and continue wave manager updates
       const player = this.entityManager.getPlayer();
       this.entityManager.update(deltaTime, { x: player.x, y: player.y });
@@ -174,7 +195,7 @@ export class GameEngine {
     const player = this.entityManager.getPlayer();
 
     // Update player
-    player.update(deltaTime, this.inputManager.getInput(), this.canvas.width, this.canvas.height, this.infiniteTileRenderer);
+    player.update(deltaTime, this.inputManager.getInput(this.isPaused), this.canvas.width, this.canvas.height, this.infiniteTileRenderer);
 
     // Update camera
     this.camera.update(player.x + player.width / 2, player.y + player.height / 2, deltaTime);

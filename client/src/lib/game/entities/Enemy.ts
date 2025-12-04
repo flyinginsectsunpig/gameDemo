@@ -95,6 +95,14 @@ export class Enemy implements GameObject {
     return this.scoreValue;
   }
 
+  public getHealth(): number {
+    return this.health;
+  }
+
+  public getMaxHealth(): number {
+    return this.maxHealth;
+  }
+
   public render(ctx: CanvasRenderingContext2D, deltaTime: number) {
     if (!this.alive) return;
 

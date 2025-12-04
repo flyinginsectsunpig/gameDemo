@@ -17,9 +17,7 @@ export class LaserBeamWeapon extends BaseWeapon {
   private rotationSpeed: number = 2;
 
   constructor() {
-    super();
-    this.damage = 15;
-    this.fireRate = 1;
+    super(15, 1, 0); // damage, fireRate, projectileSpeed
     
     this.beams.push({
       angle: 0,
@@ -81,7 +79,7 @@ export class LaserBeamWeapon extends BaseWeapon {
     });
   }
 
-  public fire(x: number, y: number, direction: { x: number; y: number }): IProjectile[] {
+  public fire(deltaTime: number, x: number, y: number, direction?: { x: number; y: number }): IProjectile[] {
     return [];
   }
 

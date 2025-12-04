@@ -16,7 +16,6 @@ export class AssassinPlayer extends Player {
     this.maxHealth = 80;
     this.health = this.maxHealth;
 
-    this.weapon = null;
     this.instanceId = `assassin_${Date.now()}_${Math.random()}`;
     this.spiderManager = new SpiderManager("normal");
     this.spiderManager.spawnSpider(x - 60, y - 20);

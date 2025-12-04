@@ -55,7 +55,25 @@ export class InputManager {
     this.keys[e.code] = false;
   };
 
-  public getInput() {
+  public getInput(paused: boolean = false) {
+    // If game is paused, return empty input to prevent any actions
+    if (paused) {
+      return {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        weapon1: false,
+        weapon2: false,
+        weapon3: false,
+        weapon4: false,
+        weapon5: false,
+        mute: false,
+        restart: false,
+        pause: false
+      };
+    }
+
     return {
       up: this.keys["KeyW"] || this.keys["ArrowUp"],
       down: this.keys["KeyS"] || this.keys["ArrowDown"],
@@ -76,20 +94,17 @@ export class InputManager {
     return this.keys[key] === true;
   }
 
-  public update() {
-    this.keys.left = this.isKeyPressed('ArrowLeft') || this.isKeyPressed('a') || this.isKeyPressed('A');
-    this.keys.right = this.isKeyPressed('ArrowRight') || this.isKeyPressed('d') || this.isKeyPressed('D');
-    this.keys.up = this.isKeyPressed('ArrowUp') || this.isKeyPressed('w') || this.isKeyPressed('W');
-    this.keys.down = this.isKeyPressed('ArrowDown') || this.isKeyPressed('s') || this.isKeyPressed('S');
-    this.keys.mute = this.isKeyPressed('m') || this.isKeyPressed('M');
-    this.keys.restart = this.isKeyPressed('r') || this.isKeyPressed('R');
-    this.keys.pause = this.isKeyPressed('Escape');
+  // Note: update() method removed as it was causing conflicts with event-driven key handling
 
-    // Debug keys for weapon testing
-    this.keys.weapon1 = this.isKeyPressed('1');
-    this.keys.weapon2 = this.isKeyPressed('2');
-    this.keys.weapon3 = this.isKeyPressed('3');
-    this.keys.weapon4 = this.isKeyPressed('4');
-    this.keys.weapon5 = this.isKeyPressed('5');
+  public clearMovementKeys() {
+    // Clear movement keys to prevent stuck movement after pause/unpause
+    this.keys["KeyW"] = false;
+    this.keys["ArrowUp"] = false;
+    this.keys["KeyS"] = false;
+    this.keys["ArrowDown"] = false;
+    this.keys["KeyA"] = false;
+    this.keys["ArrowLeft"] = false;
+    this.keys["KeyD"] = false;
+    this.keys["ArrowRight"] = false;
   }
 }

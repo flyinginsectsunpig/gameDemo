@@ -83,6 +83,10 @@ export class Projectile implements IProjectile, IGameObject {
     }
   }
 
+  public isSylph(): boolean {
+    return this.isSylphOrb;
+  }
+
   public render(ctx: CanvasRenderingContext2D, cameraX: number = 0, cameraY: number = 0): void {
     const screenX = this.x - cameraX;
     const screenY = this.y - cameraY;

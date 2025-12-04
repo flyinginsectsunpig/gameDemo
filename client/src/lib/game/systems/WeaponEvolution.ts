@@ -1,5 +1,5 @@
 
-import { IWeapon } from "../core/interfaces/IWeapon";
+import { IWeapon, IUpgradeable } from "../core/interfaces/IWeapon";
 
 export type WeaponRarity = "common" | "rare" | "epic" | "legendary";
 
@@ -90,7 +90,16 @@ export class WeaponEvolutionSystem {
     if (!weaponData) return false;
 
     weaponData.level++;
-    weaponData.weapon.upgrade();
+
+    // Check if weapon implements IUpgradeable
+    if ('upgrade' in weaponData.weapon && typeof weaponData.weapon.upgrade === 'function') {
+      (weaponData.weapon as unknown as IUpgradeable).upgrade();
+    } else {
+      // Fallback: try to upgrade damage directly
+      if ('upgradeDamage' in weaponData.weapon && typeof weaponData.weapon.upgradeDamage === 'function') {
+        (weaponData.weapon as any).upgradeDamage();
+      }
+    }
 
     const evolution = this.checkEvolution(weaponType, weaponData.level);
     if (evolution) {
@@ -135,7 +144,12 @@ export class WeaponEvolutionSystem {
 
   public applyRarityBonus(weapon: IWeapon, rarity: WeaponRarity): void {
     const rarityData = WEAPON_RARITIES[rarity];
-    weapon.setDamage(weapon.getDamage() * rarityData.damageMultiplier);
+    const newDamage = weapon.getDamage() * rarityData.damageMultiplier;
+
+    // Try to set damage directly on BaseWeapon subclasses
+    if ('damage' in weapon) {
+      (weapon as any).damage = newDamage;
+    }
   }
 
   public getWeaponData(weaponType: string) {

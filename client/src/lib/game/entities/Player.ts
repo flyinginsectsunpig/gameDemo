@@ -1,10 +1,12 @@
-import { Projectile } from "./Projectile";
+import { Projectile } from "../weapons/projectiles/Projectile";
 import { OrbitalWeapon } from "../weapons/OrbitalWeapon";
-import { BaseWeapon } from "./WeaponTypes";
-import { SylphBloomsWeapon } from "../weapons/SylphBloomsWeapon";
+import { BaseWeapon } from "../weapons/WeaponTypes";
+import { Weapon } from "../weapons/Weapon";
 import { useGameState } from "../../stores/useGameState";
 import { SpriteManager } from "../rendering/SpriteManager";
 import { AnimationManager } from "../rendering/AnimationManager";
+import { IPlayer } from "../core/interfaces/IPlayer";
+import { IWeapon } from "../core/interfaces/IWeapon";
 
 export interface GameObject {
   x: number;
@@ -13,7 +15,7 @@ export interface GameObject {
   height: number;
 }
 
-export class Player implements GameObject {
+export class Player implements GameObject, IPlayer {
   public x: number;
   public y: number;
   public width = 96;
@@ -26,17 +28,18 @@ export class Player implements GameObject {
   private lastDamageTime = 0;
   private orbitalWeapons: OrbitalWeapon[] = [];
   private orbitalPositions: { x: number; y: number }[] = [];
-  private lastMoveDirection = { x: 1, y: 0 }; // Default to right
-  private isMoving = false;
+  protected lastMoveDirection = { x: 1, y: 0 }; // Default to right
+  protected isMoving = false;
   protected instanceId: string;
   protected animationManager: AnimationManager;
   protected currentAnimation = "idle";
   protected lastAnimationFrame: any = null;
+  protected weapon: BaseWeapon;
 
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
-    this.weapon = new SylphBloomsWeapon();
+    this.weapon = new Weapon();
     this.instanceId = `player_${Date.now()}_${Math.random()}`;
     this.animationManager = new AnimationManager();
     this.setupAnimations();
@@ -265,7 +268,7 @@ export class Player implements GameObject {
     this.lastAnimationFrame = walkDownFrames[0];
   }
 
-  public getWeapon() {
+  public getWeapon(): IWeapon | null {
     return this.weapon;
   }
 
@@ -405,19 +408,50 @@ export class Player implements GameObject {
     this.orbitalWeapons.push(new OrbitalWeapon());
   }
 
+  public getMaxHealth(): number {
+    return this.maxHealth;
+  }
+
+  public setMaxHealth(maxHealth: number): void {
+    this.maxHealth = maxHealth;
+    // Ensure current health doesn't exceed new max
+    if (this.health > this.maxHealth) {
+      this.health = this.maxHealth;
+    }
+  }
+
+  public getSpeed(): number {
+    return this.speed;
+  }
+
+  public setSpeed(speed: number): void {
+    this.speed = speed;
+  }
+
+  public getHealth(): number {
+    return this.health;
+  }
+
+  public isAlive(): boolean {
+    return this.health > 0;
+  }
+
+  public destroy(): void {
+    // Cleanup logic if needed
+  }
+
   public upgradeHealth() {
     const gameState = useGameState.getState();
     gameState.upgradeHealth();
   }
 
-  public setWeapon(weapon: BaseWeapon) {
-    this.weapon = weapon;
+  public setWeapon(weapon: IWeapon) {
+    this.weapon = weapon as any;
   }
 
   public renderFlowers(ctx: CanvasRenderingContext2D) {
-    if (this.weapon instanceof SylphBloomsWeapon) {
-      this.weapon.renderFlowers(ctx);
-    }
+    // Flowers are now rendered by the tile system, not directly by weapons
+    // This method is kept for interface compatibility but does nothing
   }
 
   public setTileRenderer(tileRenderer: any): void {
@@ -434,7 +468,7 @@ export class Player implements GameObject {
     this.health = Math.min(this.maxHealth, this.health + amount);
   }
 
-  private checkTileCollision(x: number, y: number, tileRenderer: any): boolean {
+  protected checkTileCollision(x: number, y: number, tileRenderer: any): boolean {
     // Check collision points around the player
     const margin = 2; // Small margin to prevent getting stuck
     const points = [
@@ -603,7 +637,7 @@ export class Player implements GameObject {
 
     // Render orbital weapons
     this.orbitalWeapons.forEach((orbital) => {
-      orbital.render(ctx);
+      orbital.render(ctx, this.x, this.y);
     });
   }
 }

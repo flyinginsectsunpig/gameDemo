@@ -1,6 +1,6 @@
 import { Player } from "./Player";
 import { Enemy } from "./Enemy";
-import { Projectile } from "../weapons/Projectile";
+import { Projectile } from "../weapons/projectiles/Projectile";
 import { MechanicalSpider } from "./MechanicalSpider";
 import { SpriteManager } from "../rendering/SpriteManager";
 import { AnimationManager } from "../rendering/AnimationManager";
@@ -24,8 +24,7 @@ export class AssassinPlayer extends Player {
     const instanceId = `assassin_${Date.now()}_${Math.random()}`;
     console.log(`Creating AssassinPlayer instance: ${instanceId}. Global count: ${globalAssassinPlayerCount}`);
 
-    // Override the weapon from Player to prevent flower spawning
-    this.weapon = null;
+    // Assassin doesn't use traditional weapons, so we keep the default weapon but override fireWeapon
 
     // Ensure instanceId is set for assassin
     this.instanceId = `assassin_${Date.now()}_${Math.random()}`;
@@ -175,11 +174,8 @@ export class AssassinPlayer extends Player {
           this.followerSpider.lastDirection || { x: 0, y: 1 }
         );
       }
-    } else if (this.followerSpider && !this.followerSpider.isAlive()) {
-      // Clean up dead spider
-      this.followerSpider = null;
-      console.log(`[${this.instanceId}] Child spider died`);
     }
+    // Note: Spider cleanup is handled in the spider's own logic
   }
 
   public renderSpiders(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
@@ -371,26 +367,10 @@ export class AssassinPlayer extends Player {
     }
   }
 
-  private checkTileCollision(x: number, y: number, tileRenderer: any): boolean {
-    // Check collision points around the player
-    const margin = 2; // Small margin to prevent getting stuck
-    const points = [
-      { x: x + margin, y: y + margin }, // Top-left
-      { x: x + this.width - margin, y: y + margin }, // Top-right
-      { x: x + margin, y: y + this.height - margin }, // Bottom-left
-      { x: x + this.width - margin, y: y + this.height - margin } // Bottom-right
-    ];
 
-    return points.some(point => tileRenderer.isSolidAt(point.x, point.y));
-  }
-
-  public fire(deltaTime: number, direction?: { x: number; y: number }): Projectile[] {
-    // Assassin doesn't fire traditional projectiles, uses spiders instead
-    return this.spiderWeapon.fire(deltaTime, this.x, this.y, direction);
-  }
 
   public fireWeapon(deltaTime: number): Projectile[] {
-    // Override parent method to prevent flower weapon firing
+    // Override parent method to prevent flower weapon firing - assassin uses spiders instead
     return [];
   }
 

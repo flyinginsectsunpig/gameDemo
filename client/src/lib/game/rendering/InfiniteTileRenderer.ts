@@ -770,7 +770,10 @@ export class InfiniteTileRenderer {
     const now = Date.now();
     const flowersToRemove: string[] = [];
 
-    for (const [key, flower] of this.flowers.entries()) {
+    // Convert Map to array to avoid iteration issues
+    const flowersArray = Array.from(this.flowers.entries());
+
+    for (const [key, flower] of flowersArray) {
       // Always update flowers regardless of game state to prevent animation reset issues
       flower.age += deltaTime * 1000;
 

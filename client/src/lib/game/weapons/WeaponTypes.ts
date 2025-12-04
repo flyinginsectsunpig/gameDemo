@@ -1,6 +1,7 @@
-import { Projectile } from "./Projectile";
+import { Projectile } from "./projectiles/Projectile";
+import { IWeapon } from "../core/interfaces/IWeapon";
 
-export abstract class BaseWeapon {
+export abstract class BaseWeapon implements IWeapon {
   protected fireRate: number;
   protected timeSinceLastShot = 0;
   protected damage: number;
@@ -13,6 +14,14 @@ export abstract class BaseWeapon {
   }
 
   public abstract fire(deltaTime: number, playerX: number, playerY: number, direction?: { x: number; y: number }): Projectile[];
+
+  public getDamage(): number {
+    return this.damage;
+  }
+
+  public getFireRate(): number {
+    return this.fireRate;
+  }
 
   public upgradeDamage() {
     this.damage += 1;

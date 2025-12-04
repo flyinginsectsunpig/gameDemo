@@ -73,6 +73,7 @@ interface GameState {
   addKill: () => void;
   addBossKill: () => void;
   updateCombo: (combo: number, multiplier: number) => void;
+  setCombo: (combo: number, multiplier: number, timeRemaining?: number) => void;
   resetCombo: () => void;
   heal: (amount: number) => void; // Added method and modified implementation
 }

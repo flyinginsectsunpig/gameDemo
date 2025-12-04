@@ -42,7 +42,16 @@ export class TileMapGenerator {
     CENTER_CRACKED: 9,
     ROCK_CLUSTER: 14,
     SUBTLE_SHADOW: 23,
-    SEAMLESS_FILLER: 24
+    SEAMLESS_FILLER: 24,
+    SCATTERED_BONES_1: 25,
+    SCATTERED_BONES_2: 26,
+    SCATTERED_BONES_3: 27,
+    BONE_FRAGMENT: 28,
+    SMALL_SKULL: 29,
+    ROSE_HIP_SHRUB: 30,
+    SMALL_CRYSTAL: 31,
+    DEAD_BRANCH: 32,
+    DEAD_LEAVES: 33
   };
 
   public static generateUndeadScene(): TileMapCell[][] {

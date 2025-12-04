@@ -2,6 +2,7 @@ import { EntityManager } from '../managers/EntityManager';
 import { GameStateManager } from './GameStateManager';
 import { CollisionDetection } from './CollisionDetection';
 import { BossEnemy } from '../entities/enemies/BossEnemy';
+import { Enemy } from '../entities/enemies/Enemy';
 import { SylphBloomsWeapon } from '../weapons/SylphBloomsWeapon';
 import { useGameState } from '../../stores/useGameState';
 import { useAudio } from '../../stores/useAudio';
@@ -34,7 +35,7 @@ export class CollisionHandler {
     const gameState = useGameState.getState();
     const audioState = useAudio.getState();
     const projectiles = this.entityManager.getProjectiles();
-    const enemies = this.entityManager.getEnemies();
+    const enemies = this.entityManager.getEnemies() as unknown as Enemy[];
 
     projectiles.forEach(projectile => {
       if (!projectile.isAlive()) return;
@@ -120,7 +121,7 @@ export class CollisionHandler {
   private handleOrbitalWeaponCollisions() {
     const audioState = useAudio.getState();
     const player = this.entityManager.getPlayer();
-    const enemies = this.entityManager.getEnemies();
+    const enemies = this.entityManager.getEnemies() as unknown as Enemy[];
     const orbitalWeapons = player.getOrbitalWeapons();
 
     orbitalWeapons.forEach(orbital => {
@@ -155,7 +156,7 @@ export class CollisionHandler {
     const audioState = useAudio.getState();
     const player = this.entityManager.getPlayer();
     const weapon = player.getWeapon();
-    const enemies = this.entityManager.getEnemies();
+    const enemies = this.entityManager.getEnemies() as unknown as Enemy[];
 
     if (weapon instanceof SylphBloomsWeapon) {
       const orbCollisions = weapon.checkCollisions(enemies);

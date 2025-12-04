@@ -1,7 +1,8 @@
 
 import { ICollectible } from "../core/interfaces/ICollectible";
 import { ExperienceOrb } from "../entities/collectibles/ExperienceOrb";
-import { PowerUp } from "../entities/collectibles/PowerUp";
+import { PowerUp, PowerUpDefinition } from "../entities/collectibles/PowerUp";
+import { POWERUP_DEFINITIONS } from "../config/PowerUpDefinitions";
 
 export class CollectibleManager {
   private collectibles: ICollectible[] = [];
@@ -11,7 +12,14 @@ export class CollectibleManager {
   }
 
   public spawnPowerUp(x: number, y: number, type: string = "health"): void {
-    this.collectibles.push(new PowerUp(x, y, type));
+    const definition = POWERUP_DEFINITIONS.find(def => def.id === type) || POWERUP_DEFINITIONS[0];
+    this.collectibles.push(new PowerUp(x, y, definition));
+  }
+
+  public spawnRandomPowerUp(x: number, y: number): void {
+    const randomIndex = Math.floor(Math.random() * POWERUP_DEFINITIONS.length);
+    const definition = POWERUP_DEFINITIONS[randomIndex];
+    this.collectibles.push(new PowerUp(x, y, definition));
   }
 
   public update(deltaTime: number, playerPos: { x: number; y: number }): void {
@@ -24,9 +32,9 @@ export class CollectibleManager {
     });
   }
 
-  public render(ctx: CanvasRenderingContext2D): void {
+  public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX?: number, cameraY?: number): void {
     this.collectibles.forEach(collectible => {
-      collectible.render(ctx);
+      collectible.render(ctx, deltaTime, cameraX, cameraY);
     });
   }
 

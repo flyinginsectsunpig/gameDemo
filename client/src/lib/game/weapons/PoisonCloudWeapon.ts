@@ -21,9 +21,7 @@ export class PoisonCloudWeapon extends BaseWeapon {
   private maxClouds: number = 3;
 
   constructor() {
-    super();
-    this.damage = 5;
-    this.fireRate = 0.3;
+    super(5, 0.3, 0); // damage, fireRate, projectileSpeed
   }
 
   public update(deltaTime: number, enemies: any[], playerX: number, playerY: number): void {
@@ -84,7 +82,7 @@ export class PoisonCloudWeapon extends BaseWeapon {
     });
   }
 
-  public fire(x: number, y: number, direction: { x: number; y: number }): IProjectile[] {
+  public fire(deltaTime: number, x: number, y: number, direction?: { x: number; y: number }): IProjectile[] {
     return [];
   }
 

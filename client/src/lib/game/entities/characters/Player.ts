@@ -177,7 +177,7 @@ export class Player extends BaseEntity implements IPlayer {
       this.renderFallback(ctx);
     }
 
-    this.orbitalWeapons.forEach(orbital => orbital.render(ctx));
+    this.orbitalWeapons.forEach(orbital => orbital.render(ctx, this.x, this.y));
   }
 
   private getSpritesForAnimation(): Record<string, any> {
@@ -277,6 +277,10 @@ export class Player extends BaseEntity implements IPlayer {
 
   public getMaxHealth(): number {
     return this.maxHealth;
+  }
+
+  public setMaxHealth(maxHealth: number): void {
+    this.maxHealth = maxHealth;
   }
 
   public addOrbitalWeapon(): void {

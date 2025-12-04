@@ -20,7 +20,7 @@ export class MechanicalSpider implements GameObject {
   private searchRadius = 120;
   private spiderMode: "normal" | "big" | "small" = "normal";
   private maxHealth = 1;
-  private lastDirection = { x: 0, y: 1 }; // Track movement direction for sprite selection
+  private _lastDirection = { x: 0, y: 1 }; // Track movement direction for sprite selection
   private isJumping = false;
   private jumpStartPos = { x: 0, y: 0 };
   private jumpTargetPos = { x: 0, y: 0 };
@@ -28,15 +28,15 @@ export class MechanicalSpider implements GameObject {
   private jumpDuration = 0.4; // 400ms jump duration
   private jumpHeight = 50; // pixels above ground during jump
   private animationManager: AnimationManager;
-  private instanceId: string;
-  private currentAnimation = "spider_idle";
+  private _instanceId: string;
+  private _currentAnimation = "spider_idle";
   private lastAnimationFrame: any = null;
   private lastAnimationSwitch = 0;
   constructor(x: number, y: number, mode: "normal" | "big" | "small" = "normal") {
     this.x = x;
     this.y = y;
     this.spiderMode = mode;
-    this.instanceId = `mechanical_spider_${Date.now()}_${Math.random()}`;
+    this._instanceId = `mechanical_spider_${Date.now()}_${Math.random()}`;
     this.animationManager = new AnimationManager();
 
     // Set stats based on mode
@@ -116,7 +116,7 @@ export class MechanicalSpider implements GameObject {
     this.lastAnimationFrame = idleFrames[0];
 
     // Start with idle animation
-    this.animationManager.startAnimation("spider_idle", this.instanceId);
+    this.animationManager.startAnimation("spider_idle", this._instanceId);
   }
 
   public update(deltaTime: number, enemies: Enemy[], playerPos: { x: number; y: number }) {
@@ -208,8 +208,8 @@ export class MechanicalSpider implements GameObject {
 
             // Only update direction when starting jump or major direction change
             if (this.jumpProgress < 0.1) {
-              this.lastDirection.x = (this.jumpTargetPos.x - this.jumpStartPos.x) / distance;
-              this.lastDirection.y = (this.jumpTargetPos.y - this.jumpStartPos.y) / distance;
+              this._lastDirection.x = (this.jumpTargetPos.x - this.jumpStartPos.x) / distance;
+              this._lastDirection.y = (this.jumpTargetPos.y - this.jumpStartPos.y) / distance;
             }
 
             targetAnimation = "spider_jumping";
@@ -221,8 +221,8 @@ export class MechanicalSpider implements GameObject {
           this.jumpTargetPos = { x: this.target.x, y: this.target.y };
           this.jumpProgress = 0;
 
-          this.lastDirection.x = dx / distance;
-          this.lastDirection.y = dy / distance;
+          this._lastDirection.x = dx / distance;
+          this._lastDirection.y = dy / distance;
 
           targetAnimation = "spider_jumping";
         }
@@ -232,9 +232,9 @@ export class MechanicalSpider implements GameObject {
     }
 
     // Only switch animation when absolutely necessary
-    if (this.currentAnimation !== targetAnimation) {
-      this.currentAnimation = targetAnimation;
-      this.animationManager.startAnimation(targetAnimation, this.instanceId);
+    if (this._currentAnimation !== targetAnimation) {
+      this._currentAnimation = targetAnimation;
+      this.animationManager.startAnimation(targetAnimation, this._instanceId);
       this.lastAnimationSwitch = Date.now();
     }
   }
@@ -274,7 +274,19 @@ export class MechanicalSpider implements GameObject {
   }
 
   public get health(): number {
-    return this.target?.health || 0;
+    return this.target?.getHealth() || 0;
+  }
+
+  public get instanceId(): string {
+    return this._instanceId;
+  }
+
+  public get currentAnimation(): string {
+    return this._currentAnimation;
+  }
+
+  public get lastDirection(): { x: number; y: number } {
+    return this._lastDirection;
   }
 
 

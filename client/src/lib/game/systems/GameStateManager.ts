@@ -115,9 +115,9 @@ export class GameStateManager {
     window.addEventListener("blur", handleWindowBlur);
   }
 
-  public handlePauseInput(input: any): boolean {
+  public handlePauseInput(input: any, inputManager?: InputManager): boolean {
     const gameState = useGameState.getState();
-    
+
     if (input.pause && !this.lastPauseState) {
       if (gameState.phase === "playing") {
         this.saveCurrentSessionStats();
@@ -127,7 +127,7 @@ export class GameStateManager {
       } else if (gameState.phase === "paused") {
         gameState.resume();
         this.lastPauseState = input.pause;
-        return false;
+        return true;
       }
     }
     this.lastPauseState = input.pause;

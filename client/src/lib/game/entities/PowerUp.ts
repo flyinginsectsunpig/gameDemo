@@ -21,8 +21,9 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     color: "#ff6b6b",
     characterRestriction: "sylph",
     apply: (player: Player) => {
-      if (player.weapon instanceof SylphBloomsWeapon) {
-        player.weapon.upgradeDamage();
+      const weapon = player.getWeapon();
+      if (weapon instanceof SylphBloomsWeapon) {
+        weapon.upgradeDamage();
       }
     }
   },
@@ -33,8 +34,9 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     color: "#4ecdc4",
     characterRestriction: "sylph",
     apply: (player: Player) => {
-      if (player.weapon instanceof SylphBloomsWeapon) {
-        player.weapon.upgradeFireRate();
+      const weapon = player.getWeapon();
+      if (weapon instanceof SylphBloomsWeapon) {
+        weapon.upgradeFireRate();
       }
     }
   },
@@ -45,8 +47,9 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     color: "#45b7d1",
     characterRestriction: "sylph",
     apply: (player: Player) => {
-      if (player.weapon instanceof SylphBloomsWeapon) {
-        player.weapon.upgradeFlowerCapacity();
+      const weapon = player.getWeapon();
+      if (weapon instanceof SylphBloomsWeapon) {
+        weapon.upgradeFlowerCapacity();
       }
     }
   },
@@ -57,8 +60,9 @@ export const POWERUP_DEFINITIONS: PowerUpDefinition[] = [
     color: "#96ceb4",
     characterRestriction: "sylph",
     apply: (player: Player) => {
-      if (player.weapon instanceof SylphBloomsWeapon) {
-        player.weapon.upgradeFlowerLifespan();
+      const weapon = player.getWeapon();
+      if (weapon instanceof SylphBloomsWeapon) {
+        weapon.upgradeFlowerLifespan();
       }
     }
   },

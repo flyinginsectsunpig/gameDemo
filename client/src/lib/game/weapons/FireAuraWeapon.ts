@@ -74,10 +74,10 @@ export class FireAuraWeapon {
   ): void {
     const burnTickInterval = 0.5;
 
-    for (const [enemy, burn] of this.burnEffects) {
+    this.burnEffects.forEach((burn, enemy) => {
       if (!enemy.isAlive() || enemy.getHealth() <= 0) {
         this.burnEffects.delete(enemy);
-        continue;
+        return;
       }
 
       burn.remainingTime -= deltaTime;
@@ -91,7 +91,7 @@ export class FireAuraWeapon {
       if (burn.remainingTime <= 0) {
         this.burnEffects.delete(enemy);
       }
-    }
+    });
   }
 
   private applyBurn(enemy: Enemy): void {
@@ -188,11 +188,11 @@ export class FireAuraWeapon {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    for (const [enemy, burn] of this.burnEffects) {
+    this.burnEffects.forEach((burn, enemy) => {
       if (enemy.isAlive()) {
         this.renderBurnEffect(ctx, enemy.x - cameraX, enemy.y - cameraY, burn);
       }
-    }
+    });
 
     ctx.restore();
   }

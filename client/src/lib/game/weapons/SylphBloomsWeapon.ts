@@ -231,4 +231,12 @@ export class SylphBloomsWeapon {
   public upgradeFlowerLifespan() {
     this.flowerLifespan += 3000; // +3 seconds
   }
+
+  public getDamage(): number {
+    return this.damage;
+  }
+
+  public getFireRate(): number {
+    return this.fireRate;
+  }
 }

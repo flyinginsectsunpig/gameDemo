@@ -1,6 +1,6 @@
 import { GameObject } from "../entities/Player";
 import { Projectile } from "../weapons/Projectile";
-import { Enemy } from "../entities/Enemy";
+import { Enemy } from "../entities/enemies/Enemy";
 import { ShieldedEnemy } from "../entities/enemies/ShieldedEnemy";
 import { FlyingEnemy } from "../entities/enemies/FlyingEnemy";
 import { EnemyProjectile } from "../entities/enemies/EnemyProjectile";
@@ -47,8 +47,9 @@ export class CollisionDetection {
   }
 
   public canDamageEnemy(enemy: Enemy): boolean {
-    if (enemy instanceof ShieldedEnemy) {
-      return !enemy.isShieldActive();
+    // Use type checking with 'in' operator to avoid intersection issues
+    if ('isShieldActive' in enemy && typeof (enemy as any).isShieldActive === 'function') {
+      return !(enemy as any).isShieldActive();
     }
     return true;
   }
@@ -77,8 +78,9 @@ export class CollisionDetection {
   }
 
   public static canDamageEnemy(enemy: Enemy): boolean {
-    if (enemy instanceof ShieldedEnemy) {
-      return !enemy.isShieldActive();
+    // Use type checking with 'in' operator to avoid intersection issues
+    if ('isShieldActive' in enemy && typeof (enemy as any).isShieldActive === 'function') {
+      return !(enemy as any).isShieldActive();
     }
     return true;
   }
@@ -102,10 +104,10 @@ export class CollisionDetection {
             continue;
           }
 
-          enemy.takeDamage(projectile.damage);
-          damageDealt += projectile.damage;
+          enemy.takeDamage(projectile.getDamage());
+          damageDealt += projectile.getDamage();
 
-          if (enemy.health <= 0 && !enemiesToRemove.includes(j)) {
+          if (enemy.getHealth() <= 0 && !enemiesToRemove.includes(j)) {
             enemiesToRemove.push(j);
           }
 

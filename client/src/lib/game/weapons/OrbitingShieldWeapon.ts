@@ -49,12 +49,12 @@ export class OrbitingShieldWeapon {
     for (const shield of this.shields) {
       shield.angle += this.getEffectiveRotationSpeed() * deltaTime;
       
-      for (const [enemy, time] of shield.hitCooldowns) {
+      shield.hitCooldowns.forEach((time, enemy) => {
         shield.hitCooldowns.set(enemy, time - deltaTime);
         if (time - deltaTime <= 0) {
           shield.hitCooldowns.delete(enemy);
         }
-      }
+      });
 
       const shieldX = playerX + Math.cos(shield.angle) * this.getEffectiveRadius();
       const shieldY = playerY + Math.sin(shield.angle) * this.getEffectiveRadius();

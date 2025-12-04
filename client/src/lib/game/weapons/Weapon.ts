@@ -1,8 +1,9 @@
 import { BaseWeapon } from "./WeaponTypes";
 import { Projectile } from "./projectiles/Projectile";
-import { Enemy } from "../entities/enemies/Enemy";
 
 export class Weapon extends BaseWeapon {
+  private projectiles: Projectile[] = [];
+
   constructor(fireRate: number = 2, damage: number = 10, projectileSpeed: number = 300) {
     super(fireRate, damage, projectileSpeed);
   }
@@ -25,15 +26,26 @@ export class Weapon extends BaseWeapon {
       this.damage
     );
 
+    this.projectiles.push(projectile);
     return [projectile];
   }
 
-  public abstract update(deltaTime: number, ...args: any[]): void;
+  public update(deltaTime: number): void {
+    // Update and clean up dead projectiles
+    this.projectiles = this.projectiles.filter(projectile => {
+      projectile.update(deltaTime);
+      return projectile.isAlive();
+    });
+  }
 
   public render(ctx: CanvasRenderingContext2D, cameraX: number, cameraY: number): void {
     // Render projectiles with camera offset
     this.projectiles.forEach(projectile => {
       projectile.render(ctx, cameraX, cameraY);
     });
+  }
+
+  public getProjectiles(): Projectile[] {
+    return this.projectiles;
   }
 }

@@ -10,9 +10,7 @@ export class ThunderStrikeWeapon extends BaseWeapon {
   private lightningBolts: Array<{ x: number; y: number; lifetime: number }> = [];
 
   constructor() {
-    super();
-    this.damage = 40;
-    this.fireRate = 0.5;
+    super(40, 0.5, 0); // damage, fireRate, projectileSpeed
   }
 
   public update(deltaTime: number, enemies: any[], playerX: number, playerY: number): void {
@@ -76,7 +74,7 @@ export class ThunderStrikeWeapon extends BaseWeapon {
     });
   }
 
-  public fire(x: number, y: number, direction: { x: number; y: number }): IProjectile[] {
+  public fire(deltaTime: number, x: number, y: number, direction?: { x: number; y: number }): IProjectile[] {
     return [];
   }
 
