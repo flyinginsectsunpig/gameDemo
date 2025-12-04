@@ -1,4 +1,5 @@
 import { SpriteManager } from './SpriteManager';
+import { useGameState } from '../../stores/useGameState';
 
 export interface Camera {
   x: number;
@@ -40,11 +41,16 @@ export interface SylphOrb {
   targetY?: number;
 }
 
-// Assuming SpiderEntity is defined elsewhere - add its interface here
+// Spider entity interface
 export interface SpiderEntity {
     x: number;
     y: number;
-    // ... other spider properties
+    instanceId?: string;
+    currentAnimation?: string;
+    lastDirection?: any;
+    previousScreenX?: number;
+    previousScreenY?: number;
+    frameCounter?: number;
 }
 
 export class InfiniteTileRenderer {
@@ -634,18 +640,20 @@ export class InfiniteTileRenderer {
 
       } catch (error) {
         console.error("Error drawing spider sprite:", error, spriteName);
-        this.renderFallbackSpider(ctx, screenX, screenY, spiderSize);
+        this.renderFallbackSpider(ctx, screenX, screenY);
       }
     } else {
-      this.renderFallbackSpider(ctx, screenX, screenY, spiderSize);
+      this.renderFallbackSpider(ctx, screenX, screenY);
     }
 
     ctx.restore();
   }
 
-  private renderFallbackSpider(ctx: CanvasRenderingContext2D, screenX: number, screenY: number, spiderSize: number): void {
+  private renderFallbackSpider(ctx: CanvasRenderingContext2D, screenX: number, screenY: number): void {
     ctx.save();
-    
+
+    const spiderSize = this.tileSize * 1.5; // Height based on tile size
+
     // Enhanced fallback spider - much more visible like flowers
     const centerX = screenX + this.tileSize / 2;
     const centerY = screenY + this.tileSize / 2;
@@ -672,7 +680,7 @@ export class InfiniteTileRenderer {
       const startY = centerY + Math.sin(angle) * spiderSize * 0.1;
       const endX = centerX + Math.cos(angle) * legLength;
       const endY = centerY + Math.sin(angle) * legLength * 0.6;
-      
+
       ctx.beginPath();
       ctx.moveTo(startX, startY);
       ctx.lineTo(endX, endY);
@@ -763,6 +771,7 @@ export class InfiniteTileRenderer {
     const flowersToRemove: string[] = [];
 
     for (const [key, flower] of this.flowers.entries()) {
+      // Always update flowers regardless of game state to prevent animation reset issues
       flower.age += deltaTime * 1000;
 
       // Update bloom stage based on age - grow over 1.5 seconds (faster growth)
@@ -811,14 +820,14 @@ export class InfiniteTileRenderer {
     const maxDistance = 3; // Keep chunks within 3 chunks of camera
 
     const chunksToRemove: string[] = [];
-    for (const [key, _] of this.loadedChunks) {
+    this.loadedChunks.forEach((_, key) => {
       const [chunkX, chunkY] = key.split(',').map(Number);
       const distance = Math.max(Math.abs(chunkX - currentChunkX), Math.abs(chunkY - currentChunkY));
 
       if (distance > maxDistance) {
         chunksToRemove.push(key);
       }
-    }
+    });
 
     chunksToRemove.forEach(key => this.loadedChunks.delete(key));
   }

@@ -2,6 +2,7 @@
 import { ISpider } from "../../core/interfaces/ISpider";
 import { IEnemy } from "../../core/interfaces/IEnemy";
 import { AnimationManager } from "../../rendering/AnimationManager";
+import { SpriteManager } from "../../rendering/SpriteManager";
 
 export class MechanicalSpider implements ISpider {
   public x: number;
@@ -250,8 +251,18 @@ export class MechanicalSpider implements ISpider {
     return this.target?.getHealth() || 0;
   }
 
+  public getRenderState() {
+    return {
+      x: this.x,
+      y: this.y,
+      instanceId: this.instanceId,
+      currentAnimation: this.currentAnimation,
+      lastDirection: this.lastDirection
+    };
+  }
+
   public render(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0) {
-    const spriteManager = require("../../rendering/SpriteManager").SpriteManager.getInstance();
+    const spriteManager = SpriteManager.getInstance();
     
     // Update animation
     const validDeltaTime = typeof deltaTime === 'number' && !isNaN(deltaTime) ? deltaTime : 0.016;
@@ -279,9 +290,8 @@ export class MechanicalSpider implements ISpider {
     const screenX = this.x - cameraX;
     const screenY = this.y - cameraY;
     
-    const aspectRatio = sprite.width / sprite.height;
+    const drawWidth = this.width;
     const drawHeight = this.height;
-    const drawWidth = drawHeight * aspectRatio;
     const drawX = screenX - drawWidth / 2;
     const drawY = screenY - drawHeight / 2;
 

@@ -6,7 +6,7 @@ import { AssassinPlayer } from '../entities/characters/AssassinPlayer';
 export type PlayerType = 'sylph' | 'assassin';
 
 export class PlayerFactory {
-  public static createPlayer(type: PlayerType, x: number, y: number): IPlayer {
+  public static createPlayer(type: PlayerType, x: number, y: number): Player | AssassinPlayer {
     switch (type) {
       case 'assassin':
         return new AssassinPlayer(x, y);

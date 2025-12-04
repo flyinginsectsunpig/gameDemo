@@ -10,12 +10,12 @@ import { IEnemy } from "../core/interfaces/IEnemy";
 
 export class WaveManager {
   private currentWave = 1;
-  private enemiesSpawned = 0;
-  private enemiesPerWave = 5;
   private spawnTimer = 0;
   private spawnInterval = 2;
   private waveStartTime = 0;
   private waveDuration = 30;
+  private maxActiveEnemies = 25;
+  private maxEnemiesCap = 80;
   
   private bossSpawnInterval = 5;
   private bossSpawned = false;
@@ -43,7 +43,12 @@ export class WaveManager {
     }
   }
 
-  public spawnEnemies(canvasWidth: number, canvasHeight: number, playerPos?: { x: number; y: number }): Enemy[] {
+  public spawnEnemies(
+    canvasWidth: number,
+    canvasHeight: number,
+    currentEnemyCount: number,
+    playerPos?: { x: number; y: number }
+  ): Enemy[] {
     const enemies: Enemy[] = [];
 
     if (this.isBossWave()) {
@@ -74,10 +79,9 @@ export class WaveManager {
       this.advanceWave();
     }
 
-    if (this.spawnTimer >= this.spawnInterval && this.enemiesSpawned < this.getEnemiesForCurrentWave()) {
+    if (this.spawnTimer >= this.spawnInterval && currentEnemyCount < this.maxActiveEnemies) {
       const enemy = this.createRandomEnemy(canvasWidth, canvasHeight, playerPos);
       enemies.push(enemy as Enemy);
-      this.enemiesSpawned++;
       this.spawnTimer = 0;
     }
 
@@ -154,9 +158,9 @@ export class WaveManager {
 
   private advanceWave() {
     this.currentWave++;
-    this.enemiesSpawned = 0;
     this.waveStartTime = 0;
-    this.spawnInterval = Math.max(0.5, this.spawnInterval * 0.95);
+    this.spawnInterval = Math.max(1, this.spawnInterval * 0.97);
+    this.maxActiveEnemies = Math.min(this.maxEnemiesCap, this.maxActiveEnemies + 5);
     
     this.bossSpawned = false;
     this.bossDefeated = false;
@@ -164,10 +168,6 @@ export class WaveManager {
     this.timeUntilBoss = 0;
     
     console.log(`Wave ${this.currentWave} started!`);
-  }
-
-  private getEnemiesForCurrentWave(): number {
-    return this.enemiesPerWave + Math.floor(this.currentWave / 2);
   }
 
   private getSpawnPosition(canvasWidth: number, canvasHeight: number, playerPos?: { x: number; y: number }): { x: number; y: number } {
@@ -208,10 +208,10 @@ export class WaveManager {
 
   public reset() {
     this.currentWave = 1;
-    this.enemiesSpawned = 0;
     this.spawnTimer = 0;
     this.waveStartTime = 0;
     this.spawnInterval = 2;
+    this.maxActiveEnemies = 25;
     this.bossSpawned = false;
     this.bossDefeated = false;
     this.bossWarningTriggered = false;

@@ -1,4 +1,3 @@
-
 import { Player } from "./Player";
 import { IEnemy } from "../../core/interfaces/IEnemy";
 import { IProjectile } from "../../core/interfaces/IProjectile";
@@ -48,10 +47,10 @@ export class AssassinPlayer extends Player {
     const newY = this.y + moveY * this.speed * deltaTime;
 
     if (tileRenderer && tileRenderer.isSolidAt) {
-      if (!this.checkTileCollision(newX, this.y, tileRenderer)) {
+      if (!this.checkAssassinTileCollision(newX, this.y, tileRenderer)) {
         this.x = newX;
       }
-      if (!this.checkTileCollision(this.x, newY, tileRenderer)) {
+      if (!this.checkAssassinTileCollision(this.x, newY, tileRenderer)) {
         this.y = newY;
       }
     } else {
@@ -59,10 +58,10 @@ export class AssassinPlayer extends Player {
       this.y = newY;
     }
 
-    this.updateAnimation();
+    this.updateAssassinAnimation();
   }
 
-  private updateAnimation(): void {
+  private updateAssassinAnimation(): void {
     let targetAnimation = "idle";
     const { x: moveX, y: moveY } = this.lastMoveDirection;
 
@@ -93,16 +92,19 @@ export class AssassinPlayer extends Player {
 
   public setTileRenderer(tileRenderer: any): void {
     this.tileRenderer = tileRenderer;
-    // Don't register spiders with tile renderer - they will be rendered directly
+    this.spiderManager.setTileRenderer(tileRenderer);
   }
 
   public updateSpiders(deltaTime: number, enemies: IEnemy[], playerPos: { x: number; y: number }): void {
     this.spiderManager.update(deltaTime, enemies, { x: this.x, y: this.y });
-    // Don't update tile renderer - spiders are rendered directly via renderSpiders()
   }
 
   public renderSpiders(ctx: CanvasRenderingContext2D, deltaTime: number, cameraX: number = 0, cameraY: number = 0): void {
     this.spiderManager.render(ctx, deltaTime, cameraX, cameraY);
+  }
+
+  public shouldRenderSpidersManually(): boolean {
+    return !this.tileRenderer;
   }
 
   public getSpiders(): ISpider[] {
@@ -124,7 +126,7 @@ export class AssassinPlayer extends Player {
     if (spriteToUse) {
       this.renderAssassinSprite(ctx, spriteToUse, frame);
     } else {
-      this.renderFallback(ctx);
+      this.renderAssassinFallback(ctx);
     }
 
     this.renderHealthBar(ctx);
@@ -160,7 +162,7 @@ export class AssassinPlayer extends Player {
     const processedSprite = this.removeWhiteOutline(sprite, frame);
 
     ctx.save();
-    if (this.shouldFlipSprite()) {
+    if (this.shouldFlipAssassinSprite()) {
       ctx.translate(this.x, this.y);
       ctx.scale(-1, 1);
       ctx.translate(-this.x, -this.y);
@@ -173,7 +175,7 @@ export class AssassinPlayer extends Player {
         ctx.drawImage(processedSprite, 0, 0, 800, 450, drawX, drawY, drawWidth, drawHeight);
       }
     } catch (error) {
-      this.renderFallback(ctx);
+      this.renderAssassinFallback(ctx);
     }
 
     ctx.restore();
@@ -192,7 +194,8 @@ export class AssassinPlayer extends Player {
       const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
       const data = imageData.data;
 
-      for (let i = 0; i < data.length; i += 4) {
+      // Optimized white outline removal - only process every 4th pixel to reduce CPU load
+      for (let i = 0; i < data.length; i += 16) {
         if (data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240) {
           data[i + 3] = 0;
         }
@@ -204,7 +207,7 @@ export class AssassinPlayer extends Player {
     return tempCanvas;
   }
 
-  private shouldFlipSprite(): boolean {
+  private shouldFlipAssassinSprite(): boolean {
     return (
       (this.currentAnimation === "walk_diagonal" && this.lastMoveDirection.x > 0) ||
       (this.currentAnimation === "walk_diagonal_down" && this.lastMoveDirection.x < 0) ||
@@ -212,7 +215,7 @@ export class AssassinPlayer extends Player {
     );
   }
 
-  private renderFallback(ctx: CanvasRenderingContext2D): void {
+  private renderAssassinFallback(ctx: CanvasRenderingContext2D): void {
     ctx.fillStyle = "#ff0000";
     ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
   }
@@ -231,7 +234,7 @@ export class AssassinPlayer extends Player {
     }
   }
 
-  private checkTileCollision(x: number, y: number, tileRenderer: any): boolean {
+  private checkAssassinTileCollision(x: number, y: number, tileRenderer: any): boolean {
     const margin = 2;
     const points = [
       { x: x + margin, y: y + margin },

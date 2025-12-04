@@ -85,9 +85,16 @@ export class RenderSystem {
     // Render player
     player.render(this.ctx, deltaTime);
 
-    // Render AssassinPlayer spiders if applicable
+    // Render AssassinPlayer spiders if applicable and not handled by tile renderer
     if (typeof (player as any).renderSpiders === 'function') {
-      (player as any).renderSpiders(this.ctx, deltaTime, this.camera.x, this.camera.y);
+      const shouldRenderSpiders =
+        typeof (player as any).shouldRenderSpidersManually === 'function'
+          ? (player as any).shouldRenderSpidersManually()
+          : true;
+
+      if (shouldRenderSpiders) {
+        (player as any).renderSpiders(this.ctx, deltaTime, this.camera.x, this.camera.y);
+      }
     }
 
     // Render orbital weapons if player has them

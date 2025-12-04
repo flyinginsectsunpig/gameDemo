@@ -1,4 +1,3 @@
-
 import { EntityManager } from '../managers/EntityManager';
 import { GameStateManager } from './GameStateManager';
 import { CollisionDetection } from './CollisionDetection';
@@ -25,6 +24,8 @@ export class CollisionHandler {
     this.handlePlayerEnemyCollisions();
     this.handleOrbitalWeaponCollisions();
     this.handleWeaponCollisions();
+    this.handlePendingEnemyDeaths();
+    this.handleSpiderEnemyCollisions();
     this.handleExperienceOrbCollection();
     this.handleBossLootCollection();
   }
@@ -212,14 +213,61 @@ export class CollisionHandler {
 
   private handleEnemyDeath(enemy: any) {
     const gameState = useGameState.getState();
+    if ((enemy as any).__deathHandled) return;
     this.gameStateManager.addKill();
     const scoreWithCombo = Math.floor(enemy.getScoreValue() * this.gameStateManager.getComboMultiplier());
     gameState.addScore(scoreWithCombo);
     this.entityManager.createHitParticles(enemy.x, enemy.y);
     const expValue = Math.max(1, Math.floor(enemy.getScoreValue() / 2));
     this.entityManager.addExperienceOrb(new ExperienceOrb(enemy.x, enemy.y, expValue));
-    
+
     const goldValue = Math.max(1, Math.floor(enemy.getScoreValue() / 10));
     gameState.addCurrency(goldValue);
+    (enemy as any).__deathHandled = true;
+  }
+
+  private handlePendingEnemyDeaths() {
+    const enemies = this.entityManager.getEnemies();
+    enemies.forEach(enemy => {
+      if (!enemy.isAlive() && !(enemy instanceof BossEnemy)) {
+        this.handleEnemyDeath(enemy);
+      }
+    });
+  }
+
+  private handleSpiderEnemyCollisions() {
+    const player = this.entityManager.getPlayer();
+    const enemies = this.entityManager.getEnemies();
+
+    // Check if player has spider-related methods (AssassinPlayer)
+    if (typeof (player as any).getSpiders === 'function') {
+      const spiders = (player as any).getSpiders();
+
+      spiders.forEach((spider: any) => {
+        enemies.forEach(enemy => {
+          if (!enemy.isAlive()) return;
+
+          // Simple distance-based collision for spiders
+          const dx = spider.x - enemy.x;
+          const dy = spider.y - enemy.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 35 && spider.isAttached) { // Spider is attached and damaging enemy
+            // Track enemy health before damage
+            const enemyHealthBefore = enemy.getHealth();
+
+            // Apply spider damage
+            if (typeof spider.damage === 'number') {
+              enemy.takeDamage(spider.damage);
+            }
+
+            // Check if spider killed the enemy
+            if (!enemy.isAlive() && !(enemy instanceof BossEnemy)) {
+              this.handleEnemyDeath(enemy);
+            }
+          }
+        });
+      });
+    }
   }
 }

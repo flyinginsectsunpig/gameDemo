@@ -14,8 +14,7 @@ import { DamageNumberManager } from '../rendering/DamageNumber';
 import { PassiveItemManager } from '../entities/collectibles/PassiveItem';
 import { InfiniteTileRenderer } from '../rendering/InfiniteTileRenderer';
 import { useGameState } from '../../stores/useGameState';
-import { PlayerType } from '../../types/PlayerType';
-import { PlayerFactory } from '../factories/PlayerFactory';
+import { PlayerFactory, PlayerType } from '../factories/PlayerFactory';
 
 export class EntityManager {
   private player: Player | AssassinPlayer;
@@ -52,6 +51,17 @@ export class EntityManager {
 
   public setupPlayer(characterType?: PlayerType) {
     const gameState = useGameState.getState();
+    
+    // Clean up old player's spiders from tile renderer if switching/resetting
+    if (this.player && typeof (this.player as any).getSpiders === 'function') {
+      const oldSpiders = (this.player as any).getSpiders();
+      oldSpiders.forEach((spider: any) => {
+        if (spider.instanceId) {
+          this.tileRenderer.removeSpider(spider.instanceId);
+        }
+      });
+    }
+    
     // Extract the ID if it's a character object, otherwise use the string directly
     let selectedChar: PlayerType = 'sylph';
 

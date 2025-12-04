@@ -63,7 +63,6 @@ export class GameEngine {
   private lastStatsSaveTime: number = 0;
   private readonly STATS_SAVE_INTERVAL: number = 30000;
 
-
   constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.gameStartTime = Date.now();
     this.canvas = canvas;
@@ -87,7 +86,7 @@ export class GameEngine {
     this.setupBossCallbacks();
     this.setupInput();
     this.initializeSprites();
-    
+
     // Setup player with selected character
     this.entityManager.setupPlayer();
   }
@@ -143,12 +142,20 @@ export class GameEngine {
       // Player input for pause is handled internally by GameStateManager now.
       // If it returns true, it means pause state changed, so we might want to stop updates.
       if (gameState.phase === "paused" || gameState.phase === "gameOver") {
+        // Update entity manager to keep enemies alive, and continue wave manager updates
+        const player = this.entityManager.getPlayer();
+        this.entityManager.update(deltaTime, { x: player.x, y: player.y });
+        this.waveManager.update(deltaTime);
         return;
       }
     }
 
-    // Don't update game if paused or game over
-    if (gameState.phase === "paused" || gameState.phase === "gameOver") {
+    // Don't update game if game over or leveling up
+    if (gameState.phase === "gameOver" || gameState.phase === "levelUp") {
+      // Update entity manager to keep enemies alive, and continue wave manager updates
+      const player = this.entityManager.getPlayer();
+      this.entityManager.update(deltaTime, { x: player.x, y: player.y });
+      this.waveManager.update(deltaTime);
       return;
     }
 
@@ -177,7 +184,13 @@ export class GameEngine {
 
     // Update wave system and spawn enemies
     this.waveManager.update(deltaTime);
-    const newEnemies = this.waveManager.spawnEnemies(this.canvas.width, this.canvas.height, player.getPosition());
+    const currentEnemyCount = this.entityManager.getEnemies().length;
+    const newEnemies = this.waveManager.spawnEnemies(
+      this.canvas.width,
+      this.canvas.height,
+      currentEnemyCount,
+      player.getPosition()
+    );
     this.entityManager.addEnemies(newEnemies);
 
     gameState.setWave(this.waveManager.getCurrentWave());
@@ -208,31 +221,62 @@ export class GameEngine {
       () => {
         this.entityManager.createDeathParticles(player.x, player.y);
         // Also handle player death specific particle effects if any
-      },
-      this.totalDamageDealt,
-      this.totalDamageTaken,
-      this.gameStartTime
+      }
     );
     // Potentially clear session stats snapshot here or let GameStateManager handle it
   }
 
   private handleBossDefeated() {
-    this.gameStateManager.handleBossDefeated(this.currentBoss!, this.entityManager.getExperienceOrbs(), this.entityManager.getBossLoot());
+    const gameState = useGameState.getState();
+    const audioState = useAudio.getState();
+
+    // Generate boss loot
+    const bossLoot = generateBossLoot(this.currentBoss!.x, this.currentBoss!.y, this.currentBoss!.getBossType());
+    this.entityManager.addBossLoot(bossLoot);
+
+    // Add experience orbs
+    const expValue = Math.max(50, Math.floor(this.currentBoss!.getScoreValue() * 2));
+    this.entityManager.addExperienceOrb(new ExperienceOrb(this.currentBoss!.x, this.currentBoss!.y, expValue));
+
+    // Add currency
+    const goldValue = Math.max(50, Math.floor(this.currentBoss!.getScoreValue() * 1.5));
+    gameState.addCurrency(goldValue);
+
+    // Update boss defeat stats
+    gameState.addBossKill();
+
+    // Trigger boss defeated event
+    gameState.onBossDefeated();
+
+    if (!audioState.isMuted) {
+      audioState.playSuccess();
+    }
+
     this.currentBoss = null;
     this.isBossActive = false;
   }
 
   private saveCurrentSessionStats() {
     const gameState = useGameState.getState();
-    const player = this.entityManager.getPlayer();
     const characterId = gameState.selectedCharacter?.id || "guardian";
 
-    this.gameStateManager.saveCurrentSessionStats(
+    const playTime = Math.floor((Date.now() - this.gameStartTime) / 1000);
+
+    StatisticsSystem.saveSessionSnapshot({
       characterId,
-      this.gameStartTime,
-      this.totalDamageDealt,
-      this.totalDamageTaken
-    );
+      kills: gameState.totalKills,
+      wave: gameState.wave,
+      level: gameState.level,
+      score: gameState.score,
+      playTime,
+      damageTaken: this.totalDamageTaken,
+      damageDealt: this.totalDamageDealt,
+      experienceGained: gameState.experience,
+      maxCombo: gameState.maxCombo,
+      bossesDefeated: gameState.bossesDefeated,
+      startTime: this.gameStartTime
+    });
+
     this.lastStatsSaveTime = Date.now();
   }
 

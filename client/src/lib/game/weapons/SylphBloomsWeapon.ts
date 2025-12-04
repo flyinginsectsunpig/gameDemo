@@ -1,20 +1,18 @@
 import { Enemy } from "../entities/enemies/Enemy";
 import { InfiniteTileRenderer } from "../rendering/InfiniteTileRenderer";
 import { Particle } from "../rendering/Particle";
-
-
+import { useGameState } from "../../stores/useGameState";
 
 export class SylphBloomsWeapon {
   protected damage: number;
   protected fireRate: number;
   protected projectileSpeed: number;
   protected lastFireTime: number = 0;
-  private lastFlowerSpawn: number = 0;
-  private flowerSpawnInterval: number = 8000; // 8 seconds between flower spawns
+  private flowerSpawnTimer: number = 0; // Accumulator for game time
+  private flowerSpawnInterval: number = 8; // 8 seconds between flower spawns (in seconds, not ms)
   private maxFlowers: number = 4; // Maximum flowers on field
   private flowerLifespan: number = 15000; // 15 seconds lifespan
   private tileRenderer: InfiniteTileRenderer | null = null;
-  private fireTimer: number = 0; // Timer for flower spawning
 
   constructor() {
     this.fireRate = 2;
@@ -44,24 +42,29 @@ export class SylphBloomsWeapon {
   ): void {
     if (!this.tileRenderer) return;
 
-    // Don't spawn flowers when game is paused
-    const { useGameState } = require("../../stores/useGameState");
+    // Always update flowers regardless of game state to prevent animation reset issues
+    this.tileRenderer.updateFlowers(deltaTime);
+
+    // Don't spawn new flowers when game is paused or leveling up
     const gameState = useGameState.getState();
-    if (gameState.phase !== "playing") return;
+    if (gameState.phase !== "playing") {
+      // Still update orbs but don't spawn new flowers
+      this.tileRenderer.updateOrbs(deltaTime, enemies, playerX, playerY);
+      return;
+    }
 
+    // Accumulate game time for flower spawning
+    this.flowerSpawnTimer += deltaTime;
 
-    // Spawn new flowers periodically
+    // Spawn new flowers periodically using game time instead of real time
     const currentFlowers = this.tileRenderer.getAllFlowers();
     if (
-      Date.now() - this.lastFlowerSpawn >= this.flowerSpawnInterval &&
+      this.flowerSpawnTimer >= this.flowerSpawnInterval &&
       currentFlowers.length < this.maxFlowers
     ) {
       this.spawnFlowerTurret(playerX, playerY);
-      this.lastFlowerSpawn = Date.now();
+      this.flowerSpawnTimer -= this.flowerSpawnInterval; // Subtract interval to maintain rhythm
     }
-
-    // Update flowers through tile renderer
-    this.tileRenderer.updateFlowers(deltaTime);
 
     // Check flower shooting
     const flowers = this.tileRenderer.getAllFlowers();
@@ -172,7 +175,7 @@ export class SylphBloomsWeapon {
     let nearestDistance = maxRange;
 
     enemies.forEach((enemy) => {
-      if (enemy.health <= 0) return;
+      if (!enemy.isAlive()) return;
 
       const dx = enemy.x - x;
       const dy = enemy.y - y;
@@ -206,7 +209,7 @@ export class SylphBloomsWeapon {
     return [];
   }
 
-  getParticles(): Particle[] {
+  getParticles(): any[] {
     return this.tileRenderer ? this.tileRenderer.getAllOrbs() : [];
   }
 
@@ -217,7 +220,7 @@ export class SylphBloomsWeapon {
 
   public upgradeFireRate() {
     // Reduce flower spawn interval and shot cooldown
-    this.flowerSpawnInterval = Math.max(2000, this.flowerSpawnInterval - 300);
+    this.flowerSpawnInterval = Math.max(2, this.flowerSpawnInterval - 0.3); // In seconds now
     // Note: Individual flower shot cooldowns are handled by the tile renderer
   }
 
