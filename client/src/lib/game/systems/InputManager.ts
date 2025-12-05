@@ -107,4 +107,31 @@ export class InputManager {
     this.keys["KeyD"] = false;
     this.keys["ArrowRight"] = false;
   }
+
+  public clearAllInput() {
+    // Clear all input state including movement, weapons, pause, and control keys
+    // Movement keys
+    this.keys["KeyW"] = false;
+    this.keys["ArrowUp"] = false;
+    this.keys["KeyS"] = false;
+    this.keys["ArrowDown"] = false;
+    this.keys["KeyA"] = false;
+    this.keys["ArrowLeft"] = false;
+    this.keys["KeyD"] = false;
+    this.keys["ArrowRight"] = false;
+
+    // Weapon selection keys
+    this.keys["1"] = false;
+    this.keys["2"] = false;
+    this.keys["3"] = false;
+    this.keys["4"] = false;
+    this.keys["5"] = false;
+
+    // Control keys
+    this.keys["Escape"] = false;
+    this.keys["m"] = false;
+    this.keys["M"] = false;
+    this.keys["r"] = false;
+    this.keys["R"] = false;
+  }
 }

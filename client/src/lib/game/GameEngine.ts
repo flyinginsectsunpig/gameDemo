@@ -109,6 +109,24 @@ export class GameEngine {
     this.inputManager.addEventListeners();
     // GameStateManager now handles its own input setup for pause, restart, etc.
     this.gameStateManager.setupInputHandlers(this.inputManager, () => this.resetGame());
+    this.gameStateManager.setInputManager(this.inputManager);
+    this.setupPhaseTransitionHandler();
+  }
+
+  private setupPhaseTransitionHandler() {
+    const gameState = useGameState.getState();
+    let previousPhase = gameState.phase;
+
+    useGameState.subscribe(
+      (state) => state.phase,
+      (currentPhase) => {
+        // Clear all input when transitioning TO playing phase from any other phase
+        if (currentPhase === "playing" && previousPhase !== "playing") {
+          this.inputManager.clearAllInput();
+        }
+        previousPhase = currentPhase;
+      }
+    );
   }
 
   private resetGame() {
